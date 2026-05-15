@@ -19,6 +19,8 @@ export default function PracticeSessionScreen() {
   const [currentItem, setCurrentItem] = useState<Item | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
+  const [allTags, setAllTags] = useState<string[]>([])
 
   // Load activity and items on mount
   useEffect(() => {
@@ -39,6 +41,9 @@ export default function PracticeSessionScreen() {
       return
     }
     setItems(loadedItems)
+    const tags = [...new Set(loadedItems.flatMap(i => i.tags ?? []))].sort()
+    setAllTags(tags)
+    setActiveTags(new Set())
   }, [activityId, navigate])
 
   const drawNextItem = useCallback(() => {
@@ -46,7 +51,10 @@ export default function PracticeSessionScreen() {
     const freshItems = getItems(activityId)
     setItems(freshItems)
     const todayPracticed = getTodayPracticedItemIds(activityId)
-    const next = selectItem(freshItems, todayPracticed, activity.weights)
+    const filtered = activeTags.size === 0
+      ? freshItems
+      : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
+    const next = selectItem(filtered, todayPracticed, activity.weights)
     if (next === null) {
       setPhase('done')
       setCurrentItem(null)
@@ -56,7 +64,7 @@ export default function PracticeSessionScreen() {
       setRevealed(false)
       setSelectedColor(null)
     }
-  }, [activity, activityId])
+  }, [activity, activityId, activeTags])
 
   // Draw first item once activity and items are loaded
   useEffect(() => {
@@ -64,6 +72,15 @@ export default function PracticeSessionScreen() {
       drawNextItem()
     }
   }, [activity, items, phase, currentItem, drawNextItem])
+
+  function toggleTag(tag: string) {
+    setActiveTags(prev => {
+      const next = new Set(prev)
+      if (next.has(tag)) next.delete(tag)
+      else next.add(tag)
+      return next
+    })
+  }
 
   const handleIPracticed = () => {
     setPhase('rate')
@@ -137,6 +154,24 @@ export default function PracticeSessionScreen() {
       {phase === 'draw' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            {allTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {allTags.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      activeTags.has(tag)
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-700 text-slate-300'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
 
             {revealed ? (
