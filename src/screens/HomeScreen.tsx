@@ -1,8 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActivities, saveActivity, deleteActivity } from '../storage'
+import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity } from '../types'
+
+function lastPracticedLabel(activityId: string): string {
+  const last = getLastPracticedByItem(activityId)
+  const dates = Object.values(last)
+  if (dates.length === 0) return 'Never practiced'
+  const mostRecent = new Date(dates.reduce((a, b) => (a > b ? a : b)))
+  const today = new Date()
+  const diffDays = Math.floor(
+    (Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) -
+      Date.UTC(mostRecent.getFullYear(), mostRecent.getMonth(), mostRecent.getDate())) /
+      86400000
+  )
+  if (diffDays === 0) return 'Practiced today'
+  if (diffDays === 1) return 'Practiced yesterday'
+  return `Practiced ${diffDays} days ago`
+}
 
 export default function HomeScreen() {
   const navigate = useNavigate()
@@ -25,7 +41,7 @@ export default function HomeScreen() {
     saveActivity(a)
     setActivities(getActivities())
     setName('')
-    setItemLabel('item')
+    setItemLabel('')
     setAdding(false)
   }
 
@@ -49,6 +65,7 @@ export default function HomeScreen() {
             <button className="flex-1 text-left" onClick={() => navigate(`/activity/${a.id}`)}>
               <div className="font-semibold">{a.name}</div>
               <div className="text-xs text-slate-400 capitalize">{a.itemLabel}s</div>
+              <div className="text-xs text-slate-500 mt-0.5">{lastPracticedLabel(a.id)}</div>
             </button>
             <button
               onClick={() => handleDelete(a.id, a.name)}
