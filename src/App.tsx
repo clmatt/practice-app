@@ -1,3 +1,25 @@
+import { HashRouter, Routes, Route } from 'react-router-dom'
+import HomeScreen from './screens/HomeScreen'
+import ActivityDashboardScreen from './screens/ActivityDashboardScreen'
+import PracticeSessionScreen from './screens/PracticeSessionScreen'
+import ManageItemsScreen from './screens/ManageItemsScreen'
+import AddEditItemScreen from './screens/AddEditItemScreen'
+import StatsScreen from './screens/StatsScreen'
+
 export default function App() {
-  return <div className="min-h-screen bg-slate-950 text-slate-100 p-4">hello</div>
+  return (
+    <HashRouter>
+      <div className="min-h-screen bg-slate-950 text-slate-100 max-w-md mx-auto">
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />
+          <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
+          <Route path="/activity/:activityId/manage" element={<ManageItemsScreen />} />
+          <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen />} />
+          <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen />} />
+          <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
+        </Routes>
+      </div>
+    </HashRouter>
+  )
 }
