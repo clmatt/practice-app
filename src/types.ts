@@ -13,6 +13,7 @@ export interface Item {
   activityId: string
   name: string
   color: Color
+  tags?: string[]
   createdAt: string
 }
 

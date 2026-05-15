@@ -46,21 +46,32 @@ export default function ManageItemsScreen() {
       ) : (
         <ul className="flex flex-col gap-2 mb-6">
           {items.map(item => (
-            <li key={item.id} className="bg-slate-800 rounded-xl px-4 py-3 flex items-center gap-3">
-              <ColorDot color={item.color} size="md" />
-              <span className="flex-1 text-sm">{item.name}</span>
-              <Link
-                to={`/activity/${activityId}/manage/${item.id}/edit`}
-                className="text-violet-400 text-sm hover:text-violet-300"
-              >
-                Edit
-              </Link>
-              <button
-                onClick={() => handleDelete(item.id, item.name)}
-                className="text-red-400 text-sm hover:text-red-300"
-              >
-                Delete
-              </button>
+            <li key={item.id} className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <ColorDot color={item.color} size="md" />
+                <span className="flex-1 text-sm">{item.name}</span>
+                <Link
+                  to={`/activity/${activityId}/manage/${item.id}/edit`}
+                  className="text-violet-400 text-sm hover:text-violet-300"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(item.id, item.name)}
+                  className="text-red-400 text-sm hover:text-red-300"
+                >
+                  Delete
+                </button>
+              </div>
+              {(item.tags ?? []).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {(item.tags ?? []).map(tag => (
+                    <span key={tag} className="bg-slate-700 rounded-full px-2 py-0.5 text-xs text-slate-300">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>

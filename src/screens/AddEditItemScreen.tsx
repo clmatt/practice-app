@@ -14,6 +14,8 @@ export default function AddEditItemScreen() {
   const [existingItem, setExistingItem] = useState<Item | null>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState<Color | null>(null)
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function AddEditItemScreen() {
       setExistingItem(item)
       setName(item.name)
       setColor(item.color)
+      setTags(item.tags ?? [])
     }
   }, [activityId, itemId, navigate])
 
@@ -48,18 +51,31 @@ export default function AddEditItemScreen() {
     }
 
     if (isEditing && existingItem) {
-      saveItem({ ...existingItem, name: name.trim(), color })
+      saveItem({ ...existingItem, name: name.trim(), color, tags })
     } else {
       saveItem({
         id: generateId(),
         activityId: activityId!,
         name: name.trim(),
         color,
+        tags,
         createdAt: new Date().toISOString(),
       })
     }
 
     navigate(`/activity/${activityId}/manage`)
+  }
+
+  function addTag() {
+    const trimmed = tagInput.trim()
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
+    }
+    setTagInput('')
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter(t => t !== tag))
   }
 
   if (!activity) return null
@@ -86,6 +102,32 @@ export default function AddEditItemScreen() {
         />
 
         <ColorPicker value={color} onChange={c => { setColor(c); setError('') }} />
+
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Add tag, press Enter"
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault()
+                addTag()
+              }
+            }}
+            className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full"
+          />
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map(tag => (
+                <span key={tag} className="flex items-center gap-1 bg-slate-700 rounded-full px-3 py-1 text-xs">
+                  {tag}
+                  <button type="button" onClick={() => removeTag(tag)} className="text-slate-400 hover:text-white">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
