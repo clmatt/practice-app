@@ -15,10 +15,11 @@ export default function ActivityDashboardScreen() {
   const [draftWeights, setDraftWeights] = useState({ red: 60, yellow: 30, green: 10 })
 
   useEffect(() => {
+    if (!activityId) { navigate('/'); return }
     const a = getActivities().find(a => a.id === activityId)
     if (!a) { navigate('/'); return }
     setActivity(a)
-    setItems(getItems(activityId!))
+    setItems(getItems(activityId))
     setDraftName(a.name)
     setDraftLabel(a.itemLabel)
     setDraftWeights({
@@ -26,11 +27,12 @@ export default function ActivityDashboardScreen() {
       yellow: Math.round(a.weights.yellow * 100),
       green: Math.round(a.weights.green * 100),
     })
-  }, [activityId])
+  }, [activityId, navigate])
 
   function handleSaveSettings() {
     if (!activity) return
     const total = draftWeights.red + draftWeights.yellow + draftWeights.green
+    if (total === 0) return
     const updated: Activity = {
       ...activity,
       name: draftName.trim() || activity.name,

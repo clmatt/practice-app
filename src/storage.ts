@@ -42,6 +42,10 @@ export function saveActivity(activity: Activity): void {
 
 export function deleteActivity(id: string): void {
   save(KEYS.activities, getActivities().filter(a => a.id !== id))
+  const allItems = load<Item>(KEYS.items)
+  const deletedItemIds = new Set(allItems.filter(i => i.activityId === id).map(i => i.id))
+  save(KEYS.items, allItems.filter(i => !deletedItemIds.has(i.id)))
+  save(KEYS.logs, load<PracticeLog>(KEYS.logs).filter(l => !deletedItemIds.has(l.itemId)))
 }
 
 // --- Items ---
