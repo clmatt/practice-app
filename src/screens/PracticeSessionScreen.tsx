@@ -7,7 +7,7 @@ import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 
-type Phase = 'draw' | 'rate' | 'done'
+type Phase = 'setup' | 'draw' | 'rate' | 'done'
 
 export default function PracticeSessionScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -15,7 +15,7 @@ export default function PracticeSessionScreen() {
 
   const [activity, setActivity] = useState<Activity | null>(null)
   const [items, setItems] = useState<Item[]>([])
-  const [phase, setPhase] = useState<Phase>('draw')
+  const [phase, setPhase] = useState<Phase>('setup')
   const [currentItem, setCurrentItem] = useState<Item | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
@@ -44,6 +44,7 @@ export default function PracticeSessionScreen() {
     const tags = [...new Set(loadedItems.flatMap(i => i.tags ?? []))].sort()
     setAllTags(tags)
     setActiveTags(new Set())
+    setPhase(tags.length > 0 ? 'setup' : 'draw')
   }, [activityId, navigate])
 
   const drawNextItem = useCallback(() => {
@@ -134,6 +135,39 @@ export default function PracticeSessionScreen() {
           Exit
         </button>
       </div>
+
+      {/* Phase: setup */}
+      {phase === 'setup' && (
+        <div className="flex flex-col flex-1 gap-6">
+          <div className="flex-1 flex flex-col justify-center gap-4">
+            <h2 className="text-xl font-bold">What are you focusing on?</h2>
+            <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    activeTags.has(tag)
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={drawNextItem}
+              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
+            >
+              {activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Phase: done */}
       {phase === 'done' && (
