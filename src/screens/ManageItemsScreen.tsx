@@ -21,7 +21,8 @@ export default function ManageItemsScreen() {
     setItems(getItems(activityId!))
   }, [activityId, navigate])
 
-  function handleDelete(itemId: string) {
+  function handleDelete(itemId: string, itemName: string) {
+    if (!window.confirm(`Delete "${itemName}"? This cannot be undone.`)) return
     deleteItem(itemId)
     setItems(getItems(activityId!))
   }
@@ -55,7 +56,7 @@ export default function ManageItemsScreen() {
                 Edit
               </Link>
               <button
-                onClick={() => handleDelete(item.id)}
+                onClick={() => handleDelete(item.id, item.name)}
                 className="text-red-400 text-sm hover:text-red-300"
               >
                 Delete

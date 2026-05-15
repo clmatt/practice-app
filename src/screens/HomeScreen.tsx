@@ -9,7 +9,7 @@ export default function HomeScreen() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
-  const [itemLabel, setItemLabel] = useState('item')
+  const [itemLabel, setItemLabel] = useState('')
 
   useEffect(() => { setActivities(getActivities()) }, [])
 
@@ -29,7 +29,8 @@ export default function HomeScreen() {
     setAdding(false)
   }
 
-  function handleDelete(id: string) {
+  function handleDelete(id: string, name: string) {
+    if (!window.confirm(`Delete "${name}" and all its items? This cannot be undone.`)) return
     deleteActivity(id)
     setActivities(getActivities())
   }
@@ -50,7 +51,7 @@ export default function HomeScreen() {
               <div className="text-xs text-slate-400 capitalize">{a.itemLabel}s</div>
             </button>
             <button
-              onClick={() => handleDelete(a.id)}
+              onClick={() => handleDelete(a.id, a.name)}
               className="text-slate-500 hover:text-red-400 text-sm ml-4"
             >
               Delete
@@ -83,7 +84,7 @@ export default function HomeScreen() {
               Add
             </button>
             <button
-              onClick={() => { setAdding(false); setName(''); setItemLabel('item') }}
+              onClick={() => { setAdding(false); setName(''); setItemLabel('') }}
               className="flex-1 bg-slate-700 hover:bg-slate-600 rounded-lg py-2 text-sm"
             >
               Cancel
