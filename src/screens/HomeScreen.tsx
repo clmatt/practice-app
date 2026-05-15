@@ -72,7 +72,7 @@ export default function HomeScreen() {
           />
           <input
             className="bg-slate-700 rounded-lg px-3 py-2 text-sm w-full outline-none"
-            placeholder="What to call each item (e.g. trick, route)"
+            placeholder="Item label, singular (e.g. trick, route)"
             value={itemLabel}
             onChange={e => setItemLabel(e.target.value)}
           />
