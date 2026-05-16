@@ -3,6 +3,7 @@ import {
   getActivities, saveActivity, deleteActivity,
   getItems, saveItem, deleteItem,
   getLogs, appendLog, getTodayPracticedItemIds,
+  getSessionHistory,
 } from '../storage'
 import type { Activity, Item, PracticeLog } from '../types'
 
@@ -108,5 +109,78 @@ describe('logs', () => {
     const ids = getTodayPracticedItemIds('act-1')
     expect(ids.has('item-1')).toBe(true)
     expect(ids.has('item-2')).toBe(false)
+  })
+})
+
+describe('getSessionHistory', () => {
+  it('returns empty array when there are no logs', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1' }))
+    expect(getSessionHistory('act-1')).toEqual([])
+  })
+
+  it('returns one session for logs on the same day', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
+    saveItem(makeItem({ id: 'i2', activityId: 'act-1', name: 'Shower' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i2', practicedAt: '2026-05-16T10:05:00.000Z', colorBefore: 'yellow', colorAfter: 'yellow' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0].date).toBe('2026-05-16')
+    expect(sessions[0].itemCount).toBe(2)
+  })
+
+  it('returns two sessions for logs on different days, newest first', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-14T10:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0].date).toBe('2026-05-16')
+    expect(sessions[1].date).toBe('2026-05-14')
+  })
+
+  it('itemCount counts distinct items, not total log entries', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T09:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions[0].itemCount).toBe(1)
+  })
+
+  it('changes only includes items where color actually changed', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
+    saveItem(makeItem({ id: 'i2', activityId: 'act-1', name: 'Shower' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i2', practicedAt: '2026-05-16T10:05:00.000Z', colorBefore: 'yellow', colorAfter: 'yellow' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions[0].changes).toHaveLength(1)
+    expect(sessions[0].changes[0].itemName).toBe('Mills Mess')
+    expect(sessions[0].changes[0].colorBefore).toBe('red')
+    expect(sessions[0].changes[0].colorAfter).toBe('yellow')
+  })
+
+  it('excludes logs for items not in the given activity', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1' }))
+    saveItem(makeItem({ id: 'i2', activityId: 'act-2' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i2', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions[0].itemCount).toBe(1)
+  })
+
+  it('for multiple logs of the same item in one day, uses the last log for change detection', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T09:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'yellow', colorAfter: 'yellow' }))
+    const sessions = getSessionHistory('act-1')
+    // Last log for i1: yellow → yellow (no change)
+    expect(sessions[0].changes).toHaveLength(0)
+  })
+
+  it('skips logs for deleted items gracefully', () => {
+    // i1 is NOT saved — simulates a deleted item
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions).toHaveLength(0)
   })
 })

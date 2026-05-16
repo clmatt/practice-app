@@ -24,3 +24,9 @@ export interface PracticeLog {
   colorBefore: Color
   colorAfter: Color
 }
+
+export interface SessionSummary {
+  date: string
+  itemCount: number
+  changes: { itemName: string; colorBefore: Color; colorAfter: Color }[]
+}

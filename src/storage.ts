@@ -1,4 +1,4 @@
-import type { Activity, Item, PracticeLog, Color } from './types'
+import type { Activity, Item, PracticeLog, Color, SessionSummary } from './types'
 
 const KEYS = {
   activities: 'practice:activities',
@@ -135,4 +135,41 @@ export function getLastPracticedByItem(activityId: string): Record<string, strin
     }
   }
   return last
+}
+
+export function getSessionHistory(activityId: string): SessionSummary[] {
+  const items = getItems(activityId)
+  const itemMap = new Map(items.map(i => [i.id, i.name]))
+  const itemIds = new Set(items.map(i => i.id))
+
+  const logs = getLogs().filter(l => itemIds.has(l.itemId))
+
+  const byDate = new Map<string, PracticeLog[]>()
+  for (const log of logs) {
+    const date = log.practicedAt.slice(0, 10)
+    if (!byDate.has(date)) byDate.set(date, [])
+    byDate.get(date)!.push(log)
+  }
+
+  const sessions: SessionSummary[] = []
+  for (const [date, dateLogs] of byDate) {
+    const practicedItemIds = new Set(dateLogs.map(l => l.itemId))
+
+    const lastLogByItem = new Map<string, PracticeLog>()
+    for (const log of [...dateLogs].sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))) {
+      lastLogByItem.set(log.itemId, log)
+    }
+
+    const changes = [...lastLogByItem.values()]
+      .filter(l => l.colorBefore !== l.colorAfter)
+      .map(l => ({
+        itemName: itemMap.get(l.itemId)!,
+        colorBefore: l.colorBefore,
+        colorAfter: l.colorAfter,
+      }))
+
+    sessions.push({ date, itemCount: practicedItemIds.size, changes })
+  }
+
+  return sessions.sort((a, b) => b.date.localeCompare(a.date))
 }
