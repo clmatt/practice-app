@@ -36,6 +36,7 @@ describe('exportData', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     clickedHref = undefined
     clickedDownload = undefined
 
@@ -70,7 +71,7 @@ describe('exportData', () => {
     expect(clickedHref).toBeDefined()
   })
 
-  it('includes exportedAt timestamp in the payload', () => {
+  it('includes exportedAt timestamp in the payload', async () => {
     let capturedBlob: Blob | undefined
     vi.stubGlobal('URL', {
       createObjectURL: (blob: Blob) => { capturedBlob = blob; return 'blob:mock-url' },
@@ -80,12 +81,11 @@ describe('exportData', () => {
     exportData()
 
     expect(capturedBlob).toBeDefined()
-    capturedBlob!.text().then(text => {
-      const parsed = JSON.parse(text)
-      expect(parsed.exportedAt).toBeDefined()
-      expect(parsed.activities).toBeInstanceOf(Array)
-      expect(parsed.items).toBeInstanceOf(Array)
-      expect(parsed.logs).toBeInstanceOf(Array)
-    })
+    const text = await capturedBlob!.text()
+    const parsed = JSON.parse(text)
+    expect(parsed.exportedAt).toBeDefined()
+    expect(parsed.activities).toBeInstanceOf(Array)
+    expect(parsed.items).toBeInstanceOf(Array)
+    expect(parsed.logs).toBeInstanceOf(Array)
   })
 })

@@ -1,23 +1,14 @@
-import { getActivities, getLogs } from './storage'
-import type { Item } from './types'
+import { getActivities, getAllItems, getLogs } from './storage'
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
-}
-
-function loadAllItems(): Item[] {
-  try {
-    return JSON.parse(localStorage.getItem('practice:items') ?? '[]')
-  } catch {
-    return []
-  }
 }
 
 export function exportData(): void {
   const payload = {
     exportedAt: new Date().toISOString(),
     activities: getActivities(),
-    items: loadAllItems(),
+    items: getAllItems(),
     logs: getLogs(),
   }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })

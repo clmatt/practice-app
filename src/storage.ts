@@ -56,6 +56,10 @@ export function getItems(activityId: string): Item[] {
   return load<Item>(KEYS.items).filter(i => i.activityId === activityId)
 }
 
+export function getAllItems(): Item[] {
+  return load<Item>(KEYS.items)
+}
+
 export function saveItem(item: Item): void {
   const all = load<Item>(KEYS.items)
   const idx = all.findIndex(i => i.id === item.id)
