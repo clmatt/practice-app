@@ -5,6 +5,7 @@ import PracticeSessionScreen from './screens/PracticeSessionScreen'
 import ManageItemsScreen from './screens/ManageItemsScreen'
 import AddEditItemScreen from './screens/AddEditItemScreen'
 import StatsScreen from './screens/StatsScreen'
+import HistoryScreen from './screens/HistoryScreen'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen />} />
           <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen />} />
           <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
+          <Route path="/activity/:activityId/history" element={<HistoryScreen />} />
         </Routes>
       </div>
     </HashRouter>

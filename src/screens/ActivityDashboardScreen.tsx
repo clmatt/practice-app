@@ -162,6 +162,12 @@ export default function ActivityDashboardScreen() {
           Stats
         </button>
         <button
+          onClick={() => navigate(`/activity/${activityId}/history`)}
+          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
+        >
+          History
+        </button>
+        <button
           onClick={() => navigate(`/activity/${activityId}/manage`)}
           className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold capitalize"
         >
