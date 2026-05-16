@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getActivities, getSessionHistory } from '../storage'
 import ColorDot from '../components/ColorDot'
@@ -12,10 +13,12 @@ export default function HistoryScreen() {
   const navigate = useNavigate()
 
   const activity = getActivities().find(a => a.id === activityId)
-  if (!activity) {
-    navigate('/')
-    return null
-  }
+
+  useEffect(() => {
+    if (!activity) navigate('/')
+  }, [activity, navigate])
+
+  if (!activity) return null
 
   const sessions = getSessionHistory(activityId)
 
@@ -41,8 +44,8 @@ export default function HistoryScreen() {
               </div>
               {session.changes.length > 0 ? (
                 <div className="flex flex-col gap-1.5 mt-2">
-                  {session.changes.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-200">
+                  {session.changes.map((c) => (
+                    <div key={c.itemName} className="flex items-center gap-2 text-sm text-slate-200">
                       <span>{c.itemName}</span>
                       <ColorDot color={c.colorBefore} size="sm" />
                       <span className="text-slate-400">→</span>
