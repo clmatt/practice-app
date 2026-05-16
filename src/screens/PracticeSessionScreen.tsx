@@ -21,6 +21,8 @@ export default function PracticeSessionScreen() {
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
+  const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
+  const [filterExhausted, setFilterExhausted] = useState(false)
 
   // Load activity and items on mount
   useEffect(() => {
@@ -57,6 +59,16 @@ export default function PracticeSessionScreen() {
       : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
     const next = selectItem(filtered, todayPracticed, activity.weights)
     if (next === null) {
+      if (activeTags.size > 0) {
+        const nextUnfiltered = selectItem(freshItems, todayPracticed, activity.weights)
+        if (nextUnfiltered !== null) {
+          setFilterExhausted(true)
+          setPhase('done')
+          setCurrentItem(null)
+          return
+        }
+      }
+      setFilterExhausted(false)
       setPhase('done')
       setCurrentItem(null)
     } else {
@@ -109,6 +121,8 @@ export default function PracticeSessionScreen() {
     if (colorAfter !== colorBefore) {
       saveItem({ ...currentItem, color: colorAfter })
     }
+
+    setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
 
     drawNextItem()
   }
@@ -169,12 +183,73 @@ export default function PracticeSessionScreen() {
         </div>
       )}
 
-      {/* Phase: done */}
-      {phase === 'done' && (
+      {/* Phase: done — filter exhausted */}
+      {phase === 'done' && filterExhausted && (
         <div className="flex flex-col items-center justify-center flex-1 gap-6">
-          <p className="text-2xl font-bold text-center text-slate-100">
-            All done! No more {activity.itemLabel}s to practice today.
-          </p>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <p className="text-xl font-bold text-slate-100">
+              All done with your current filter.
+            </p>
+            {activeTags.size > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[...activeTags].map(tag => (
+                  <span
+                    key={tag}
+                    className="bg-slate-700 rounded-full px-3 py-1 text-xs text-slate-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-3 w-full">
+            <button
+              onClick={() => setPhase('setup')}
+              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold w-full"
+            >
+              Change filter
+            </button>
+            <button
+              onClick={() => setFilterExhausted(false)}
+              className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
+            >
+              End session
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Phase: done — true session complete */}
+      {phase === 'done' && !filterExhausted && (
+        <div className="flex flex-col flex-1 gap-6">
+          <div className="flex-1 flex flex-col justify-center gap-4">
+            <h2 className="text-lg font-semibold mb-2">Session complete</h2>
+            <p className="text-slate-400 text-sm">
+              You practiced {sessionLog.length} {sessionLog.length === 1 ? 'item' : 'items'}
+            </p>
+
+            {sessionLog.some(entry => entry.colorBefore !== entry.colorAfter) ? (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Changes</h3>
+                <div className="flex flex-col">
+                  {sessionLog
+                    .filter(entry => entry.colorBefore !== entry.colorAfter)
+                    .map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2 py-1">
+                        <span className="text-slate-200 text-sm">{entry.name}</span>
+                        <ColorDot color={entry.colorBefore} size="sm" />
+                        <span className="text-slate-400 text-sm">→</span>
+                        <ColorDot color={entry.colorAfter} size="sm" />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-slate-400 text-sm">No ratings changed</p>
+            )}
+          </div>
+
           <button
             onClick={() => navigate(`/activity/${activityId}`)}
             className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
