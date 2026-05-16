@@ -23,6 +23,7 @@ export default function PracticeSessionScreen() {
   const [allTags, setAllTags] = useState<string[]>([])
   const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
   const [filterExhausted, setFilterExhausted] = useState(false)
+  const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
 
   // Load activity and items on mount
   useEffect(() => {
@@ -49,18 +50,19 @@ export default function PracticeSessionScreen() {
     setPhase(tags.length > 0 ? 'setup' : 'draw')
   }, [activityId, navigate])
 
-  const drawNextItem = useCallback(() => {
+  const drawNextItem = useCallback((skipped: Set<string> = skippedItemIds) => {
     if (!activity || !activityId) return
     const freshItems = getItems(activityId)
     setItems(freshItems)
     const todayPracticed = getTodayPracticedItemIds(activityId)
+    const excluded = new Set([...todayPracticed, ...skipped])
     const filtered = activeTags.size === 0
       ? freshItems
       : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
-    const next = selectItem(filtered, todayPracticed, activity.weights)
+    const next = selectItem(filtered, excluded, activity.weights)
     if (next === null) {
       if (activeTags.size > 0) {
-        const nextUnfiltered = selectItem(freshItems, todayPracticed, activity.weights)
+        const nextUnfiltered = selectItem(freshItems, excluded, activity.weights)
         if (nextUnfiltered !== null) {
           setFilterExhausted(true)
           setPhase('done')
@@ -77,7 +79,7 @@ export default function PracticeSessionScreen() {
       setRevealed(false)
       setSelectedColor(null)
     }
-  }, [activity, activityId, activeTags])
+  }, [activity, activityId, activeTags, skippedItemIds])
 
   // Draw first item once activity and items are loaded
   useEffect(() => {
@@ -101,7 +103,10 @@ export default function PracticeSessionScreen() {
   }
 
   const handleSkip = () => {
-    drawNextItem()
+    if (!currentItem) return
+    const updated = new Set([...skippedItemIds, currentItem.id])
+    setSkippedItemIds(updated)
+    drawNextItem(updated)
   }
 
   const handleSave = () => {
