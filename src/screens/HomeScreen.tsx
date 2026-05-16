@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem } from '../storage'
-import { generateId } from '../utils'
+import { generateId, exportData } from '../utils'
 import type { Activity } from '../types'
 
 function lastPracticedLabel(activityId: string): string {
@@ -116,6 +116,13 @@ export default function HomeScreen() {
           + Add Activity
         </button>
       )}
+
+      <button
+        onClick={exportData}
+        className="w-full text-slate-500 hover:text-slate-300 text-sm py-2 text-center mt-2"
+      >
+        Export data
+      </button>
     </div>
   )
 }
