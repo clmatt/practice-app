@@ -179,7 +179,7 @@ export default function PracticeSessionScreen() {
           </div>
           <div className="flex flex-col gap-3">
             <button
-              onClick={drawNextItem}
+              onClick={() => drawNextItem()}
               className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
             >
               {activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}

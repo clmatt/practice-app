@@ -35,12 +35,13 @@ describe('exportData', () => {
   let clickedDownload: string | undefined
 
   beforeEach(() => {
+    vi.restoreAllMocks()
     clickedHref = undefined
     clickedDownload = undefined
 
     // Mock URL.createObjectURL and URL.revokeObjectURL
     vi.stubGlobal('URL', {
-      createObjectURL: (blob: Blob) => 'blob:mock-url',
+      createObjectURL: (_blob: Blob) => 'blob:mock-url',
       revokeObjectURL: vi.fn(),
     })
 
