@@ -168,13 +168,25 @@ describe('getSessionHistory', () => {
     expect(sessions[0].itemCount).toBe(1)
   })
 
-  it('for multiple logs of the same item in one day, uses the last log for change detection', () => {
+  it('for multiple logs of the same item in one day, shows net change from first colorBefore to last colorAfter', () => {
     saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
     appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T09:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
     appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'yellow', colorAfter: 'yellow' }))
     const sessions = getSessionHistory('act-1')
-    // Last log for i1: yellow → yellow (no change)
-    expect(sessions[0].changes).toHaveLength(0)
+    // Net change: red (start of day) → yellow (end of day) = a real change
+    expect(sessions[0].changes).toHaveLength(1)
+    expect(sessions[0].changes[0].colorBefore).toBe('red')
+    expect(sessions[0].changes[0].colorAfter).toBe('yellow')
+  })
+
+  it('shows net color change across the session when item is rated multiple times in a day', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T09:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'yellow', colorAfter: 'green' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions[0].changes).toHaveLength(1)
+    expect(sessions[0].changes[0].colorBefore).toBe('red')
+    expect(sessions[0].changes[0].colorAfter).toBe('green')
   })
 
   it('skips logs for deleted items gracefully', () => {

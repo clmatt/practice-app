@@ -157,17 +157,24 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
   for (const [date, dateLogs] of byDate) {
     const practicedItemIds = new Set(dateLogs.map(l => l.itemId))
 
+    const sortedDayLogs = [...dateLogs].sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
+    const firstLogByItem = new Map<string, PracticeLog>()
     const lastLogByItem = new Map<string, PracticeLog>()
-    for (const log of [...dateLogs].sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))) {
+    for (const log of sortedDayLogs) {
+      if (!firstLogByItem.has(log.itemId)) firstLogByItem.set(log.itemId, log)
       lastLogByItem.set(log.itemId, log)
     }
 
-    const changes = [...lastLogByItem.values()]
-      .filter(l => l.colorBefore !== l.colorAfter)
-      .map(l => ({
-        itemName: itemMap.get(l.itemId)!,
-        colorBefore: l.colorBefore,
-        colorAfter: l.colorAfter,
+    const changes = [...lastLogByItem.keys()]
+      .filter(itemId => {
+        const first = firstLogByItem.get(itemId)!
+        const last = lastLogByItem.get(itemId)!
+        return first.colorBefore !== last.colorAfter
+      })
+      .map(itemId => ({
+        itemName: itemMap.get(itemId)!,
+        colorBefore: firstLogByItem.get(itemId)!.colorBefore,
+        colorAfter: lastLogByItem.get(itemId)!.colorAfter,
       }))
 
     sessions.push({ date, itemCount: practicedItemIds.size, changes })
