@@ -1,5 +1,7 @@
 import type { Activity, Item, PracticeLog, Color, SessionSummary } from './types'
 
+export type { SessionSummary } from './types'
+
 const KEYS = {
   activities: 'practice:activities',
   items: 'practice:items',
