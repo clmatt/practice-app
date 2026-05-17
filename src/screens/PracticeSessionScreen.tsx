@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds } from '../storage'
+import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds, getLastPracticedByItem } from '../storage'
 import { selectItem } from '../selection'
 import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
@@ -56,13 +56,15 @@ export default function PracticeSessionScreen() {
     setItems(freshItems)
     const todayPracticed = getTodayPracticedItemIds(activityId)
     const excluded = new Set([...todayPracticed, ...skipped])
+    const lastPracticedAt = getLastPracticedByItem(activityId)
+    const recencyBias = activity.recencyBias ?? 0.9
     const filtered = activeTags.size === 0
       ? freshItems
       : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
-    const next = selectItem(filtered, excluded, activity.weights)
+    const next = selectItem(filtered, excluded, activity.weights, recencyBias, lastPracticedAt)
     if (next === null) {
       if (activeTags.size > 0) {
-        const nextUnfiltered = selectItem(freshItems, excluded, activity.weights)
+        const nextUnfiltered = selectItem(freshItems, excluded, activity.weights, recencyBias, lastPracticedAt)
         if (nextUnfiltered !== null) {
           setFilterExhausted(true)
           setPhase('done')
