@@ -5,6 +5,7 @@ export interface Activity {
   name: string
   itemLabel: string
   weights: { red: number; yellow: number; green: number }
+  recencyBias?: number
   createdAt: string
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selectItem } from '../selection'
+import { selectItem, computeRecencyWeights } from '../selection'
 import type { Item } from '../types'
 
 const makeItem = (id: string, color: Item['color']): Item => ({
@@ -68,5 +68,87 @@ describe('selectItem', () => {
     }
     expect(tally.red).toBeGreaterThan(tally.yellow)
     expect(tally.yellow).toBeGreaterThan(tally.green)
+  })
+})
+
+describe('computeRecencyWeights', () => {
+  const makeW = (id: string): Item => ({
+    id, activityId: 'act-1', name: id, color: 'red', createdAt: '2024-01-01T00:00:00.000Z',
+  })
+
+  it('single item gets weight 1', () => {
+    expect(computeRecencyWeights([makeW('a')], 0.9, {})).toEqual([1])
+  })
+
+  it('two never-practiced items get equal weight', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const [wa, wb] = computeRecencyWeights([a, b], 0.9, {})
+    expect(wa).toBeCloseTo(0.5)
+    expect(wb).toBeCloseTo(0.5)
+  })
+
+  it('stale item gets higher weight than recent with bias < 1', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const lastPracticedAt = { a: '2024-01-01T00:00:00.000Z', b: '2024-06-01T00:00:00.000Z' }
+    const [wa, wb] = computeRecencyWeights([a, b], 0.5, lastPracticedAt)
+    expect(wa).toBeGreaterThan(wb)
+    expect(wa).toBeCloseTo(1 / 1.5)
+    expect(wb).toBeCloseTo(0.5 / 1.5)
+  })
+
+  it('never-practiced item gets higher weight than practiced item with bias < 1', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const lastPracticedAt = { b: '2024-06-01T00:00:00.000Z' }
+    const [wa, wb] = computeRecencyWeights([a, b], 0.5, lastPracticedAt)
+    expect(wa).toBeGreaterThan(wb)
+  })
+
+  it('bias=1 produces uniform weights regardless of recency', () => {
+    const [a, b, c] = [makeW('a'), makeW('b'), makeW('c')]
+    const lastPracticedAt = {
+      a: '2024-01-01T00:00:00.000Z',
+      b: '2024-03-01T00:00:00.000Z',
+      c: '2024-06-01T00:00:00.000Z',
+    }
+    const [wa, wb, wc] = computeRecencyWeights([a, b, c], 1, lastPracticedAt)
+    expect(wa).toBeCloseTo(1 / 3)
+    expect(wb).toBeCloseTo(1 / 3)
+    expect(wc).toBeCloseTo(1 / 3)
+  })
+
+  it('bias=0 gives all weight to rank-0 (most stale) item', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const lastPracticedAt = { a: '2024-01-01T00:00:00.000Z', b: '2024-06-01T00:00:00.000Z' }
+    const [wa, wb] = computeRecencyWeights([a, b], 0, lastPracticedAt)
+    expect(wa).toBeCloseTo(1)
+    expect(wb).toBeCloseTo(0)
+  })
+
+  it('bias=0 with multiple never-practiced items distributes uniformly among them', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const [wa, wb] = computeRecencyWeights([a, b], 0, {})
+    expect(wa).toBeCloseTo(0.5)
+    expect(wb).toBeCloseTo(0.5)
+  })
+
+  it('items with the same timestamp share a rank and get equal weight', () => {
+    const [a, b, c] = [makeW('a'), makeW('b'), makeW('c')]
+    const lastPracticedAt = {
+      a: '2024-01-01T00:00:00.000Z',
+      b: '2024-01-01T00:00:00.000Z',
+      c: '2024-06-01T00:00:00.000Z',
+    }
+    const [wa, wb, wc] = computeRecencyWeights([a, b, c], 0.5, lastPracticedAt)
+    expect(wa).toBeCloseTo(wb)
+    expect(wa).toBeGreaterThan(wc)
+  })
+
+  it('weight for each item is independent of pool order', () => {
+    const [a, b] = [makeW('a'), makeW('b')]
+    const lastPracticedAt = { a: '2024-01-01T00:00:00.000Z', b: '2024-06-01T00:00:00.000Z' }
+    const w1 = computeRecencyWeights([a, b], 0.5, lastPracticedAt)
+    const w2 = computeRecencyWeights([b, a], 0.5, lastPracticedAt)
+    expect(w1[0]).toBeCloseTo(w2[1])
+    expect(w1[1]).toBeCloseTo(w2[0])
   })
 })

@@ -1,5 +1,33 @@
 import type { Activity, Item, Color } from './types'
 
+export function computeRecencyWeights(
+  pool: Item[],
+  recencyBias: number,
+  lastPracticedAt: Record<string, string>,
+): number[] {
+  const sorted = [...pool].sort((a, b) => {
+    const la = lastPracticedAt[a.id]
+    const lb = lastPracticedAt[b.id]
+    if (!la && !lb) return 0
+    if (!la) return -1
+    if (!lb) return 1
+    return la.localeCompare(lb)
+  })
+  const rankOf = new Map<string, number>()
+  let rank = 0
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0) {
+      const prev = lastPracticedAt[sorted[i - 1].id]
+      const curr = lastPracticedAt[sorted[i].id]
+      if (prev !== curr) rank++
+    }
+    rankOf.set(sorted[i].id, rank)
+  }
+  const raw = pool.map(item => Math.pow(recencyBias, rankOf.get(item.id)!))
+  const sum = raw.reduce((a, b) => a + b, 0)
+  return raw.map(w => w / sum)
+}
+
 export function selectItem(
   items: Item[],
   todayPracticedItemIds: Set<string>,
