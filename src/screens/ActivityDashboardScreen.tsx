@@ -13,6 +13,7 @@ export default function ActivityDashboardScreen() {
   const [draftName, setDraftName] = useState('')
   const [draftLabel, setDraftLabel] = useState('')
   const [draftWeights, setDraftWeights] = useState({ red: 60, yellow: 30, green: 10 })
+  const [draftRecencyBias, setDraftRecencyBias] = useState(0.9)
 
   useEffect(() => {
     if (!activityId) { navigate('/'); return }
@@ -27,6 +28,7 @@ export default function ActivityDashboardScreen() {
       yellow: Math.round(a.weights.yellow * 100),
       green: Math.round(a.weights.green * 100),
     })
+    setDraftRecencyBias(a.recencyBias ?? 0.9)
   }, [activityId, navigate])
 
   function handleSaveSettings() {
@@ -42,6 +44,7 @@ export default function ActivityDashboardScreen() {
         yellow: draftWeights.yellow / total,
         green: draftWeights.green / total,
       },
+      recencyBias: draftRecencyBias,
     }
     saveActivity(updated)
     setActivity(updated)
@@ -105,6 +108,28 @@ export default function ActivityDashboardScreen() {
                 Total: {draftWeights.red + draftWeights.yellow + draftWeights.green}% (auto-normalised on save)
               </p>
             </div>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
+              Recency bias
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={draftRecencyBias}
+                onChange={e => setDraftRecencyBias(Number(e.target.value))}
+                className="flex-1"
+              />
+              <span className="text-sm text-slate-300 w-12 text-right">
+                {draftRecencyBias.toFixed(2)}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              1 = uniform, lower = prefer items practiced longest ago
+            </p>
           </div>
           <button
             onClick={handleSaveSettings}
