@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ColorDot from '../components/ColorDot'
 import { getActivities, getItems, deleteItem } from '../storage'
-import type { Activity, Item } from '../types'
+import type { Activity, Item, Color } from '../types'
 
 export default function ManageItemsScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -10,6 +10,8 @@ export default function ManageItemsScreen() {
 
   const [activity, setActivity] = useState<Activity | null>(null)
   const [items, setItems] = useState<Item[]>([])
+  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set())
+  const [activeColorFilters, setActiveColorFilters] = useState<Set<Color>>(new Set())
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
@@ -27,9 +29,35 @@ export default function ManageItemsScreen() {
     setItems(getItems(activityId!))
   }
 
+  function toggleTagFilter(tag: string) {
+    setActiveTagFilters(prev => {
+      const next = new Set(prev)
+      if (next.has(tag)) next.delete(tag)
+      else next.add(tag)
+      return next
+    })
+  }
+
+  function toggleColorFilter(color: Color) {
+    setActiveColorFilters(prev => {
+      const next = new Set(prev)
+      if (next.has(color)) next.delete(color)
+      else next.add(color)
+      return next
+    })
+  }
+
   if (!activity) return null
 
   const label = activity.itemLabel
+  const allTags = [...new Set(items.flatMap(i => i.tags ?? []))].sort()
+  const filtersActive = activeTagFilters.size > 0 || activeColorFilters.size > 0
+
+  const filteredItems = items.filter(item => {
+    const tagMatch = activeTagFilters.size === 0 || (item.tags ?? []).some(t => activeTagFilters.has(t))
+    const colorMatch = activeColorFilters.size === 0 || activeColorFilters.has(item.color)
+    return tagMatch && colorMatch
+  })
 
   return (
     <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
@@ -41,11 +69,57 @@ export default function ManageItemsScreen() {
         Manage {label}s
       </h1>
 
+      {/* Color filter chips — always shown */}
+      <div className="flex gap-2 mb-3">
+        {(['red', 'yellow', 'green'] as const).map(color => (
+          <button
+            key={color}
+            onClick={() => toggleColorFilter(color)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              activeColorFilters.has(color)
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-700 text-slate-300'
+            }`}
+          >
+            <ColorDot color={color} size="sm" />
+            <span className="capitalize">{color}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tag filter chips — only shown if any items have tags */}
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {allTags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => toggleTagFilter(tag)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                activeTagFilters.has(tag)
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-slate-700 text-slate-300'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Count label when filters are active */}
+      {filtersActive && items.length > 0 && (
+        <p className="text-slate-500 text-xs mb-3">
+          Showing {filteredItems.length} of {items.length} {label}{items.length === 1 ? '' : 's'}
+        </p>
+      )}
+
       {items.length === 0 ? (
         <p className="text-slate-400 text-sm mb-6">No {label}s yet</p>
+      ) : filteredItems.length === 0 ? (
+        <p className="text-slate-400 text-sm mb-6">No {label}s match the current filters.</p>
       ) : (
         <ul className="flex flex-col gap-2 mb-6">
-          {items.map(item => (
+          {filteredItems.map(item => (
             <li key={item.id} className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <ColorDot color={item.color} size="md" />
