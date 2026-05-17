@@ -7,6 +7,7 @@ import AddEditItemScreen from './screens/AddEditItemScreen'
 import ItemProgressScreen from './screens/ItemProgressScreen'
 import StatsScreen from './screens/StatsScreen'
 import HistoryScreen from './screens/HistoryScreen'
+import ImportScreen from './screens/ImportScreen'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen />} />
           <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
           <Route path="/activity/:activityId/history" element={<HistoryScreen />} />
+          <Route path="/import" element={<ImportScreen />} />
         </Routes>
       </div>
     </HashRouter>

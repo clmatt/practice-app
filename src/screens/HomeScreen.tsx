@@ -123,6 +123,12 @@ export default function HomeScreen() {
       >
         Export data
       </button>
+      <button
+        onClick={() => navigate('/import')}
+        className="w-full text-slate-500 hover:text-slate-300 text-sm py-2 text-center"
+      >
+        Import data
+      </button>
     </div>
   )
 }
