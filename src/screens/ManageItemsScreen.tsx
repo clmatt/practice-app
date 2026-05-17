@@ -123,7 +123,12 @@ export default function ManageItemsScreen() {
             <li key={item.id} className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <ColorDot color={item.color} size="md" />
-                <span className="flex-1 text-sm">{item.name}</span>
+                <Link
+                  to={`/activity/${activityId}/manage/${item.id}`}
+                  className="flex-1 text-sm text-violet-400 hover:text-violet-300"
+                >
+                  {item.name}
+                </Link>
                 <Link
                   to={`/activity/${activityId}/manage/${item.id}/edit`}
                   className="text-violet-400 text-sm hover:text-violet-300"
