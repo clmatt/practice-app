@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getActivities, saveActivity, deleteActivity,
-  getItems, saveItem, deleteItem,
+  getItems, saveItem, deleteItem, deleteItemWithLogs,
   getLogs, appendLog, getTodayPracticedItemIds,
   getSessionHistory,
 } from '../storage'
@@ -194,5 +194,18 @@ describe('getSessionHistory', () => {
     appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
     const sessions = getSessionHistory('act-1')
     expect(sessions).toHaveLength(0)
+  })
+})
+
+describe('deleteItemWithLogs', () => {
+  it('deletes the item and all its logs atomically', () => {
+    saveItem(makeItem({ id: 'item-1', activityId: 'act-1' }))
+    saveItem(makeItem({ id: 'item-2', activityId: 'act-1' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'item-2' }))
+    appendLog(makeLog({ id: 'l3', itemId: 'item-1' }))
+    deleteItemWithLogs('item-1')
+    expect(getItems('act-1').map(i => i.id)).toEqual(['item-2'])
+    expect(getLogs().map(l => l.id)).toEqual(['l2'])
   })
 })

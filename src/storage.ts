@@ -72,6 +72,11 @@ export function deleteItem(id: string): void {
   save(KEYS.items, load<Item>(KEYS.items).filter(i => i.id !== id))
 }
 
+export function deleteItemWithLogs(itemId: string): void {
+  save(KEYS.items, load<Item>(KEYS.items).filter(i => i.id !== itemId))
+  save(KEYS.logs, load<PracticeLog>(KEYS.logs).filter(l => l.itemId !== itemId))
+}
+
 // --- Logs ---
 
 export function getLogs(): PracticeLog[] {
