@@ -69,6 +69,42 @@ describe('selectItem', () => {
     expect(tally.red).toBeGreaterThan(tally.yellow)
     expect(tally.yellow).toBeGreaterThan(tally.green)
   })
+
+  it('bias=0 always picks the least recently practiced item within the color bucket', () => {
+    const items = [makeItem('stale', 'red'), makeItem('recent', 'red')]
+    const lastPracticedAt = {
+      stale: '2024-01-01T00:00:00.000Z',
+      recent: '2024-06-01T00:00:00.000Z',
+    }
+    for (let i = 0; i < 50; i++) {
+      expect(selectItem(items, new Set(), weights, 0, lastPracticedAt)?.id).toBe('stale')
+    }
+  })
+
+  it('never-practiced item is treated as most stale with bias=0', () => {
+    const items = [makeItem('never', 'red'), makeItem('practiced', 'red')]
+    const lastPracticedAt = { practiced: '2024-06-01T00:00:00.000Z' }
+    for (let i = 0; i < 50; i++) {
+      expect(selectItem(items, new Set(), weights, 0, lastPracticedAt)?.id).toBe('never')
+    }
+  })
+
+  it('bias=1 with lastPracticedAt still selects all items (uniform)', () => {
+    const items = [makeItem('a', 'red'), makeItem('b', 'red'), makeItem('c', 'red')]
+    const lastPracticedAt = {
+      a: '2024-01-01T00:00:00.000Z',
+      b: '2024-03-01T00:00:00.000Z',
+      c: '2024-06-01T00:00:00.000Z',
+    }
+    const seen = new Set<string>()
+    for (let i = 0; i < 200; i++) {
+      const item = selectItem(items, new Set(), weights, 1, lastPracticedAt)
+      if (item) seen.add(item.id)
+    }
+    expect(seen.has('a')).toBe(true)
+    expect(seen.has('b')).toBe(true)
+    expect(seen.has('c')).toBe(true)
+  })
 })
 
 describe('computeRecencyWeights', () => {

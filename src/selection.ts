@@ -30,10 +30,12 @@ export function computeRecencyWeights(
 
 export function selectItem(
   items: Item[],
-  todayPracticedItemIds: Set<string>,
-  weights: Activity['weights']
+  excluded: Set<string>,
+  weights: Activity['weights'],
+  recencyBias: number = 1,
+  lastPracticedAt: Record<string, string> = {},
 ): Item | null {
-  const available = items.filter(i => !todayPracticedItemIds.has(i.id))
+  const available = items.filter(i => !excluded.has(i.id))
   if (available.length === 0) return null
 
   const byColor: Record<Color, Item[]> = {
@@ -45,7 +47,6 @@ export function selectItem(
   const colors: Color[] = ['red', 'yellow', 'green']
   const nonEmpty = colors.filter(c => byColor[c].length > 0)
 
-  // Redistribute weight from empty categories proportionally to non-empty ones
   const emptyWeight = colors
     .filter(c => byColor[c].length === 0)
     .reduce((sum, c) => sum + weights[c], 0)
@@ -56,7 +57,6 @@ export function selectItem(
     effective[c] = weights[c] + emptyWeight * (weights[c] / totalNonEmptyWeight)
   }
 
-  // Pick a color using weighted random
   const rand = Math.random()
   let cumulative = 0
   let chosenColor: Color = nonEmpty[0]
@@ -68,7 +68,13 @@ export function selectItem(
     }
   }
 
-  // Pick uniformly within that color
   const pool = byColor[chosenColor]
-  return pool[Math.floor(Math.random() * pool.length)]
+  const recencyWeights = computeRecencyWeights(pool, recencyBias, lastPracticedAt)
+  const r2 = Math.random()
+  let cum = 0
+  for (let i = 0; i < pool.length; i++) {
+    cum += recencyWeights[i]
+    if (r2 < cum) return pool[i]
+  }
+  return pool[pool.length - 1]
 }
