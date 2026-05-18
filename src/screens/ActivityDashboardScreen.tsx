@@ -163,7 +163,7 @@ export default function ActivityDashboardScreen() {
         {(['red', 'yellow', 'green'] as const).map(color => (
           <Link
             key={color}
-            to={`/activity/${activityId}/manage?color=${color}`}
+            to={`/activity/${activityId}/history?tab=items&color=${color}`}
             className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
           >
             <ColorDot color={color} />
