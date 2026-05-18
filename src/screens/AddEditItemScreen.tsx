@@ -18,7 +18,12 @@ export default function AddEditItemScreen() {
   const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
   const [allActivityTags, setAllActivityTags] = useState<string[]>([])
+  const [tagInputKey, setTagInputKey] = useState(0)
   const tagInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (tagInputKey > 0) tagInputRef.current?.focus()
+  }, [tagInputKey])
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
@@ -90,9 +95,8 @@ export default function AddEditItemScreen() {
       setTags([...tags, trimmed])
     }
     setTagInput('')
-    // Blur then re-focus to reset iOS auto-capitalize for the next tag
-    tagInputRef.current?.blur()
-    tagInputRef.current?.focus()
+    // Increment key to remount the input — gives iOS a fresh element so auto-capitalize resets
+    setTagInputKey(k => k + 1)
   }
 
   function removeTag(tag: string) {
@@ -126,6 +130,7 @@ export default function AddEditItemScreen() {
 
         <div className="flex flex-col gap-2">
           <input
+            key={tagInputKey}
             ref={tagInputRef}
             type="text"
             placeholder="Add tag, press Enter"
