@@ -11,6 +11,15 @@
   /* Remove grey tap highlight on interactive elements */
   * {
     -webkit-tap-highlight-color: transparent;
+    /* Prevent long-press text selection on non-input elements */
+    user-select: none;
+    /* Suppress Safari's link long-press callout ("Open in New Tab" etc.) */
+    -webkit-touch-callout: none;
+  }
+
+  /* Re-enable text selection inside inputs */
+  input, textarea {
+    user-select: text;
   }
 
   /* Respect safe areas (notch, home indicator) */
@@ -19,5 +28,7 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    /* Prevent rubber-band overscroll revealing white background */
+    overscroll-behavior: none;
   }
 }
