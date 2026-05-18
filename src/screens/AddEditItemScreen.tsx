@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
-import { getActivities, getItems, saveItem } from '../storage'
+import { getActivities, getItems, saveItem, deleteItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Color, Item } from '../types'
 
@@ -103,6 +103,13 @@ export default function AddEditItemScreen() {
     setTags(tags.filter(t => t !== tag))
   }
 
+  function handleDelete() {
+    if (!existingItem) return
+    if (!window.confirm(`Delete "${existingItem.name}"? This cannot be undone.`)) return
+    deleteItem(existingItem.id)
+    navigate(`/activity/${activityId}/manage`)
+  }
+
   if (!activity) return null
 
   const label = activity.itemLabel
@@ -183,6 +190,16 @@ export default function AddEditItemScreen() {
         >
           {isEditing ? 'Save changes' : `Add ${label}`}
         </button>
+
+        {isEditing && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="text-red-400 text-sm font-medium py-2 w-full text-center"
+          >
+            Delete {label}
+          </button>
+        )}
       </form>
     </div>
   )

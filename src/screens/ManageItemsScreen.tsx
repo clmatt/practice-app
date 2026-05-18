@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import ColorDot from '../components/ColorDot'
-import { getActivities, getItems, deleteItem, getLastPracticedByItem } from '../storage'
+import { getActivities, getItems, getLastPracticedByItem } from '../storage'
 import type { Activity, Item, Color } from '../types'
 
 type SortKey = 'date-oldest' | 'date-newest' | 'name-asc' | 'name-desc' | 'practiced-recent' | 'practiced-oldest' | 'color'
@@ -32,12 +32,6 @@ export default function ManageItemsScreen() {
     setActivity(found)
     setItems(getItems(activityId!))
   }, [activityId, navigate])
-
-  function handleDelete(itemId: string, itemName: string) {
-    if (!window.confirm(`Delete "${itemName}"? This cannot be undone.`)) return
-    deleteItem(itemId)
-    setItems(getItems(activityId!))
-  }
 
   function toggleTagFilter(tag: string) {
     setActiveTagFilters(prev => {
@@ -104,9 +98,15 @@ export default function ManageItemsScreen() {
         ← Back
       </Link>
 
-      <h1 className="text-xl font-bold mb-4">
-        Manage {label}s
-      </h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold">Manage {label}s</h1>
+        <button
+          onClick={() => navigate(`/activity/${activityId}/manage/add`)}
+          className="bg-violet-600 hover:bg-violet-500 rounded-xl px-4 py-2 text-sm font-semibold"
+        >
+          + Add {label}
+        </button>
+      </div>
 
       {/* Search */}
       <input
@@ -186,43 +186,31 @@ export default function ManageItemsScreen() {
       ) : (
         <ul className="flex flex-col gap-2 mb-6">
           {sortedItems.map(item => (
-            <li key={item.id} className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <ColorDot color={item.color} size="md" />
-                <span className="flex-1 text-sm">{item.name}</span>
-                <Link
-                  to={`/activity/${activityId}/manage/${item.id}/edit`}
-                  className="text-violet-400 text-sm hover:text-violet-300"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => handleDelete(item.id, item.name)}
-                  className="text-red-400 text-sm hover:text-red-300"
-                >
-                  Delete
-                </button>
-              </div>
-              {(item.tags ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {(item.tags ?? []).map(tag => (
-                    <span key={tag} className="bg-slate-700 rounded-full px-2 py-0.5 text-xs text-slate-300">
-                      {tag}
-                    </span>
-                  ))}
+            <li key={item.id}>
+              <Link
+                to={`/activity/${activityId}/manage/${item.id}/edit`}
+                className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2 block"
+              >
+                <div className="flex items-center gap-3">
+                  <ColorDot color={item.color} size="md" />
+                  <span className="flex-1 text-sm">{item.name}</span>
+                  <span className="text-violet-400 text-sm">›</span>
                 </div>
-              )}
+                {(item.tags ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {(item.tags ?? []).map(tag => (
+                      <span key={tag} className="bg-slate-700 rounded-full px-2 py-0.5 text-xs text-slate-300">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
       )}
 
-      <button
-        onClick={() => navigate(`/activity/${activityId}/manage/add`)}
-        className="bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold w-full"
-      >
-        Add {label}
-      </button>
     </div>
   )
 }
