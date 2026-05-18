@@ -85,8 +85,9 @@ export default function AddEditItemScreen() {
 
   function addTag() {
     const trimmed = tagInput.trim()
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed])
+    const capitalized = trimmed ? trimmed[0].toUpperCase() + trimmed.slice(1) : ''
+    if (capitalized && !tags.includes(capitalized)) {
+      setTags([...tags, capitalized])
     }
     setTagInput('')
   }
