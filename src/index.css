@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /* Prevent iOS auto-zoom on input focus (triggered when font-size < 16px) */
-  input, textarea, select {
-    font-size: 16px;
-  }
+/* Prevent iOS auto-zoom — outside @layer so it overrides Tailwind utility font sizes */
+input, textarea, select {
+  font-size: 16px !important;
+}
 
+@layer base {
   /* Remove grey tap highlight on interactive elements */
   * {
     -webkit-tap-highlight-color: transparent;
