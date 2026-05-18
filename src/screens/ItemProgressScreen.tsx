@@ -49,7 +49,7 @@ export default function ItemProgressScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const backTo = location.state?.from === 'history'
-    ? `/activity/${activityId}/history?tab=items`
+    ? `/activity/${activityId}/stats?tab=items`
     : `/activity/${activityId}/manage`
 
   const activity = getActivities().find(a => a.id === activityId)

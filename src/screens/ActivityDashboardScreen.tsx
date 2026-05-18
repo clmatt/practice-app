@@ -163,7 +163,7 @@ export default function ActivityDashboardScreen() {
         {(['red', 'yellow', 'green'] as const).map(color => (
           <Link
             key={color}
-            to={`/activity/${activityId}/history?tab=items&color=${color}`}
+            to={`/activity/${activityId}/stats?tab=items&color=${color}`}
             className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
           >
             <ColorDot color={color} />
@@ -189,12 +189,6 @@ export default function ActivityDashboardScreen() {
           className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
         >
           Stats
-        </button>
-        <button
-          onClick={() => navigate(`/activity/${activityId}/history`)}
-          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
-        >
-          History
         </button>
         <button
           onClick={() => navigate(`/activity/${activityId}/manage`)}
