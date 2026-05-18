@@ -148,7 +148,7 @@ export default function PracticeSessionScreen() {
   const sessionTotal = (activeTags.size === 0 ? items : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))).length
 
   return (
-    <div className="p-4 flex flex-col min-h-screen">
+    <div className="p-4 flex flex-col h-screen overflow-hidden">
       {/* Header with exit button and progress counter */}
       <div className="flex justify-between items-center mb-6">
         {(phase === 'draw' || phase === 'rate') ? (
@@ -167,7 +167,7 @@ export default function PracticeSessionScreen() {
       {/* Phase: setup */}
       {phase === 'setup' && (
         <div className="flex flex-col flex-1 gap-6">
-          <div className="flex-1 flex flex-col justify-center gap-4">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
             <h2 className="text-xl font-bold">What are you focusing on?</h2>
             <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
             <div className="flex flex-wrap gap-2">
@@ -278,12 +278,12 @@ export default function PracticeSessionScreen() {
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             {allTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
                 {allTags.map(tag => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       activeTags.has(tag)
                         ? 'bg-violet-600 text-white'
                         : 'bg-slate-700 text-slate-300'

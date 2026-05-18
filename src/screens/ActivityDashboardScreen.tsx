@@ -61,12 +61,12 @@ export default function ActivityDashboardScreen() {
 
   if (editingSettings) {
     return (
-      <div className="p-4">
-        <button onClick={() => setEditingSettings(false)} className="text-slate-400 text-sm mb-4 block">
+      <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
+        <button onClick={() => setEditingSettings(false)} className="text-slate-400 text-sm mb-4 block shrink-0">
           ← Cancel
         </button>
-        <h2 className="text-xl font-bold mb-4">Activity Settings</h2>
-        <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-bold mb-4 shrink-0">Activity Settings</h2>
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
           <div>
             <label className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Name</label>
             <input
@@ -143,7 +143,7 @@ export default function ActivityDashboardScreen() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
       <button onClick={() => navigate('/')} className="text-slate-400 text-sm mb-4 block">
         ← Back
       </button>
@@ -173,7 +173,7 @@ export default function ActivityDashboardScreen() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
         <button
           onClick={() => navigate(`/activity/${activityId}/practice`)}
           className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg"

@@ -102,7 +102,7 @@ export default function HistoryScreen() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
       <Link to={`/activity/${activityId}`} className="text-slate-400 text-sm mb-4 block">
         ← Back
       </Link>
@@ -110,7 +110,7 @@ export default function HistoryScreen() {
       <h1 className="text-lg font-bold mb-4">{activity.name} History</h1>
 
       {/* Tab bar */}
-      <div className="flex border-b border-slate-800 mb-4 -mx-4 px-4">
+      <div className="flex border-b border-slate-800 -mx-4 px-4">
         <button
           onClick={() => setSearchParams({})}
           className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
@@ -132,6 +132,9 @@ export default function HistoryScreen() {
           By item
         </button>
       </div>
+
+      {/* Scrollable tab content */}
+      <div className="flex-1 min-h-0 overflow-y-auto pt-4">
 
       {/* By session */}
       {tab === 'sessions' && (
@@ -269,6 +272,7 @@ export default function HistoryScreen() {
           </>
         )
       )}
+      </div> {/* end scrollable content */}
     </div>
   )
 }
