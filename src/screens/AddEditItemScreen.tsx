@@ -17,6 +17,7 @@ export default function AddEditItemScreen() {
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
+  const [allActivityTags, setAllActivityTags] = useState<string[]>([])
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
@@ -25,6 +26,10 @@ export default function AddEditItemScreen() {
       return
     }
     setActivity(found)
+
+    const allItems = getItems(activityId!)
+    const existingTags = [...new Set(allItems.flatMap(i => i.tags ?? []))].sort()
+    setAllActivityTags(existingTags)
 
     if (itemId) {
       const item = getItems(activityId!).find(i => i.id === itemId)
@@ -64,6 +69,10 @@ export default function AddEditItemScreen() {
     }
 
     navigate(`/activity/${activityId}/manage`)
+  }
+
+  function toggleActivityTag(tag: string) {
+    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
   function addTag() {
@@ -118,9 +127,27 @@ export default function AddEditItemScreen() {
             }}
             className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full"
           />
-          {tags.length > 0 && (
+          {allActivityTags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {tags.map(tag => (
+              {allActivityTags.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleActivityTag(tag)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    tags.includes(tag)
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+          {tags.some(t => !allActivityTags.includes(t)) && (
+            <div className="flex flex-wrap gap-2">
+              {tags.filter(t => !allActivityTags.includes(t)).map(tag => (
                 <span key={tag} className="flex items-center gap-1 bg-slate-700 rounded-full px-3 py-1 text-xs">
                   {tag}
                   <button type="button" onClick={() => removeTag(tag)} className="text-slate-400 hover:text-white">×</button>
