@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getActivities, getItems, saveActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
@@ -161,11 +161,15 @@ export default function ActivityDashboardScreen() {
 
       <div className="flex gap-3 mb-8">
         {(['red', 'yellow', 'green'] as const).map(color => (
-          <div key={color} className="flex-1 bg-slate-800 rounded-xl p-3 text-center">
+          <Link
+            key={color}
+            to={`/activity/${activityId}/manage?color=${color}`}
+            className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
+          >
             <ColorDot color={color} />
             <div className="text-2xl font-bold mt-1">{counts[color]}</div>
             <div className="text-xs text-slate-400 capitalize mt-0.5">{color}</div>
-          </div>
+          </Link>
         ))}
       </div>
 

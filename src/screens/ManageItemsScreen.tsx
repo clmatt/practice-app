@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import ColorDot from '../components/ColorDot'
 import { getActivities, getItems, deleteItem } from '../storage'
 import type { Activity, Item, Color } from '../types'
@@ -7,11 +7,15 @@ import type { Activity, Item, Color } from '../types'
 export default function ManageItemsScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [activity, setActivity] = useState<Activity | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set())
-  const [activeColorFilters, setActiveColorFilters] = useState<Set<Color>>(new Set())
+  const [activeColorFilters, setActiveColorFilters] = useState<Set<Color>>(() => {
+    const color = searchParams.get('color') as Color | null
+    return color ? new Set([color]) : new Set()
+  })
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
