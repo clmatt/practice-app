@@ -55,6 +55,14 @@ export default function AddEditItemScreen() {
       return
     }
 
+    const duplicate = getItems(activityId!).some(
+      i => i.name.toLowerCase() === name.trim().toLowerCase() && i.id !== existingItem?.id
+    )
+    if (duplicate) {
+      setError(`A ${label} with that name already exists.`)
+      return
+    }
+
     if (isEditing && existingItem) {
       saveItem({ ...existingItem, name: name.trim(), color, tags })
     } else {
