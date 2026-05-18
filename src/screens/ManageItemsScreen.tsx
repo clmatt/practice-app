@@ -11,6 +11,7 @@ export default function ManageItemsScreen() {
 
   const [activity, setActivity] = useState<Activity | null>(null)
   const [items, setItems] = useState<Item[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set())
   const [activeColorFilters, setActiveColorFilters] = useState<Set<Color>>(() => {
     const color = searchParams.get('color') as Color | null
@@ -55,12 +56,13 @@ export default function ManageItemsScreen() {
 
   const label = activity.itemLabel
   const allTags = [...new Set(items.flatMap(i => i.tags ?? []))].sort()
-  const filtersActive = activeTagFilters.size > 0 || activeColorFilters.size > 0
+  const filtersActive = searchQuery.trim().length > 0 || activeTagFilters.size > 0 || activeColorFilters.size > 0
 
   const filteredItems = items.filter(item => {
+    const searchMatch = searchQuery.trim() === '' || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
     const tagMatch = activeTagFilters.size === 0 || (item.tags ?? []).some(t => activeTagFilters.has(t))
     const colorMatch = activeColorFilters.size === 0 || activeColorFilters.has(item.color)
-    return tagMatch && colorMatch
+    return searchMatch && tagMatch && colorMatch
   })
 
   return (
@@ -72,6 +74,15 @@ export default function ManageItemsScreen() {
       <h1 className="text-xl font-bold mb-4">
         Manage {label}s
       </h1>
+
+      {/* Search */}
+      <input
+        type="text"
+        placeholder={`Search ${label}s`}
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+        className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-3"
+      />
 
       {/* Color filter chips — always shown */}
       <div className="flex gap-2 mb-3">
