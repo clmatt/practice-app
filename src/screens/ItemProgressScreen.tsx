@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getActivities, getItems, getLogs } from '../storage'
 import type { Color, PracticeLog } from '../types'
 
@@ -47,6 +47,10 @@ function formatDateRange(start: string, end: string): string {
 export default function ItemProgressScreen() {
   const { activityId, itemId } = useParams<{ activityId: string; itemId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const backTo = location.state?.from === 'history'
+    ? `/activity/${activityId}/history?tab=items`
+    : `/activity/${activityId}/manage`
 
   const activity = getActivities().find(a => a.id === activityId)
   const item = activity ? getItems(activityId!).find(i => i.id === itemId) : undefined
@@ -63,7 +67,7 @@ export default function ItemProgressScreen() {
 
   return (
     <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
-      <Link to={`/activity/${activityId}/manage`} className="text-slate-400 text-sm mb-4 block">
+      <Link to={backTo} className="text-slate-400 text-sm mb-4 block">
         ← Back
       </Link>
 
