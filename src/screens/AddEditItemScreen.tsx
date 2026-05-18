@@ -108,6 +108,7 @@ export default function AddEditItemScreen() {
             type="text"
             placeholder="Add tag, press Enter"
             value={tagInput}
+            autoCapitalize="words"
             onChange={e => setTagInput(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ',') {
