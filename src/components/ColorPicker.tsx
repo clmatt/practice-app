@@ -18,6 +18,7 @@ export default function ColorPicker({
       {OPTIONS.map(({ color, label, classes }) => (
         <button
           key={color}
+          type="button"
           onClick={() => onChange(color)}
           className={`flex-1 py-4 rounded-xl font-semibold text-white text-sm transition-opacity ${classes} ${
             value && value !== color ? 'opacity-40' : 'opacity-100'
