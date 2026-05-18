@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
 import { getActivities, getItems, saveItem } from '../storage'
@@ -18,6 +18,7 @@ export default function AddEditItemScreen() {
   const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
   const [allActivityTags, setAllActivityTags] = useState<string[]>([])
+  const tagInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
@@ -85,11 +86,13 @@ export default function AddEditItemScreen() {
 
   function addTag() {
     const trimmed = tagInput.trim()
-    const capitalized = trimmed ? trimmed[0].toUpperCase() + trimmed.slice(1) : ''
-    if (capitalized && !tags.includes(capitalized)) {
-      setTags([...tags, capitalized])
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
     }
     setTagInput('')
+    // Blur then re-focus to reset iOS auto-capitalize for the next tag
+    tagInputRef.current?.blur()
+    tagInputRef.current?.focus()
   }
 
   function removeTag(tag: string) {
@@ -123,6 +126,7 @@ export default function AddEditItemScreen() {
 
         <div className="flex flex-col gap-2">
           <input
+            ref={tagInputRef}
             type="text"
             placeholder="Add tag, press Enter"
             value={tagInput}
