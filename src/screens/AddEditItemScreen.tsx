@@ -166,9 +166,9 @@ export default function AddEditItemScreen() {
           {tags.some(t => !allActivityTags.includes(t)) && (
             <div className="flex flex-wrap gap-2">
               {tags.filter(t => !allActivityTags.includes(t)).map(tag => (
-                <span key={tag} className="flex items-center gap-1 bg-slate-700 rounded-full px-3 py-1 text-xs">
+                <span key={tag} className="flex items-center gap-1 bg-violet-600 text-white rounded-full px-3 py-1 text-xs font-medium">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-slate-400 hover:text-white">×</button>
+                  <button type="button" onClick={() => removeTag(tag)} className="text-violet-200 hover:text-white">×</button>
                 </span>
               ))}
             </div>
