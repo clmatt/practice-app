@@ -145,10 +145,17 @@ export default function PracticeSessionScreen() {
 
   if (!activity) return null
 
+  const sessionTotal = (activeTags.size === 0 ? items : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))).length
+
   return (
     <div className="p-4 flex flex-col min-h-screen">
-      {/* Header with exit button */}
-      <div className="flex justify-end mb-6">
+      {/* Header with exit button and progress counter */}
+      <div className="flex justify-between items-center mb-6">
+        {(phase === 'draw' || phase === 'rate') ? (
+          <span className="text-slate-400 text-sm">{sessionLog.length} / {sessionTotal} done</span>
+        ) : (
+          <span />
+        )}
         <button
           onClick={handleExit}
           className="text-slate-500 hover:text-slate-300 text-sm"
