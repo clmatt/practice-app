@@ -4,8 +4,9 @@ import {
   getItems, saveItem, deleteItem, deleteItemWithLogs,
   getLogs, appendLog, getTodayPracticedItemIds,
   getSessionHistory,
+  getSavedFilters, upsertSavedFilter, deleteSavedFilter,
 } from '../storage'
-import type { Activity, Item, PracticeLog } from '../types'
+import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
 const makeActivity = (overrides: Partial<Activity> = {}): Activity => ({
   id: 'act-1',
@@ -207,5 +208,57 @@ describe('deleteItemWithLogs', () => {
     deleteItemWithLogs('item-1')
     expect(getItems('act-1').map(i => i.id)).toEqual(['item-2'])
     expect(getLogs().map(l => l.id)).toEqual(['l2'])
+  })
+})
+
+const makeSavedFilter = (overrides: Partial<SavedFilter> = {}): SavedFilter => ({
+  id: 'sf-1',
+  activityId: 'act-1',
+  name: 'Test Filter',
+  expression: '"good" && "V2"',
+  createdAt: new Date().toISOString(),
+  ...overrides,
+})
+
+describe('savedFilters', () => {
+  it('returns empty array when nothing stored', () => {
+    expect(getSavedFilters('act-1')).toEqual([])
+  })
+
+  it('saves and retrieves a filter', () => {
+    const f = makeSavedFilter()
+    upsertSavedFilter(f)
+    expect(getSavedFilters('act-1')).toEqual([f])
+  })
+
+  it('scopes filters by activityId', () => {
+    upsertSavedFilter(makeSavedFilter({ activityId: 'act-1' }))
+    upsertSavedFilter(makeSavedFilter({ id: 'sf-2', activityId: 'act-2' }))
+    expect(getSavedFilters('act-1')).toHaveLength(1)
+    expect(getSavedFilters('act-2')).toHaveLength(1)
+  })
+
+  it('updates an existing filter on upsert', () => {
+    const f = makeSavedFilter()
+    upsertSavedFilter(f)
+    upsertSavedFilter({ ...f, name: 'Renamed' })
+    const result = getSavedFilters('act-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].name).toBe('Renamed')
+  })
+
+  it('deletes a filter by id', () => {
+    const f = makeSavedFilter()
+    upsertSavedFilter(f)
+    deleteSavedFilter(f.id)
+    expect(getSavedFilters('act-1')).toEqual([])
+  })
+
+  it('deleteActivity also removes its saved filters', () => {
+    const activity = makeActivity()
+    saveActivity(activity)
+    upsertSavedFilter(makeSavedFilter({ activityId: 'act-1' }))
+    deleteActivity('act-1')
+    expect(getSavedFilters('act-1')).toEqual([])
   })
 })

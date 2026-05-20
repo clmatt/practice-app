@@ -1,11 +1,12 @@
-import type { Activity, Item, PracticeLog, Color, SessionSummary } from './types'
+import type { Activity, Item, PracticeLog, Color, SessionSummary, SavedFilter } from './types'
 
-export type { SessionSummary } from './types'
+export type { SessionSummary, SavedFilter } from './types'
 
 const KEYS = {
   activities: 'practice:activities',
   items: 'practice:items',
   logs: 'practice:logs',
+  savedFilters: 'practice:saved-filters',
 }
 
 function load<T>(key: string): T[] {
@@ -48,6 +49,7 @@ export function deleteActivity(id: string): void {
   const deletedItemIds = new Set(allItems.filter(i => i.activityId === id).map(i => i.id))
   save(KEYS.items, allItems.filter(i => !deletedItemIds.has(i.id)))
   save(KEYS.logs, load<PracticeLog>(KEYS.logs).filter(l => !deletedItemIds.has(l.itemId)))
+  save(KEYS.savedFilters, load<SavedFilter>(KEYS.savedFilters).filter(f => f.activityId !== id))
 }
 
 // --- Items ---
@@ -196,4 +198,22 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
   }
 
   return sessions.sort((a, b) => b.date.localeCompare(a.date))
+}
+
+// --- Saved Filters ---
+
+export function getSavedFilters(activityId: string): SavedFilter[] {
+  return load<SavedFilter>(KEYS.savedFilters).filter(f => f.activityId === activityId)
+}
+
+export function upsertSavedFilter(filter: SavedFilter): void {
+  const all = load<SavedFilter>(KEYS.savedFilters)
+  const idx = all.findIndex(f => f.id === filter.id)
+  if (idx >= 0) all[idx] = filter
+  else all.push(filter)
+  save(KEYS.savedFilters, all)
+}
+
+export function deleteSavedFilter(id: string): void {
+  save(KEYS.savedFilters, load<SavedFilter>(KEYS.savedFilters).filter(f => f.id !== id))
 }
