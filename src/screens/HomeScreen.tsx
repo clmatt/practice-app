@@ -52,7 +52,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
+    <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4 pb-2">
         <h1 className="text-2xl font-bold">Practice App</h1>
       </div>

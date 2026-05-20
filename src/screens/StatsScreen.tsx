@@ -109,7 +109,7 @@ export default function StatsScreen() {
   }
 
   return (
-    <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
       <h1 className="text-lg font-bold mb-4 shrink-0">{activity.name} Stats</h1>
 
       {/* Tab bar */}

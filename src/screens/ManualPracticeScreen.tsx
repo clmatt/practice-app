@@ -80,7 +80,7 @@ export default function ManualPracticeScreen() {
 
   if (phase === 'rate' && selectedItem) {
     return (
-      <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
+      <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
         <button onClick={handleBack} className="text-slate-400 text-sm mb-4 block">
           ← Back
         </button>
@@ -134,7 +134,7 @@ export default function ManualPracticeScreen() {
   }
 
   return (
-    <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
+    <div className="p-4 bg-slate-950 text-slate-100 h-full">
       <button
         onClick={() => navigate(`/activity/${activityId}`)}
         className="text-slate-400 text-sm mb-4 block"

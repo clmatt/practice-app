@@ -253,7 +253,7 @@ export default function ImportScreen() {
   const currentItemConflict = step === 'item' ? itemConflicts[itemIdx] : null
 
   return (
-    <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
+    <div className="p-4 bg-slate-950 text-slate-100 h-full">
 
       {/* ── Step 1: File select ── */}
       {step === 'select' && (

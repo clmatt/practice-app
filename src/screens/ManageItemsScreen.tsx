@@ -33,7 +33,7 @@ export default function ManageItemsScreen() {
   const filteredItems = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
+    <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold">Manage {label}s</h1>

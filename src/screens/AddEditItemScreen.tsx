@@ -116,7 +116,7 @@ export default function AddEditItemScreen() {
   const label = activity.itemLabel
 
   return (
-    <div className="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
+    <div className="bg-slate-950 text-slate-100 flex flex-col h-full overflow-hidden">
       <div className="shrink-0 px-4 pt-4">
         <h1 className="text-xl font-bold mb-4">
           {isEditing ? `Edit ${label}` : `Add ${label}`}

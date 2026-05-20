@@ -23,7 +23,7 @@ export default function PracticeChooserScreen() {
   const hasItems = items.length > 0
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
+    <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="flex-1 min-h-0 flex flex-col justify-center gap-4 p-6">
         <h1 className="text-2xl font-bold mb-2">Practice</h1>
 

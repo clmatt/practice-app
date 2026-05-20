@@ -13,7 +13,7 @@ import PracticeChooserScreen from './screens/PracticeChooserScreen'
 export default function App() {
   return (
     <HashRouter>
-      <div className="min-h-screen bg-slate-950 text-slate-100 max-w-md mx-auto">
+      <div className="h-screen overflow-hidden bg-slate-950 text-slate-100 max-w-md mx-auto" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />

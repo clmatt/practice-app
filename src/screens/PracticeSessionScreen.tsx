@@ -157,7 +157,7 @@ export default function PracticeSessionScreen() {
   const sessionTotal = (activeTags.size === 0 ? items : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))).length
 
   return (
-    <div className="p-4 flex flex-col h-screen overflow-hidden">
+    <div className="p-4 flex flex-col h-full overflow-hidden">
       {/* Header with exit button and progress counter */}
       <div className="flex justify-between items-center mb-6">
         {(phase === 'draw' || phase === 'rate') ? (

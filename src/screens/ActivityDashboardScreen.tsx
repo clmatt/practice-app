@@ -62,7 +62,7 @@ export default function ActivityDashboardScreen() {
 
   if (editingSettings) {
     return (
-      <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
+      <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
         <button onClick={() => setEditingSettings(false)} className="text-slate-400 text-sm mb-4 block shrink-0">
           ← Cancel
         </button>
@@ -144,7 +144,7 @@ export default function ActivityDashboardScreen() {
   }
 
   return (
-    <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
       <div className="flex items-start justify-between mb-1 shrink-0">
         <h1 className="text-2xl font-bold">{activity.name}</h1>
         <button

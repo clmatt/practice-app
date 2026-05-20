@@ -64,7 +64,7 @@ export default function ItemProgressScreen() {
   const notes = getNotesForItem(itemId!)
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
+    <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
         <h1 className="text-xl font-bold mb-1">{item.name}</h1>
         <p className="text-slate-400 text-sm mb-4">
