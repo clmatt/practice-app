@@ -6,6 +6,7 @@ import {
   getLastPracticedByItem, getPracticeCountByItem,
 } from '../storage'
 import ColorDot from '../components/ColorDot'
+import TabBar from '../components/TabBar'
 import type { Color } from '../types'
 
 type SortKey = 'name-asc' | 'name-desc' | 'date-oldest' | 'date-newest' | 'practiced-recent' | 'practiced-oldest' | 'color'
@@ -354,6 +355,8 @@ export default function StatsScreen() {
         )}
 
       </div>
+
+      <TabBar activityId={activityId} />
     </div>
   )
 }
