@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { getActivities, getItems, getLogs } from '../storage'
+import { getActivities, getItems, getLogs, getNotesForItem } from '../storage'
 import type { Color, PracticeLog } from '../types'
 
 interface Run {
@@ -64,6 +64,7 @@ export default function ItemProgressScreen() {
   const logs = getLogs().filter(l => l.itemId === itemId)
   const runs = buildRuns(logs)
   const totalSessions = logs.length
+  const notes = getNotesForItem(itemId!)
 
   return (
     <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
@@ -116,6 +117,22 @@ export default function ItemProgressScreen() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {notes.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Notes</h2>
+          <div className="flex flex-col gap-3">
+            {notes.map(n => (
+              <div key={n.practicedAt} className="bg-slate-800 rounded-xl px-4 py-3">
+                <p className="text-xs text-slate-500 mb-1">
+                  {new Date(n.practicedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
+                <p className="text-sm text-slate-200">{n.note}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
