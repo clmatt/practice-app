@@ -116,18 +116,20 @@ export default function AddEditItemScreen() {
   const label = activity.itemLabel
 
   return (
-    <div className="p-4 bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
-      <Link to={`/activity/${activityId}/manage`} className="text-slate-400 text-sm mb-4 block shrink-0">
-        ← Back
-      </Link>
+    <div className="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
+      <div className="shrink-0 px-4 pt-4">
+        <Link to={`/activity/${activityId}/manage`} className="text-slate-400 text-sm mb-4 block">
+          ← Back
+        </Link>
 
-      <h1 className="text-xl font-bold mb-4 shrink-0">
-        {isEditing ? `Edit ${label}` : `Add ${label}`}
-      </h1>
+        <h1 className="text-xl font-bold mb-4">
+          {isEditing ? `Edit ${label}` : `Add ${label}`}
+        </h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
         {/* Scrollable fields */}
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4 px-4">
           <input
             type="text"
             placeholder={`${label} name`}
@@ -189,7 +191,7 @@ export default function AddEditItemScreen() {
         </div>
 
         {/* Pinned buttons */}
-        <div className="shrink-0 flex flex-col gap-2 pt-2">
+        <div className="shrink-0 flex flex-col gap-2 pt-2 px-4 pb-4">
           <button
             type="submit"
             className="bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold w-full"
