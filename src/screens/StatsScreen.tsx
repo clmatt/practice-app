@@ -109,7 +109,8 @@ export default function StatsScreen() {
   }
 
   return (
-    <div className="px-4 pt-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
+      <div className="px-4 pt-4 flex flex-col flex-1 min-h-0 overflow-hidden">
       <h1 className="text-lg font-bold mb-4 shrink-0">{activity.name} Stats</h1>
 
       {/* Tab bar */}
@@ -350,6 +351,7 @@ export default function StatsScreen() {
           )
         )}
 
+      </div>
       </div>
 
       <TabBar activityId={activityId} activityName={activity.name} />

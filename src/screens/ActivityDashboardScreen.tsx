@@ -144,33 +144,35 @@ export default function ActivityDashboardScreen() {
   }
 
   return (
-    <div className="px-4 pt-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
-      <div className="flex items-start justify-between mb-1 shrink-0">
-        <h1 className="text-2xl font-bold">{activity.name}</h1>
-        <button
-          onClick={() => setEditingSettings(true)}
-          className="text-xs text-slate-500 hover:text-slate-300 mt-1"
-        >
-          Settings
-        </button>
-      </div>
-      <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
-
-      <div className="flex gap-3 shrink-0 mb-4">
-        {(['red', 'yellow', 'green'] as const).map(color => (
-          <Link
-            key={color}
-            to={`/activity/${activityId}/stats?tab=items&color=${color}`}
-            className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
+    <div className="flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
+      <div className="px-4 pt-4 flex flex-col flex-1 min-h-0">
+        <div className="flex items-start justify-between mb-1 shrink-0">
+          <h1 className="text-2xl font-bold">{activity.name}</h1>
+          <button
+            onClick={() => setEditingSettings(true)}
+            className="text-xs text-slate-500 hover:text-slate-300 mt-1"
           >
-            <ColorDot color={color} />
-            <div className="text-2xl font-bold mt-1">{counts[color]}</div>
-            <div className="text-xs text-slate-400 capitalize mt-0.5">{color}</div>
-          </Link>
-        ))}
-      </div>
+            Settings
+          </button>
+        </div>
+        <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
 
-      <div className="flex-1 min-h-0" />
+        <div className="flex gap-3 shrink-0 mb-4">
+          {(['red', 'yellow', 'green'] as const).map(color => (
+            <Link
+              key={color}
+              to={`/activity/${activityId}/stats?tab=items&color=${color}`}
+              className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
+            >
+              <ColorDot color={color} />
+              <div className="text-2xl font-bold mt-1">{counts[color]}</div>
+              <div className="text-xs text-slate-400 capitalize mt-0.5">{color}</div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex-1 min-h-0" />
+      </div>
 
       <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
