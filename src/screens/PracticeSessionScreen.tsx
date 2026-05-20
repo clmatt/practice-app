@@ -333,6 +333,23 @@ export default function PracticeSessionScreen() {
       {phase === 'rate' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            {allTags.length > 0 && (
+              <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
+                {allTags.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      activeTags.has(tag)
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-700 text-slate-300'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
             <p className="text-slate-400 text-sm">How did it go?</p>
           </div>
