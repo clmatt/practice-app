@@ -1,73 +1,30 @@
-# React + TypeScript + Vite
+# Practice App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal practice tracking app designed to run as a PWA on your phone's home screen.
 
-Currently, two official plugins are available:
+## What It Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Practice App helps you track progress across anything you're working to improve — juggling tricks, climbing routes, musical pieces, language vocabulary, or any other skill with discrete items to practice.
 
-## React Compiler
+You create **activities** (e.g. "Juggling"), add **items** to each one (e.g. individual tricks), and rate each item red, yellow, or green after practicing it. The app uses those ratings to weight which items get drawn during practice sessions — items you struggle with come up more often, items you've mastered come up less.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Over time, the stats view shows how your color distribution shifts as you improve.
 
-## Expanding the ESLint configuration
+## Technical
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Stack:** React 19, TypeScript, React Router v7, Tailwind CSS v3, Recharts, Vite
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Storage:** All data lives in `localStorage` — no backend, no accounts.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+**PWA:** Built with `vite-plugin-pwa`. Add to your iPhone home screen via Safari's share menu for a native-feeling experience with safe-area insets and no browser chrome.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+**Deployed to:** GitHub Pages via `gh-pages`
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Commands
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev       # Start dev server
+npm run build     # Type-check and build for production
+npm test          # Run test suite (Vitest)
+npm run deploy    # Build and push to gh-pages branch
 ```
