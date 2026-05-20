@@ -46,7 +46,7 @@ export default function AddEditItemScreen() {
       setExistingItem(item)
       setName(item.name)
       setColor(item.color)
-      setTags(item.tags ?? [])
+      setTags([...(item.tags ?? [])].sort())
     }
   }, [activityId, itemId, navigate])
 
@@ -92,7 +92,7 @@ export default function AddEditItemScreen() {
   function addTag() {
     const trimmed = tagInput.trim()
     if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed])
+      setTags([...tags, trimmed].sort())
     }
     setTagInput('')
     // Increment key to remount the input — gives iOS a fresh element so auto-capitalize resets

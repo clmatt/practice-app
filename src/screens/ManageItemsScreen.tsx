@@ -74,7 +74,7 @@ export default function ManageItemsScreen() {
                 </div>
                 {(item.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {(item.tags ?? []).map(tag => (
+                    {[...(item.tags ?? [])].sort().map(tag => (
                       <span key={tag} className="bg-slate-700 rounded-full px-2 py-0.5 text-xs text-slate-300">
                         {tag}
                       </span>
