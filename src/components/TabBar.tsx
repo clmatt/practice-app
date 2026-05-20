@@ -78,8 +78,7 @@ export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
 
   return (
     <div
-      className="shrink-0 relative z-10 bg-slate-900 border-t border-slate-800"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
+      className="shrink-0 relative z-10 bg-slate-900 border-t border-slate-800 pb-3"
     >
       <div className="flex items-end">
         <button
