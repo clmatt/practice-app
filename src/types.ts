@@ -27,6 +27,14 @@ export interface PracticeLog {
   note?: string
 }
 
+export interface SavedFilter {
+  id: string
+  activityId: string
+  name: string
+  expression: string
+  createdAt: string
+}
+
 export interface SessionSummary {
   date: string
   itemCount: number
