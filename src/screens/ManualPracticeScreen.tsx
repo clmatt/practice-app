@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog } from '../storage'
+import { getActivities, getItems, saveItem, appendLog, getNotesForItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
@@ -18,6 +18,7 @@ export default function ManualPracticeScreen() {
   const [phase, setPhase] = useState<Phase>('list')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
+  const [noteText, setNoteText] = useState('')
 
   useEffect(() => {
     const found = getActivities().find(a => a.id === activityId)
@@ -36,6 +37,7 @@ export default function ManualPracticeScreen() {
   function handleSelectItem(item: Item) {
     setSelectedItem(item)
     setSelectedColor(null)
+    setNoteText('')
     setPhase('rate')
   }
 
@@ -44,6 +46,7 @@ export default function ManualPracticeScreen() {
 
     const colorBefore = selectedItem.color
     const colorAfter = selectedColor
+    const trimmedNote = noteText.trim()
 
     appendLog({
       id: generateId(),
@@ -51,6 +54,7 @@ export default function ManualPracticeScreen() {
       practicedAt: new Date().toISOString(),
       colorBefore,
       colorAfter,
+      ...(trimmedNote ? { note: trimmedNote } : {}),
     })
 
     if (colorAfter !== colorBefore) {
@@ -62,13 +66,17 @@ export default function ManualPracticeScreen() {
     setSearchQuery('')
     setSelectedItem(null)
     setSelectedColor(null)
+    setNoteText('')
   }
 
   function handleBack() {
     setPhase('list')
     setSelectedItem(null)
     setSelectedColor(null)
+    setNoteText('')
   }
+
+  const selectedItemNotes = selectedItem ? getNotesForItem(selectedItem.id) : []
 
   if (phase === 'rate' && selectedItem) {
     return (
@@ -84,10 +92,29 @@ export default function ManualPracticeScreen() {
             <span className="text-slate-400 text-sm capitalize">{selectedItem.color}</span>
           </div>
           <p className="text-slate-400 text-sm">How did it go?</p>
+          {selectedItemNotes.length > 0 && (
+            <div className="w-full max-h-36 overflow-y-auto flex flex-col gap-1.5">
+              {selectedItemNotes.map(n => (
+                <div key={n.practicedAt} className="bg-slate-800 rounded-lg px-3 py-2">
+                  <p className="text-xs text-slate-500 mb-0.5">
+                    {new Date(n.practicedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </p>
+                  <p className="text-sm text-slate-300">{n.note}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
           <ColorPicker value={selectedColor} onChange={setSelectedColor} />
+          <textarea
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            placeholder="Add a note (optional)"
+            rows={2}
+            className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
+          />
           <button
             onClick={handleSave}
             disabled={selectedColor === null}
