@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
+import TabBar from '../components/TabBar'
 import { getActivities, getItems, saveItem, deleteItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Color, Item } from '../types'
@@ -207,6 +208,8 @@ export default function AddEditItemScreen() {
           )}
         </div>
       </form>
+
+      <TabBar activityId={activityId!} />
     </div>
   )
 }
