@@ -10,6 +10,7 @@ input, textarea, select {
 @layer base {
   html, body {
     box-sizing: border-box;
+    overflow: hidden;
     @apply bg-slate-950;
     height: 100%;
   }
