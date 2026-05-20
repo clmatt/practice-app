@@ -30,4 +30,5 @@ export interface SessionSummary {
   date: string
   itemCount: number
   changes: { itemName: string; colorBefore: Color; colorAfter: Color }[]
+  allPracticed: { itemName: string; colorBefore: Color; colorAfter: Color }[]
 }

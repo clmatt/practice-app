@@ -174,19 +174,18 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
       lastLogByItem.set(log.itemId, log)
     }
 
-    const changes = [...lastLogByItem.keys()]
-      .filter(itemId => {
-        const first = firstLogByItem.get(itemId)!
-        const last = lastLogByItem.get(itemId)!
-        return first.colorBefore !== last.colorAfter
-      })
+    const allPracticed = [...lastLogByItem.keys()]
+      .filter(itemId => itemMap.has(itemId))
       .map(itemId => ({
         itemName: itemMap.get(itemId)!,
         colorBefore: firstLogByItem.get(itemId)!.colorBefore,
         colorAfter: lastLogByItem.get(itemId)!.colorAfter,
       }))
+      .sort((a, b) => a.itemName.localeCompare(b.itemName))
 
-    sessions.push({ date, itemCount: practicedItemIds.size, changes })
+    const changes = allPracticed.filter(p => p.colorBefore !== p.colorAfter)
+
+    sessions.push({ date, itemCount: practicedItemIds.size, changes, allPracticed })
   }
 
   return sessions.sort((a, b) => b.date.localeCompare(a.date))

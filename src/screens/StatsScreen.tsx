@@ -30,6 +30,7 @@ export default function StatsScreen() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('name-asc')
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set())
   const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set())
   const [activeColorFilters, setActiveColorFilters] = useState<Set<Color>>(() => {
     const color = searchParams.get('color') as Color | null
@@ -190,30 +191,61 @@ export default function StatsScreen() {
             <p className="text-slate-400 text-sm">No sessions recorded yet — start practicing!</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {sessions.map(session => (
-                <div key={session.date} className="bg-slate-800 rounded-xl p-4">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <span className="font-semibold text-slate-100">{formatDate(session.date)}</span>
-                    <span className="text-slate-400 text-xs">
-                      {session.itemCount} {session.itemCount === 1 ? 'item' : 'items'}
-                    </span>
-                  </div>
-                  {session.changes.length > 0 ? (
-                    <div className="flex flex-col gap-1.5 mt-2">
-                      {session.changes.map((c) => (
-                        <div key={c.itemName} className="flex items-center gap-2 text-sm text-slate-200">
-                          <span>{c.itemName}</span>
-                          <ColorDot color={c.colorBefore} size="sm" />
-                          <span className="text-slate-400">→</span>
-                          <ColorDot color={c.colorAfter} size="sm" />
-                        </div>
-                      ))}
+              {sessions.map(session => {
+                const expanded = expandedSessions.has(session.date)
+                return (
+                  <button
+                    key={session.date}
+                    onClick={() => setExpandedSessions(prev => {
+                      const next = new Set(prev)
+                      if (next.has(session.date)) next.delete(session.date)
+                      else next.add(session.date)
+                      return next
+                    })}
+                    className="bg-slate-800 rounded-xl p-4 text-left w-full"
+                  >
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="font-semibold text-slate-100">{formatDate(session.date)}</span>
+                      <span className="text-slate-400 text-xs">
+                        {session.itemCount} {session.itemCount === 1 ? 'item' : 'items'}
+                      </span>
                     </div>
-                  ) : (
-                    <p className="text-slate-500 text-sm mt-1">No ratings changed</p>
-                  )}
-                </div>
-              ))}
+                    {expanded ? (
+                      <div className="flex flex-col gap-1.5 mt-2">
+                        {session.allPracticed.map((p) => (
+                          <div key={p.itemName} className="flex items-center gap-2 text-sm text-slate-200">
+                            <span className="flex-1">{p.itemName}</span>
+                            {p.colorBefore !== p.colorAfter ? (
+                              <>
+                                <ColorDot color={p.colorBefore} size="sm" />
+                                <span className="text-slate-400">→</span>
+                                <ColorDot color={p.colorAfter} size="sm" />
+                              </>
+                            ) : (
+                              <ColorDot color={p.colorAfter} size="sm" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      session.changes.length > 0 ? (
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          {session.changes.map((c) => (
+                            <div key={c.itemName} className="flex items-center gap-2 text-sm text-slate-200">
+                              <span>{c.itemName}</span>
+                              <ColorDot color={c.colorBefore} size="sm" />
+                              <span className="text-slate-400">→</span>
+                              <ColorDot color={c.colorAfter} size="sm" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-slate-500 text-sm mt-1">No ratings changed</p>
+                      )
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )
         )}
