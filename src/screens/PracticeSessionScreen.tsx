@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds, getLastPracticedByItem } from '../storage'
+import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds, getLastPracticedByItem, getNotesForItem } from '../storage'
 import { selectItem } from '../selection'
 import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
@@ -24,6 +24,7 @@ export default function PracticeSessionScreen() {
   const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
   const [filterExhausted, setFilterExhausted] = useState(false)
   const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
+  const [noteText, setNoteText] = useState('')
 
   // Load activity and items on mount
   useEffect(() => {
@@ -90,6 +91,10 @@ export default function PracticeSessionScreen() {
     }
   }, [activity, items, phase, currentItem, drawNextItem])
 
+  function formatNoteDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  }
+
   function toggleTag(tag: string) {
     setActiveTags(prev => {
       const next = new Set(prev)
@@ -116,6 +121,7 @@ export default function PracticeSessionScreen() {
 
     const colorBefore = currentItem.color
     const colorAfter = selectedColor
+    const trimmedNote = noteText.trim()
 
     appendLog({
       id: generateId(),
@@ -123,6 +129,7 @@ export default function PracticeSessionScreen() {
       practicedAt: new Date().toISOString(),
       colorBefore,
       colorAfter,
+      ...(trimmedNote ? { note: trimmedNote } : {}),
     })
 
     if (colorAfter !== colorBefore) {
@@ -130,12 +137,13 @@ export default function PracticeSessionScreen() {
     }
 
     setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
-
+    setNoteText('')
     drawNextItem()
   }
 
   const handleBackToDraw = () => {
     setPhase('draw')
+    setNoteText('')
   }
 
   const handleExit = () => {
@@ -145,6 +153,7 @@ export default function PracticeSessionScreen() {
 
   if (!activity) return null
 
+  const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
   const sessionTotal = (activeTags.size === 0 ? items : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))).length
 
   return (
@@ -310,6 +319,17 @@ export default function PracticeSessionScreen() {
                 Tap to reveal previous rating
               </button>
             )}
+
+            {pastNotes.length > 0 && (
+              <div className="w-full max-h-36 overflow-y-auto flex flex-col gap-1.5">
+                {pastNotes.map(n => (
+                  <div key={n.practicedAt} className="bg-slate-800 rounded-lg px-3 py-2">
+                    <p className="text-xs text-slate-500 mb-0.5">{formatNoteDate(n.practicedAt)}</p>
+                    <p className="text-sm text-slate-300">{n.note}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -356,6 +376,14 @@ export default function PracticeSessionScreen() {
 
           <div className="flex flex-col gap-4">
             <ColorPicker value={selectedColor} onChange={setSelectedColor} />
+
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="Add a note (optional)"
+              rows={2}
+              className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
+            />
 
             <button
               onClick={handleSave}
