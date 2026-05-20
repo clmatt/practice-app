@@ -4,8 +4,12 @@ import { getActiveTab } from '../components/TabBar'
 describe('getActiveTab', () => {
   const id = 'abc123'
 
-  it('returns home for the activity root', () => {
-    expect(getActiveTab(`/activity/${id}`, id)).toBe('home')
+  it('returns activities for the root path', () => {
+    expect(getActiveTab('/', id)).toBe('activities')
+  })
+
+  it('returns dashboard for the activity root', () => {
+    expect(getActiveTab(`/activity/${id}`, id)).toBe('dashboard')
   })
 
   it('returns practice for practice-chooser', () => {

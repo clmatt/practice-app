@@ -2,17 +2,30 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 interface TabBarProps {
   activityId: string
+  activityName?: string
 }
 
-export type Tab = 'home' | 'practice' | 'items' | 'stats'
+export type Tab = 'activities' | 'dashboard' | 'practice' | 'items' | 'stats'
 
 export function getActiveTab(pathname: string, activityId: string): Tab {
   const base = `/activity/${activityId}`
   const path = pathname.split('?')[0]
+  if (path === '/') return 'activities'
+  if (path.startsWith(`${base}/practice-chooser`)) return 'practice'
   if (path.startsWith(`${base}/manage`)) return 'items'
   if (path.startsWith(`${base}/stats`)) return 'stats'
-  if (path.startsWith(`${base}/practice-chooser`)) return 'practice'
-  return 'home'
+  return 'dashboard'
+}
+
+function GridIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+    </svg>
+  )
 }
 
 function HomeIcon() {
@@ -26,7 +39,7 @@ function HomeIcon() {
 
 function PlayIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="5,3 19,12 5,21" />
     </svg>
   )
@@ -55,43 +68,61 @@ function BarChartIcon() {
   )
 }
 
-const TABS = [
-  { id: 'home' as Tab, label: 'Home', icon: HomeIcon },
-  { id: 'practice' as Tab, label: 'Practice', icon: PlayIcon },
-  { id: 'items' as Tab, label: 'Items', icon: ListIcon },
-  { id: 'stats' as Tab, label: 'Stats', icon: BarChartIcon },
-]
-
-export default function TabBar({ activityId }: TabBarProps) {
+export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const active = getActiveTab(pathname, activityId)
 
-  const routes: Record<Tab, string> = {
-    home: `/activity/${activityId}`,
-    practice: `/activity/${activityId}/practice-chooser`,
-    items: `/activity/${activityId}/manage`,
-    stats: `/activity/${activityId}/stats`,
-  }
+  const inactive = 'text-slate-500'
+  const activeClass = 'text-violet-400'
 
   return (
     <div
       className="shrink-0 bg-slate-900 border-t border-slate-800"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => navigate(routes[id])}
-            className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${
-              active === id ? 'text-violet-400' : 'text-slate-500'
-            }`}
-          >
-            <Icon />
-            <span className="text-[10px] font-medium">{label}</span>
-          </button>
-        ))}
+      <div className="flex items-end">
+        <button
+          onClick={() => navigate('/')}
+          className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'activities' ? activeClass : inactive}`}
+        >
+          <GridIcon />
+          <span className="text-[10px] font-medium">Activities</span>
+        </button>
+
+        <button
+          onClick={() => navigate(`/activity/${activityId}`)}
+          className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'dashboard' ? activeClass : inactive}`}
+        >
+          <HomeIcon />
+          <span className="text-[10px] font-medium max-w-[4.5rem] truncate">{activityName || 'Home'}</span>
+        </button>
+
+        <button
+          onClick={() => navigate(`/activity/${activityId}/practice-chooser`)}
+          className={`flex-1 flex flex-col items-center justify-center pb-2 gap-1 ${active === 'practice' ? activeClass : inactive}`}
+        >
+          <div className="bg-violet-600 rounded-2xl p-2 -mt-4 text-white">
+            <PlayIcon />
+          </div>
+          <span className="text-xs font-medium">Practice</span>
+        </button>
+
+        <button
+          onClick={() => navigate(`/activity/${activityId}/manage`)}
+          className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'items' ? activeClass : inactive}`}
+        >
+          <ListIcon />
+          <span className="text-[10px] font-medium">Items</span>
+        </button>
+
+        <button
+          onClick={() => navigate(`/activity/${activityId}/stats`)}
+          className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'stats' ? activeClass : inactive}`}
+        >
+          <BarChartIcon />
+          <span className="text-[10px] font-medium">Stats</span>
+        </button>
       </div>
     </div>
   )
