@@ -145,10 +145,6 @@ export default function ActivityDashboardScreen() {
 
   return (
     <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <button onClick={() => navigate('/')} className="text-slate-400 text-sm mb-4 block shrink-0">
-        ← Activities
-      </button>
-
       <div className="flex items-start justify-between mb-1 shrink-0">
         <h1 className="text-2xl font-bold">{activity.name}</h1>
         <button
@@ -176,7 +172,7 @@ export default function ActivityDashboardScreen() {
 
       <div className="flex-1 min-h-0" />
 
-      <TabBar activityId={activityId!} />
+      <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
   )
 }

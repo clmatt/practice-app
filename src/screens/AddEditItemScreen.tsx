@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
 import TabBar from '../components/TabBar'
 import { getActivities, getItems, saveItem, deleteItem } from '../storage'
@@ -118,10 +118,6 @@ export default function AddEditItemScreen() {
   return (
     <div className="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
       <div className="shrink-0 px-4 pt-4">
-        <Link to={`/activity/${activityId}/manage`} className="text-slate-400 text-sm mb-4 block">
-          ← Back
-        </Link>
-
         <h1 className="text-xl font-bold mb-4">
           {isEditing ? `Edit ${label}` : `Add ${label}`}
         </h1>
@@ -211,7 +207,7 @@ export default function AddEditItemScreen() {
         </div>
       </form>
 
-      <TabBar activityId={activityId!} />
+      <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
   )
 }

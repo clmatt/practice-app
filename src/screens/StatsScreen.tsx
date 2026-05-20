@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import {
   getActivities, getItems, getSessionHistory, getColorDistributionByDay,
@@ -110,10 +110,6 @@ export default function StatsScreen() {
 
   return (
     <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <Link to={`/activity/${activityId}`} className="text-slate-400 text-sm mb-4 block shrink-0">
-        ← Back
-      </Link>
-
       <h1 className="text-lg font-bold mb-4 shrink-0">{activity.name} Stats</h1>
 
       {/* Tab bar */}
@@ -356,7 +352,7 @@ export default function StatsScreen() {
 
       </div>
 
-      <TabBar activityId={activityId} />
+      <TabBar activityId={activityId} activityName={activity.name} />
     </div>
   )
 }

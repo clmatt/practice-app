@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getActivities, getItems, getLogs, getNotesForItem } from '../storage'
 import type { Color, PracticeLog } from '../types'
 import TabBar from '../components/TabBar'
@@ -48,10 +48,6 @@ function formatDateRange(start: string, end: string): string {
 export default function ItemProgressScreen() {
   const { activityId, itemId } = useParams<{ activityId: string; itemId: string }>()
   const navigate = useNavigate()
-  const location = useLocation()
-  const backTo = location.state?.from === 'history'
-    ? `/activity/${activityId}/stats?tab=items`
-    : `/activity/${activityId}/manage`
 
   const activity = getActivities().find(a => a.id === activityId)
   const item = activity ? getItems(activityId!).find(i => i.id === itemId) : undefined
@@ -70,9 +66,6 @@ export default function ItemProgressScreen() {
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
-        <Link to={backTo} className="text-slate-400 text-sm mb-4 block">
-          ← Back
-        </Link>
         <h1 className="text-xl font-bold mb-1">{item.name}</h1>
         <p className="text-slate-400 text-sm mb-4">
           <span style={{ color: BAR_COLOR[item.color] }}>●</span>{' '}
@@ -141,7 +134,7 @@ export default function ItemProgressScreen() {
         )}
       </div>
 
-      <TabBar activityId={activityId!} />
+      <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
   )
 }

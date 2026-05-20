@@ -52,7 +52,7 @@ export default function PracticeChooserScreen() {
         </button>
       </div>
 
-      <TabBar activityId={activityId!} />
+      <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
   )
 }

@@ -35,10 +35,6 @@ export default function ManageItemsScreen() {
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
-        <Link to={`/activity/${activityId}`} className="text-slate-400 text-sm mb-4 block">
-          ← Back
-        </Link>
-
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold">Manage {label}s</h1>
           <button
@@ -92,7 +88,7 @@ export default function ManageItemsScreen() {
         )}
       </div>
 
-      <TabBar activityId={activityId!} />
+      <TabBar activityId={activityId!} activityName={activity.name} />
     </div>
   )
 }
