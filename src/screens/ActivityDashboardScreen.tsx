@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getActivities, getItems, saveActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
+import TabBar from '../components/TabBar'
 
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -144,11 +145,11 @@ export default function ActivityDashboardScreen() {
 
   return (
     <div className="p-4 flex flex-col h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <button onClick={() => navigate('/')} className="text-slate-400 text-sm mb-4 block">
-        ← Back
+      <button onClick={() => navigate('/')} className="text-slate-400 text-sm mb-4 block shrink-0">
+        ← Activities
       </button>
 
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between mb-1 shrink-0">
         <h1 className="text-2xl font-bold">{activity.name}</h1>
         <button
           onClick={() => setEditingSettings(true)}
@@ -157,9 +158,9 @@ export default function ActivityDashboardScreen() {
           Settings
         </button>
       </div>
-      <p className="text-slate-400 text-sm mb-6 capitalize">{activity.itemLabel}s</p>
+      <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
 
-      <div className="flex gap-3 mb-8">
+      <div className="flex gap-3 shrink-0">
         {(['red', 'yellow', 'green'] as const).map(color => (
           <Link
             key={color}
@@ -173,37 +174,9 @@ export default function ActivityDashboardScreen() {
         ))}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
-        <button
-          onClick={() => navigate(`/activity/${activityId}/practice`)}
-          className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg"
-          disabled={items.length === 0}
-        >
-          Start Practice
-        </button>
-        <button
-          onClick={() => navigate(`/activity/${activityId}/manual-practice`)}
-          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
-          disabled={items.length === 0}
-        >
-          Manual Practice
-        </button>
-        {items.length === 0 && (
-          <p className="text-center text-xs text-slate-500">Add some {activity.itemLabel}s first</p>
-        )}
-        <button
-          onClick={() => navigate(`/activity/${activityId}/stats`)}
-          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
-        >
-          Stats
-        </button>
-        <button
-          onClick={() => navigate(`/activity/${activityId}/manage`)}
-          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold capitalize"
-        >
-          Manage {activity.itemLabel}s
-        </button>
-      </div>
+      <div className="flex-1 min-h-0" />
+
+      <TabBar activityId={activityId!} />
     </div>
   )
 }
