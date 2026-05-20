@@ -26,9 +26,10 @@ export default function ManageItemsScreen() {
 
   const label = activity.itemLabel
 
-  const filteredItems = searchQuery.trim() === ''
+  const filteredItems = (searchQuery.trim() === ''
     ? items
     : items.filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+  ).sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="p-4 bg-slate-950 text-slate-100 min-h-screen">
