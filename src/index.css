@@ -8,6 +8,15 @@ input, textarea, select {
 }
 
 @layer base {
+  html, body {
+    @apply bg-slate-950;
+    height: 100%;
+  }
+
+  #root {
+    height: 100%;
+  }
+
   /* Remove grey tap highlight on interactive elements */
   * {
     -webkit-tap-highlight-color: transparent;
