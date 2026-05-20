@@ -176,12 +176,31 @@ export default function PracticeSessionScreen() {
       : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t))).length
   })()
 
+  const filteredPool = (() => {
+    if (advancedFilter) {
+      const ast = parseFilter(advancedFilter)
+      return typeof ast === 'string' ? [] : items.filter(i => evaluateFilter(ast, i.tags ?? []))
+    }
+    return activeTags.size === 0
+      ? items
+      : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
+  })()
+
+  const todayDoneCount = activityId
+    ? filteredPool.filter(i => getTodayPracticedItemIds(activityId).has(i.id)).length
+    : 0
+
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
       {/* Header with exit button and progress counter */}
       <div className="flex justify-between items-center mb-6">
         {(phase === 'draw' || phase === 'rate') ? (
-          <span className="text-slate-400 text-sm">{sessionLog.length} / {sessionTotal} done</span>
+          <div className="flex flex-col">
+            <span className="text-slate-400 text-sm">{todayDoneCount} / {sessionTotal} done</span>
+            {skippedItemIds.size > 0 && (
+              <span className="text-slate-500 text-xs">{skippedItemIds.size} skipped this session</span>
+            )}
+          </div>
         ) : (
           <span />
         )}
