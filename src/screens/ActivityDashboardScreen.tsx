@@ -181,6 +181,13 @@ export default function ActivityDashboardScreen() {
         >
           Start Practice
         </button>
+        <button
+          onClick={() => navigate(`/activity/${activityId}/manual-practice`)}
+          className="w-full bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold"
+          disabled={items.length === 0}
+        >
+          Manual Practice
+        </button>
         {items.length === 0 && (
           <p className="text-center text-xs text-slate-500">Add some {activity.itemLabel}s first</p>
         )}
