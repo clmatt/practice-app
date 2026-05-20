@@ -28,10 +28,10 @@ export default function ManualPracticeScreen() {
 
   if (!activity) return null
 
-  const filteredItems = (searchQuery.trim() === ''
+  const filtered = searchQuery.trim() === ''
     ? items
     : items.filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-  ).sort((a, b) => a.name.localeCompare(b.name))
+  const filteredItems = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
 
   function handleSelectItem(item: Item) {
     setSelectedItem(item)
