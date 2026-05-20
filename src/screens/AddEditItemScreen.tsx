@@ -91,7 +91,7 @@ export default function AddEditItemScreen() {
   }
 
   function addTag() {
-    const trimmed = tagInput.trim()
+    const trimmed = tagInput.trim().replace(/"/g, '')
     if (trimmed && !tags.includes(trimmed)) {
       setTags([...tags, trimmed].sort())
     }
