@@ -160,7 +160,7 @@ export default function ActivityDashboardScreen() {
       </div>
       <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
 
-      <div className="flex gap-3 shrink-0">
+      <div className="flex gap-3 shrink-0 mb-4">
         {(['red', 'yellow', 'green'] as const).map(color => (
           <Link
             key={color}
