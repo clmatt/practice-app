@@ -6,6 +6,8 @@ import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
+import AdvancedFilterModal from '../components/AdvancedFilterModal'
+import { parseFilter, evaluateFilter } from '../filterParser'
 
 type Phase = 'setup' | 'draw' | 'rate' | 'done'
 
@@ -25,6 +27,8 @@ export default function PracticeSessionScreen() {
   const [filterExhausted, setFilterExhausted] = useState(false)
   const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
   const [noteText, setNoteText] = useState('')
+  const [advancedFilter, setAdvancedFilter] = useState<string | null>(null)
+  const [showFilterModal, setShowFilterModal] = useState(false)
 
   // Load activity and items on mount
   useEffect(() => {
@@ -59,12 +63,20 @@ export default function PracticeSessionScreen() {
     const excluded = new Set([...todayPracticed, ...skipped])
     const lastPracticedAt = getLastPracticedByItem(activityId)
     const recencyBias = activity.recencyBias ?? 0.9
-    const filtered = activeTags.size === 0
-      ? freshItems
-      : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
+
+    let filtered: Item[]
+    if (advancedFilter) {
+      const ast = parseFilter(advancedFilter)
+      filtered = typeof ast === 'string' ? [] : freshItems.filter(i => evaluateFilter(ast, i.tags ?? []))
+    } else {
+      filtered = activeTags.size === 0
+        ? freshItems
+        : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
+    }
+
     const next = selectItem(filtered, excluded, activity.weights, recencyBias, lastPracticedAt)
     if (next === null) {
-      if (activeTags.size > 0) {
+      if (activeTags.size > 0 || advancedFilter) {
         const nextUnfiltered = selectItem(freshItems, excluded, activity.weights, recencyBias, lastPracticedAt)
         if (nextUnfiltered !== null) {
           setFilterExhausted(true)
@@ -82,7 +94,7 @@ export default function PracticeSessionScreen() {
       setRevealed(false)
       setSelectedColor(null)
     }
-  }, [activity, activityId, activeTags, skippedItemIds])
+  }, [activity, activityId, activeTags, skippedItemIds, advancedFilter])
 
   // Draw first item once activity and items are loaded
   useEffect(() => {
@@ -154,7 +166,15 @@ export default function PracticeSessionScreen() {
   if (!activity) return null
 
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
-  const sessionTotal = (activeTags.size === 0 ? items : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))).length
+  const sessionTotal = (() => {
+    if (advancedFilter) {
+      const ast = parseFilter(advancedFilter)
+      return typeof ast === 'string' ? 0 : items.filter(i => evaluateFilter(ast, i.tags ?? [])).length
+    }
+    return activeTags.size === 0
+      ? items.length
+      : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t))).length
+  })()
 
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
@@ -178,29 +198,52 @@ export default function PracticeSessionScreen() {
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
             <h2 className="text-xl font-bold">What are you focusing on?</h2>
-            <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
-            <div className="flex flex-wrap gap-2">
-              {allTags.map(tag => (
+            {advancedFilter ? (
+              <>
+                <p className="text-slate-400 text-sm">Advanced filter active.</p>
                 <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    activeTags.has(tag)
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-slate-700 text-slate-300'
-                  }`}
+                  onClick={() => setShowFilterModal(true)}
+                  className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-4 py-3 w-full"
                 >
-                  {tag}
+                  <span className="text-violet-400 text-sm font-mono text-left truncate">⚡ {advancedFilter}</span>
+                  <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
                 </button>
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                        activeTags.has(tag)
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-3">
+            {!advancedFilter && (
+              <button
+                onClick={() => setShowFilterModal(true)}
+                className="bg-transparent border border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-400 rounded-xl py-3 text-sm w-full transition-colors"
+              >
+                ⚡ Advanced Filter
+              </button>
+            )}
             <button
               onClick={() => drawNextItem()}
               className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
             >
-              {activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
+              {advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
             </button>
           </div>
         </div>
@@ -213,7 +256,9 @@ export default function PracticeSessionScreen() {
             <p className="text-xl font-bold text-slate-100">
               All done with your current filter.
             </p>
-            {activeTags.size > 0 && (
+            {advancedFilter ? (
+              <p className="text-xs text-slate-400 font-mono bg-slate-800 px-3 py-2 rounded-lg">{advancedFilter}</p>
+            ) : activeTags.size > 0 && (
               <div className="flex flex-wrap gap-2 justify-center">
                 {[...activeTags].map(tag => (
                   <span
@@ -286,7 +331,15 @@ export default function PracticeSessionScreen() {
       {phase === 'draw' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {allTags.length > 0 && (
+            {advancedFilter ? (
+              <button
+                onClick={() => setShowFilterModal(true)}
+                className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-3 py-2 w-full mb-2"
+              >
+                <span className="text-violet-400 text-xs font-mono text-left truncate">⚡ {advancedFilter}</span>
+                <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
+              </button>
+            ) : allTags.length > 0 && (
               <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
                 {allTags.map(tag => (
                   <button
@@ -353,7 +406,15 @@ export default function PracticeSessionScreen() {
       {phase === 'rate' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {allTags.length > 0 && (
+            {advancedFilter ? (
+              <button
+                onClick={() => setShowFilterModal(true)}
+                className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-3 py-2 w-full mb-2"
+              >
+                <span className="text-violet-400 text-xs font-mono text-left truncate">⚡ {advancedFilter}</span>
+                <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
+              </button>
+            ) : allTags.length > 0 && (
               <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
                 {allTags.map(tag => (
                   <button
@@ -401,6 +462,19 @@ export default function PracticeSessionScreen() {
             </button>
           </div>
         </div>
+      )}
+      {showFilterModal && (
+        <AdvancedFilterModal
+          activityId={activityId!}
+          allTags={allTags}
+          items={items}
+          initialExpression={advancedFilter ?? ''}
+          onApply={expr => {
+            setAdvancedFilter(expr)
+            setShowFilterModal(false)
+          }}
+          onClose={() => setShowFilterModal(false)}
+        />
       )}
     </div>
   )
