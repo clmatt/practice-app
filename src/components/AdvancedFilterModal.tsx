@@ -29,16 +29,15 @@ export default function AdvancedFilterModal({ activityId, allTags, items, initia
   const matchCount = isValid ? items.filter(i => evaluateFilter(parseResult, i.tags ?? [])).length : 0
   const parseError = parseResult !== null && typeof parseResult === 'string' ? parseResult : null
 
-  function insertTag(tag: string) {
+  function insertSnippet(text: string) {
     const el = textareaRef.current
     const start = el?.selectionStart ?? expression.length
     const end = el?.selectionEnd ?? expression.length
-    const snippet = `"${tag}"`
-    const next = expression.slice(0, start) + snippet + expression.slice(end)
+    const next = expression.slice(0, start) + text + expression.slice(end)
     setExpression(next)
     setTimeout(() => {
       el?.focus()
-      el?.setSelectionRange(start + snippet.length, start + snippet.length)
+      el?.setSelectionRange(start + text.length, start + text.length)
     }, 0)
   }
 
@@ -150,6 +149,21 @@ export default function AdvancedFilterModal({ activityId, allTags, items, initia
           )}
         </div>
 
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-slate-500 uppercase tracking-wider">Operators</p>
+          <div className="flex gap-2">
+            {(['&&', '||', '!', '(', ')'] as const).map(op => (
+              <button
+                key={op}
+                onClick={() => insertSnippet(op === '&&' ? ' && ' : op === '||' ? ' || ' : op)}
+                className="bg-slate-900 border border-slate-600 hover:border-violet-500 text-slate-300 hover:text-violet-400 rounded-lg px-3 py-1 text-xs font-mono transition-colors"
+              >
+                {op}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {allTags.length > 0 && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Tap to insert tag</p>
@@ -157,7 +171,7 @@ export default function AdvancedFilterModal({ activityId, allTags, items, initia
               {allTags.map(tag => (
                 <button
                   key={tag}
-                  onClick={() => insertTag(tag)}
+                  onClick={() => insertSnippet(`"${tag}"`)}
                   className="bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-full px-3 py-1 text-xs font-medium"
                 >
                   {tag}
