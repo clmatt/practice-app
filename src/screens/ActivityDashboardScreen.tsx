@@ -144,7 +144,7 @@ export default function ActivityDashboardScreen() {
   }
 
   return (
-    <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
+    <div className="px-4 pt-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
       <div className="flex items-start justify-between mb-1 shrink-0">
         <h1 className="text-2xl font-bold">{activity.name}</h1>
         <button
