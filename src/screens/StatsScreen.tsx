@@ -52,7 +52,7 @@ export default function StatsScreen() {
   const lastPracticedAt = getLastPracticedByItem(activityId)
   const practiceCounts = getPracticeCountByItem(activityId)
   const allTags = [...new Set(allItems.flatMap(i => i.tags ?? []))].sort()
-  const itemsPracticed = allItems.filter(i => (practiceCounts[i.id] ?? 0) > 0).length
+  const totalReps = Object.values(practiceCounts).reduce((sum, n) => sum + n, 0)
 
   const filteredItems = allItems.filter(item => {
     const searchMatch = searchQuery.trim() === '' || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
@@ -152,8 +152,8 @@ export default function StatsScreen() {
                 <div className="text-xs text-slate-400 mt-0.5">Sessions</div>
               </div>
               <div className="flex-1 bg-slate-800 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold">{itemsPracticed}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{activity.itemLabel}s practiced</div>
+                <div className="text-2xl font-bold">{totalReps}</div>
+                <div className="text-xs text-slate-400 mt-0.5">Total reps</div>
               </div>
               <div className="flex-1 bg-slate-800 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold">{allItems.length}</div>
