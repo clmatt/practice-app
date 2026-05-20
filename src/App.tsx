@@ -8,6 +8,7 @@ import AddEditItemScreen from './screens/AddEditItemScreen'
 import ItemProgressScreen from './screens/ItemProgressScreen'
 import StatsScreen from './screens/StatsScreen'
 import ImportScreen from './screens/ImportScreen'
+import PracticeChooserScreen from './screens/PracticeChooserScreen'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />
+          <Route path="/activity/:activityId/practice-chooser" element={<PracticeChooserScreen />} />
           <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
           <Route path="/activity/:activityId/manual-practice" element={<ManualPracticeScreen />} />
           <Route path="/activity/:activityId/manage" element={<ManageItemsScreen />} />
