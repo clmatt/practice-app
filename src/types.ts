@@ -24,6 +24,7 @@ export interface PracticeLog {
   practicedAt: string
   colorBefore: Color
   colorAfter: Color
+  note?: string
 }
 
 export interface SessionSummary {

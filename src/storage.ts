@@ -148,6 +148,13 @@ export function getLastPracticedByItem(activityId: string): Record<string, strin
   return last
 }
 
+export function getNotesForItem(itemId: string): { practicedAt: string; note: string }[] {
+  return getLogs()
+    .filter(l => l.itemId === itemId && !!l.note)
+    .map(l => ({ practicedAt: l.practicedAt, note: l.note! }))
+    .sort((a, b) => b.practicedAt.localeCompare(a.practicedAt))
+}
+
 export function getSessionHistory(activityId: string): SessionSummary[] {
   const items = getItems(activityId)
   const itemMap = new Map(items.map(i => [i.id, i.name]))
