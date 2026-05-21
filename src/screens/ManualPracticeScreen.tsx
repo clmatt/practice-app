@@ -134,44 +134,46 @@ export default function ManualPracticeScreen() {
   }
 
   return (
-    <div className="p-4 bg-slate-950 text-slate-100 h-full">
+    <div className="p-4 flex flex-col h-full overflow-hidden bg-slate-950 text-slate-100">
       <button
         onClick={() => navigate(`/activity/${activityId}`)}
-        className="text-slate-400 text-sm mb-4 block"
+        className="text-slate-400 text-sm mb-4 block shrink-0"
       >
         ← Back
       </button>
 
-      <h1 className="text-xl font-bold mb-4">Manual Practice</h1>
+      <h1 className="text-xl font-bold mb-4 shrink-0">Manual Practice</h1>
 
       <input
         type="text"
         placeholder={`Search ${activity.itemLabel}s`}
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
-        className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-4"
+        className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-4 shrink-0"
       />
 
-      {items.length === 0 ? (
-        <p className="text-slate-400 text-sm">No {activity.itemLabel}s yet</p>
-      ) : filteredItems.length === 0 ? (
-        <p className="text-slate-400 text-sm">No {activity.itemLabel}s match your search.</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {filteredItems.map(item => (
-            <li key={item.id}>
-              <button
-                onClick={() => handleSelectItem(item)}
-                className="bg-slate-800 rounded-xl px-4 py-3 flex items-center gap-3 w-full text-left"
-              >
-                <ColorDot color={item.color} size="md" />
-                <span className="flex-1 text-sm">{item.name}</span>
-                <span className="text-violet-400 text-sm">›</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="flex-1 overflow-y-auto">
+        {items.length === 0 ? (
+          <p className="text-slate-400 text-sm">No {activity.itemLabel}s yet</p>
+        ) : filteredItems.length === 0 ? (
+          <p className="text-slate-400 text-sm">No {activity.itemLabel}s match your search.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {filteredItems.map(item => (
+              <li key={item.id}>
+                <button
+                  onClick={() => handleSelectItem(item)}
+                  className="bg-slate-800 rounded-xl px-4 py-3 flex items-center gap-3 w-full text-left"
+                >
+                  <ColorDot color={item.color} size="md" />
+                  <span className="flex-1 text-sm">{item.name}</span>
+                  <span className="text-violet-400 text-sm">›</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
