@@ -11,6 +11,157 @@ import { parseFilter, evaluateFilter } from '../filterParser'
 
 type Phase = 'setup' | 'draw' | 'rate' | 'done'
 
+function buildFilteredPool(items: Item[], activeTags: Set<string>, advancedFilter: string | null): Item[] {
+  if (advancedFilter) {
+    const ast = parseFilter(advancedFilter)
+    return typeof ast === 'string' ? [] : items.filter(i => evaluateFilter(ast, i.tags ?? []))
+  }
+  return activeTags.size === 0
+    ? items
+    : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
+}
+
+interface SetupPhaseProps {
+  allTags: string[]
+  activeTags: Set<string>
+  advancedFilter: string | null
+  onToggleTag: (tag: string) => void
+  onOpenFilterModal: () => void
+  onStart: () => void
+}
+
+function SetupPhase({ allTags, activeTags, advancedFilter, onToggleTag, onOpenFilterModal, onStart }: SetupPhaseProps) {
+  return (
+    <div className="flex flex-col flex-1 gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
+        <h2 className="text-xl font-bold">What are you focusing on?</h2>
+        {advancedFilter ? (
+          <>
+            <p className="text-slate-400 text-sm">Advanced filter active.</p>
+            <button
+              onClick={onOpenFilterModal}
+              className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-4 py-3 w-full"
+            >
+              <span className="text-violet-400 text-sm font-mono text-left truncate">⚡ {advancedFilter}</span>
+              <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => onToggleTag(tag)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    activeTags.has(tag)
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <div className="flex flex-col gap-3">
+        {!advancedFilter && (
+          <button
+            onClick={onOpenFilterModal}
+            className="bg-transparent border border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-400 rounded-xl py-3 text-sm w-full transition-colors"
+          >
+            ⚡ Advanced Filter
+          </button>
+        )}
+        <button
+          onClick={onStart}
+          className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
+        >
+          {advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface FilterExhaustedDoneProps {
+  advancedFilter: string | null
+  activeTags: Set<string>
+  onChangeFilter: () => void
+  onEndSession: () => void
+}
+
+function FilterExhaustedDone({ advancedFilter, activeTags, onChangeFilter, onEndSession }: FilterExhaustedDoneProps) {
+  return (
+    <div className="flex flex-col items-center justify-center flex-1 gap-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <p className="text-xl font-bold text-slate-100">All done with your current filter.</p>
+        {advancedFilter ? (
+          <p className="text-xs text-slate-400 font-mono bg-slate-800 px-3 py-2 rounded-lg">{advancedFilter}</p>
+        ) : activeTags.size > 0 && (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {[...activeTags].map(tag => (
+              <span key={tag} className="bg-slate-700 rounded-full px-3 py-1 text-xs text-slate-300">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 w-full">
+        <button onClick={onChangeFilter} className="bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold w-full">
+          Change filter
+        </button>
+        <button onClick={onEndSession} className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full">
+          End session
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface SessionCompleteDoneProps {
+  sessionLog: Array<{ name: string; colorBefore: Color; colorAfter: Color }>
+  activityName: string
+  onNavigateBack: () => void
+}
+
+function SessionCompleteDone({ sessionLog, activityName, onNavigateBack }: SessionCompleteDoneProps) {
+  return (
+    <div className="flex flex-col flex-1 gap-6">
+      <div className="flex-1 flex flex-col justify-center gap-4">
+        <h2 className="text-lg font-semibold mb-2">Session complete</h2>
+        <p className="text-slate-400 text-sm">
+          You practiced {sessionLog.length} {sessionLog.length === 1 ? 'item' : 'items'}
+        </p>
+        {sessionLog.some(e => e.colorBefore !== e.colorAfter) ? (
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Changes</h3>
+            <div className="flex flex-col">
+              {sessionLog
+                .filter(e => e.colorBefore !== e.colorAfter)
+                .map((e, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1">
+                    <span className="text-slate-200 text-sm">{e.name}</span>
+                    <ColorDot color={e.colorBefore} size="sm" />
+                    <span className="text-slate-400 text-sm">→</span>
+                    <ColorDot color={e.colorAfter} size="sm" />
+                  </div>
+                ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-400 text-sm">No ratings changed</p>
+        )}
+      </div>
+      <button onClick={onNavigateBack} className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full">
+        Back to {activityName}
+      </button>
+    </div>
+  )
+}
+
 export default function PracticeSessionScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
@@ -30,7 +181,6 @@ export default function PracticeSessionScreen() {
   const [advancedFilter, setAdvancedFilter] = useState<string | null>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
 
-  // Load activity and items on mount
   useEffect(() => {
     if (!activityId) {
       navigate('/')
@@ -64,16 +214,7 @@ export default function PracticeSessionScreen() {
     const lastPracticedAt = getLastPracticedByItem(activityId)
     const recencyBias = activity.recencyBias ?? 0.9
 
-    let filtered: Item[]
-    if (advancedFilter) {
-      const ast = parseFilter(advancedFilter)
-      filtered = typeof ast === 'string' ? [] : freshItems.filter(i => evaluateFilter(ast, i.tags ?? []))
-    } else {
-      filtered = activeTags.size === 0
-        ? freshItems
-        : freshItems.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
-    }
-
+    const filtered = buildFilteredPool(freshItems, activeTags, advancedFilter)
     const next = selectItem(filtered, excluded, activity.weights, recencyBias, lastPracticedAt)
     if (next === null) {
       if (activeTags.size > 0 || advancedFilter) {
@@ -96,7 +237,6 @@ export default function PracticeSessionScreen() {
     }
   }, [activity, activityId, activeTags, skippedItemIds, advancedFilter])
 
-  // Draw first item once activity and items are loaded
   useEffect(() => {
     if (activity && items.length > 0 && phase === 'draw' && currentItem === null) {
       drawNextItem()
@@ -166,33 +306,14 @@ export default function PracticeSessionScreen() {
   if (!activity) return null
 
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
-  const sessionTotal = (() => {
-    if (advancedFilter) {
-      const ast = parseFilter(advancedFilter)
-      return typeof ast === 'string' ? 0 : items.filter(i => evaluateFilter(ast, i.tags ?? [])).length
-    }
-    return activeTags.size === 0
-      ? items.length
-      : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t))).length
-  })()
-
-  const filteredPool = (() => {
-    if (advancedFilter) {
-      const ast = parseFilter(advancedFilter)
-      return typeof ast === 'string' ? [] : items.filter(i => evaluateFilter(ast, i.tags ?? []))
-    }
-    return activeTags.size === 0
-      ? items
-      : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
-  })()
-
+  const filteredPool = buildFilteredPool(items, activeTags, advancedFilter)
+  const sessionTotal = filteredPool.length
   const todayDoneCount = activityId
     ? filteredPool.filter(i => getTodayPracticedItemIds(activityId).has(i.id)).length
     : 0
 
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
-      {/* Header with exit button and progress counter */}
       <div className="flex justify-between items-center mb-6">
         {(phase === 'draw' || phase === 'rate') ? (
           <div className="flex flex-col">
@@ -204,149 +325,39 @@ export default function PracticeSessionScreen() {
         ) : (
           <span />
         )}
-        <button
-          onClick={handleExit}
-          className="text-slate-500 hover:text-slate-300 text-sm"
-        >
+        <button onClick={handleExit} className="text-slate-500 hover:text-slate-300 text-sm">
           Exit
         </button>
       </div>
 
-      {/* Phase: setup */}
       {phase === 'setup' && (
-        <div className="flex flex-col flex-1 gap-6">
-          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
-            <h2 className="text-xl font-bold">What are you focusing on?</h2>
-            {advancedFilter ? (
-              <>
-                <p className="text-slate-400 text-sm">Advanced filter active.</p>
-                <button
-                  onClick={() => setShowFilterModal(true)}
-                  className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-4 py-3 w-full"
-                >
-                  <span className="text-violet-400 text-sm font-mono text-left truncate">⚡ {advancedFilter}</span>
-                  <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
-                <div className="flex flex-wrap gap-2">
-                  {allTags.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                        activeTags.has(tag)
-                          ? 'bg-violet-600 text-white'
-                          : 'bg-slate-700 text-slate-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <div className="flex flex-col gap-3">
-            {!advancedFilter && (
-              <button
-                onClick={() => setShowFilterModal(true)}
-                className="bg-transparent border border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-400 rounded-xl py-3 text-sm w-full transition-colors"
-              >
-                ⚡ Advanced Filter
-              </button>
-            )}
-            <button
-              onClick={() => drawNextItem()}
-              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
-            >
-              {advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
-            </button>
-          </div>
-        </div>
+        <SetupPhase
+          allTags={allTags}
+          activeTags={activeTags}
+          advancedFilter={advancedFilter}
+          onToggleTag={toggleTag}
+          onOpenFilterModal={() => setShowFilterModal(true)}
+          onStart={() => drawNextItem()}
+        />
       )}
 
-      {/* Phase: done — filter exhausted */}
       {phase === 'done' && filterExhausted && (
-        <div className="flex flex-col items-center justify-center flex-1 gap-6">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <p className="text-xl font-bold text-slate-100">
-              All done with your current filter.
-            </p>
-            {advancedFilter ? (
-              <p className="text-xs text-slate-400 font-mono bg-slate-800 px-3 py-2 rounded-lg">{advancedFilter}</p>
-            ) : activeTags.size > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center">
-                {[...activeTags].map(tag => (
-                  <span
-                    key={tag}
-                    className="bg-slate-700 rounded-full px-3 py-1 text-xs text-slate-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-3 w-full">
-            <button
-              onClick={() => setPhase('setup')}
-              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold w-full"
-            >
-              Change filter
-            </button>
-            <button
-              onClick={() => setFilterExhausted(false)}
-              className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
-            >
-              End session
-            </button>
-          </div>
-        </div>
+        <FilterExhaustedDone
+          advancedFilter={advancedFilter}
+          activeTags={activeTags}
+          onChangeFilter={() => setPhase('setup')}
+          onEndSession={() => setFilterExhausted(false)}
+        />
       )}
 
-      {/* Phase: done — true session complete */}
       {phase === 'done' && !filterExhausted && (
-        <div className="flex flex-col flex-1 gap-6">
-          <div className="flex-1 flex flex-col justify-center gap-4">
-            <h2 className="text-lg font-semibold mb-2">Session complete</h2>
-            <p className="text-slate-400 text-sm">
-              You practiced {sessionLog.length} {sessionLog.length === 1 ? 'item' : 'items'}
-            </p>
-
-            {sessionLog.some(entry => entry.colorBefore !== entry.colorAfter) ? (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Changes</h3>
-                <div className="flex flex-col">
-                  {sessionLog
-                    .filter(entry => entry.colorBefore !== entry.colorAfter)
-                    .map((entry, i) => (
-                      <div key={i} className="flex items-center gap-2 py-1">
-                        <span className="text-slate-200 text-sm">{entry.name}</span>
-                        <ColorDot color={entry.colorBefore} size="sm" />
-                        <span className="text-slate-400 text-sm">→</span>
-                        <ColorDot color={entry.colorAfter} size="sm" />
-                      </div>
-                    ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-slate-400 text-sm">No ratings changed</p>
-            )}
-          </div>
-
-          <button
-            onClick={() => navigate(`/activity/${activityId}`)}
-            className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
-          >
-            Back to {activity.name}
-          </button>
-        </div>
+        <SessionCompleteDone
+          sessionLog={sessionLog}
+          activityName={activity.name}
+          onNavigateBack={() => navigate(`/activity/${activityId}`)}
+        />
       )}
 
-      {/* Phase: draw */}
       {phase === 'draw' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -365,9 +376,7 @@ export default function PracticeSessionScreen() {
                     key={tag}
                     onClick={() => toggleTag(tag)}
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      activeTags.has(tag)
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-700 text-slate-300'
+                      activeTags.has(tag) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
                     }`}
                   >
                     {tag}
@@ -384,10 +393,7 @@ export default function PracticeSessionScreen() {
                 <span className="text-slate-400 text-sm capitalize">{currentItem.color}</span>
               </div>
             ) : (
-              <button
-                onClick={() => setRevealed(true)}
-                className="text-slate-400 text-sm underline"
-              >
+              <button onClick={() => setRevealed(true)} className="text-slate-400 text-sm underline">
                 Tap to reveal previous rating
               </button>
             )}
@@ -405,23 +411,16 @@ export default function PracticeSessionScreen() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <button
-              onClick={handleIPracticed}
-              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
-            >
+            <button onClick={handleIPracticed} className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full">
               I practiced it
             </button>
-            <button
-              onClick={handleSkip}
-              className="text-slate-400 text-sm text-center"
-            >
+            <button onClick={handleSkip} className="text-slate-400 text-sm text-center">
               Skip without rating
             </button>
           </div>
         </div>
       )}
 
-      {/* Phase: rate */}
       {phase === 'rate' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -440,9 +439,7 @@ export default function PracticeSessionScreen() {
                     key={tag}
                     onClick={() => toggleTag(tag)}
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      activeTags.has(tag)
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-700 text-slate-300'
+                      activeTags.has(tag) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
                     }`}
                   >
                     {tag}
@@ -456,7 +453,6 @@ export default function PracticeSessionScreen() {
 
           <div className="flex flex-col gap-4">
             <ColorPicker value={selectedColor} onChange={setSelectedColor} />
-
             <textarea
               value={noteText}
               onChange={e => setNoteText(e.target.value)}
@@ -464,7 +460,6 @@ export default function PracticeSessionScreen() {
               rows={2}
               className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
             />
-
             <button
               onClick={handleSave}
               disabled={selectedColor === null}
@@ -472,16 +467,13 @@ export default function PracticeSessionScreen() {
             >
               Save
             </button>
-
-            <button
-              onClick={handleBackToDraw}
-              className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
-            >
+            <button onClick={handleBackToDraw} className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full">
               Back
             </button>
           </div>
         </div>
       )}
+
       {showFilterModal && (
         <AdvancedFilterModal
           activityId={activityId!}
