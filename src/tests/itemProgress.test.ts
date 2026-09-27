@@ -64,4 +64,10 @@ describe('buildRuns', () => {
     expect(runs[0]).toEqual({ color: 'red', count: 2, startDate: '2026-05-01', endDate: '2026-05-02' })
     expect(runs[1]).toEqual({ color: 'yellow', count: 1, startDate: '2026-05-03', endDate: '2026-05-03' })
   })
+
+  it('dates runs by local day', () => {
+    // 8pm PDT May 1
+    const runs = buildRuns([makeLog('green', '2026-05-02T03:00:00.000Z')])
+    expect(runs[0].startDate).toBe('2026-05-01')
+  })
 })

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem } from '../storage'
+import { localDateKey, daysBetweenKeys } from '../dates'
 import { generateId, exportData } from '../utils'
 import type { Activity } from '../types'
 
@@ -8,13 +9,8 @@ function lastPracticedLabel(activityId: string): string {
   const last = getLastPracticedByItem(activityId)
   const dates = Object.values(last)
   if (dates.length === 0) return 'Never practiced'
-  const mostRecent = new Date(dates.reduce((a, b) => (a > b ? a : b)))
-  const today = new Date()
-  const diffDays = Math.floor(
-    (Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) -
-      Date.UTC(mostRecent.getFullYear(), mostRecent.getMonth(), mostRecent.getDate())) /
-      86400000
-  )
+  const mostRecent = dates.reduce((a, b) => (a > b ? a : b))
+  const diffDays = daysBetweenKeys(localDateKey(mostRecent), localDateKey(new Date()))
   if (diffDays === 0) return 'Practiced today'
   if (diffDays === 1) return 'Practiced yesterday'
   return `Practiced ${diffDays} days ago`

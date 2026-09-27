@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   getActivities, saveActivity, deleteActivity,
   getItems, saveItem, deleteItem, deleteItemWithLogs,
   getLogs, appendLog, getTodayPracticedItemIds,
-  getSessionHistory,
+  getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
 } from '../storage'
 import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
@@ -195,6 +195,38 @@ describe('getSessionHistory', () => {
     appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
     const sessions = getSessionHistory('act-1')
     expect(sessions).toHaveLength(0)
+  })
+})
+
+describe('local calendar dates', () => {
+  afterEach(() => { vi.useRealTimers() })
+
+  it('getSessionHistory groups evening practice with the same local day', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', name: 'Mills Mess' }))
+    // 1pm and 6:30pm PDT on May 15, then 9am PDT on May 16
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-15T20:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-16T01:30:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l3', itemId: 'i1', practicedAt: '2026-05-16T16:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    const sessions = getSessionHistory('act-1')
+    expect(sessions.map(s => s.date)).toEqual(['2026-05-16', '2026-05-15'])
+  })
+
+  it('getTodayPracticedItemIds uses the local day', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-05-16T02:00:00.000Z')) // 7pm PDT May 15
+    saveItem(makeItem({ id: 'item-1', activityId: 'act-1' }))
+    saveItem(makeItem({ id: 'item-2', activityId: 'act-1' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1', practicedAt: '2026-05-15T22:00:00.000Z' })) // 3pm May 15
+    appendLog(makeLog({ id: 'l2', itemId: 'item-2', practicedAt: '2026-05-15T06:00:00.000Z' })) // 11pm May 14
+    const ids = getTodayPracticedItemIds('act-1')
+    expect(ids.has('item-1')).toBe(true)
+    expect(ids.has('item-2')).toBe(false)
+  })
+
+  it('getColorDistributionByDay uses local dates', () => {
+    saveItem(makeItem({ id: 'i1', activityId: 'act-1', color: 'yellow', createdAt: '2026-05-01T00:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-16T01:30:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    expect(getColorDistributionByDay('act-1').map(d => d.date)).toEqual(['2026-05-15'])
   })
 })
 

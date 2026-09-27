@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getActivities, getItems, getLogs, getNotesForItem } from '../storage'
+import { localDateKey, formatDateKey } from '../dates'
 import type { Color, PracticeLog } from '../types'
 import TabBar from '../components/TabBar'
 
@@ -15,7 +16,7 @@ export function buildRuns(logs: PracticeLog[]): Run[] {
   const sorted = [...logs].sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
   const runs: Run[] = []
   for (const log of sorted) {
-    const date = log.practicedAt.slice(0, 10)
+    const date = localDateKey(log.practicedAt)
     const last = runs[runs.length - 1]
     if (last && last.color === log.colorAfter) {
       last.count++
@@ -40,8 +41,7 @@ const TEXT_CLASS: Record<Color, string> = {
 }
 
 function formatDateRange(start: string, end: string): string {
-  const fmt = (d: string) =>
-    new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const fmt = (d: string) => formatDateKey(d, { month: 'short', day: 'numeric' })
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 

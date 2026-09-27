@@ -28,5 +28,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
     globals: true,
+    // Tests assume the user's timezone so local-date behaviour is exercised
+    // (UTC-7/-8: evening practice is already "tomorrow" in UTC).
+    env: { TZ: 'America/Los_Angeles' },
   },
 })

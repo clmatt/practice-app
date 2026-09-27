@@ -1,6 +1,7 @@
 import type { Activity, Item, PracticeLog, Color, SessionSummary, SavedFilter } from './types'
 import { openDb, readAll, applyOps, deleteDb, type Meta, type RecordStore, type WriteOp } from './db'
 import { CURRENT_SCHEMA_VERSION, migrateSnapshot, type DataSnapshot } from './migrations'
+import { localDateKey } from './dates'
 
 export type { SessionSummary, SavedFilter } from './types'
 
@@ -323,11 +324,7 @@ export function appendLog(log: PracticeLog): void {
 }
 
 function isToday(iso: string): boolean {
-  const d = new Date(iso)
-  const n = new Date()
-  return d.getFullYear() === n.getFullYear() &&
-    d.getMonth() === n.getMonth() &&
-    d.getDate() === n.getDate()
+  return localDateKey(iso) === localDateKey(new Date())
 }
 
 export function getTodayPracticedItemIds(activityId: string): Set<string> {
@@ -346,15 +343,15 @@ export function getColorDistributionByDay(
 ): Array<{ date: string; red: number; yellow: number; green: number }> {
   const items = getItems(activityId)
   const logs = state.logs.filter(l => items.some(i => i.id === l.itemId))
-  const dates = [...new Set(logs.map(l => l.practicedAt.slice(0, 10)))].sort()
+  const dates = [...new Set(logs.map(l => localDateKey(l.practicedAt)))].sort()
   if (dates.length === 0) return []
 
   return dates.map(date => {
     const counts = { red: 0, yellow: 0, green: 0 }
     for (const item of items) {
-      if (item.createdAt.slice(0, 10) > date) continue
+      if (localDateKey(item.createdAt) > date) continue
       const itemLogs = logs
-        .filter(l => l.itemId === item.id && l.practicedAt.slice(0, 10) <= date)
+        .filter(l => l.itemId === item.id && localDateKey(l.practicedAt) <= date)
         .sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
       const color: Color = itemLogs.length > 0
         ? itemLogs[itemLogs.length - 1].colorAfter
@@ -405,7 +402,7 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
 
   const byDate = new Map<string, PracticeLog[]>()
   for (const log of logs) {
-    const date = log.practicedAt.slice(0, 10)
+    const date = localDateKey(log.practicedAt)
     if (!byDate.has(date)) byDate.set(date, [])
     byDate.get(date)!.push(log)
   }

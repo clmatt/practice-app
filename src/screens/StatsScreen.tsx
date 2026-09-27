@@ -5,6 +5,7 @@ import {
   getActivities, getItems, getSessionHistory, getColorDistributionByDay,
   getLastPracticedByItem, getPracticeCountByItem,
 } from '../storage'
+import { localDateKey, formatDateKey } from '../dates'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
 import type { Color } from '../types'
@@ -13,12 +14,12 @@ type SortKey = 'name-asc' | 'name-desc' | 'date-oldest' | 'date-newest' | 'pract
 
 const COLOR_ORDER: Record<Color, number> = { red: 0, yellow: 1, green: 2 }
 
-function formatDate(isoDate: string): string {
-  return new Date(isoDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+function formatDate(dateKey: string): string {
+  return formatDateKey(dateKey, { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 function formatShortDate(iso: string): string {
-  return new Date(iso.slice(0, 10) + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+  return formatDateKey(localDateKey(iso), { month: 'long', day: 'numeric' })
 }
 
 export default function StatsScreen() {
