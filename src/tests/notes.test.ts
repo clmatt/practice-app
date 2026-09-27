@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { getNotesForItem, appendLog } from '../storage'
 import type { PracticeLog } from '../types'
 
@@ -12,10 +12,6 @@ const makeLog = (overrides: Partial<PracticeLog> = {}): PracticeLog => ({
 })
 
 describe('getNotesForItem', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
-
   it('returns empty array when no logs exist', () => {
     expect(getNotesForItem('item-1')).toEqual([])
   })
