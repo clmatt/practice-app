@@ -1,13 +1,21 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   validateImportPayload,
   findActivityConflicts,
   findItemConflicts,
   executeImport,
+  buildBackup,
+  backupFileName,
+  exportData,
+  describeLastBackup,
   type ImportPayload,
-} from '../screens/ImportScreen'
-import { getActivities, getItems, getLogs, saveActivity, saveItem, appendLog } from '../storage'
-import type { Activity, Item, PracticeLog } from '../types'
+} from '../backup'
+import {
+  getActivities, getItems, getLogs, saveActivity, saveItem, appendLog,
+  getSavedFilters, upsertSavedFilter, getLastBackupAt,
+} from '../storage'
+import { NewerSchemaError } from '../migrations'
+import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
 const makeActivity = (overrides: Partial<Activity> = {}): Activity => ({
   id: 'act-1',
@@ -63,7 +71,7 @@ describe('validateImportPayload', () => {
 
   it('returns the payload when all arrays are present', () => {
     const payload = { exportedAt: '2026-01-01', activities: [], items: [], logs: [] }
-    expect(validateImportPayload(payload)).toEqual(payload)
+    expect(validateImportPayload(payload)).toEqual({ ...payload, savedFilters: [] })
   })
 })
 
@@ -263,5 +271,150 @@ describe('executeImport', () => {
   it('returns zero stats for an empty payload', () => {
     const stats = executeImport(makePayload(), new Map(), new Map())
     expect(stats).toEqual({ activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0 })
+  })
+})
+
+const makeFilter = (overrides: Partial<SavedFilter> = {}): SavedFilter => ({
+  id: 'sf-1',
+  activityId: 'act-1',
+  name: 'Hard ones',
+  expression: '"hard"',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
+})
+
+describe('buildBackup', () => {
+  it('includes app id, schema version, all collections and saved filters', () => {
+    saveActivity(makeActivity())
+    saveItem(makeItem())
+    appendLog(makeLog())
+    upsertSavedFilter(makeFilter())
+    const backup = buildBackup(new Date('2026-05-16T01:00:00.000Z'))
+    expect(backup.app).toBe('practice-app')
+    expect(backup.schemaVersion).toBe(1)
+    expect(backup.exportedAt).toBe('2026-05-16T01:00:00.000Z')
+    expect(backup.activities).toHaveLength(1)
+    expect(backup.items).toHaveLength(1)
+    expect(backup.logs).toHaveLength(1)
+    expect(backup.savedFilters).toEqual([makeFilter()])
+  })
+
+  it('names the file with the local date', () => {
+    // 6pm PDT on May 15
+    expect(backupFileName(new Date('2026-05-16T01:00:00.000Z'))).toBe('practice-backup-2026-05-15.json')
+  })
+})
+
+describe('exportData', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  function stubDownload() {
+    const blobs: Blob[] = []
+    vi.stubGlobal('URL', {
+      createObjectURL: (blob: Blob) => { blobs.push(blob); return 'blob:mock-url' },
+      revokeObjectURL: vi.fn(),
+    })
+    const clicks: string[] = []
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = origCreate(tag)
+      if (tag === 'a') vi.spyOn(el, 'click').mockImplementation(() => { clicks.push((el as HTMLAnchorElement).download) })
+      return el
+    })
+    return { blobs, clicks }
+  }
+
+  it('downloads the backup when sharing files is unavailable, and records the backup', async () => {
+    const { blobs, clicks } = stubDownload()
+    saveActivity(makeActivity())
+    expect(await exportData()).toBe(true)
+    expect(clicks[0]).toMatch(/^practice-backup-\d{4}-\d{2}-\d{2}\.json$/)
+    const parsed = JSON.parse(await blobs[0].text())
+    expect(parsed.activities).toHaveLength(1)
+    expect(parsed.schemaVersion).toBe(1)
+    expect(getLastBackupAt()).not.toBeNull()
+  })
+
+  it('uses the share sheet when files can be shared', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { ...navigator, canShare: () => true, share })
+    expect(await exportData()).toBe(true)
+    expect(share).toHaveBeenCalledTimes(1)
+    const file = share.mock.calls[0][0].files[0] as File
+    expect(file.name).toMatch(/^practice-backup-.*\.json$/)
+    expect(getLastBackupAt()).not.toBeNull()
+  })
+
+  it('returns false and records nothing when the share sheet is cancelled', async () => {
+    const share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'))
+    vi.stubGlobal('navigator', { ...navigator, canShare: () => true, share })
+    expect(await exportData()).toBe(false)
+    expect(getLastBackupAt()).toBeNull()
+  })
+
+  it('falls back to download when sharing fails for another reason', async () => {
+    const { clicks } = stubDownload()
+    const share = vi.fn().mockRejectedValue(new DOMException('nope', 'NotAllowedError'))
+    vi.stubGlobal('navigator', { ...navigator, canShare: () => true, share })
+    expect(await exportData()).toBe(true)
+    expect(clicks).toHaveLength(1)
+  })
+})
+
+describe('describeLastBackup', () => {
+  const now = new Date('2026-09-27T19:00:00.000Z') // noon PDT Sep 27
+
+  it('never backed up is stale', () => {
+    expect(describeLastBackup(null, now)).toEqual({ text: 'Never backed up', stale: true })
+  })
+
+  it('today / yesterday / N days ago', () => {
+    expect(describeLastBackup('2026-09-27T16:00:00.000Z', now)).toEqual({ text: 'Last backup: today', stale: false })
+    expect(describeLastBackup('2026-09-26T16:00:00.000Z', now)).toEqual({ text: 'Last backup: yesterday', stale: false })
+    expect(describeLastBackup('2026-09-17T16:00:00.000Z', now)).toEqual({ text: 'Last backup: 10 days ago', stale: false })
+  })
+
+  it('30 or more days is stale', () => {
+    expect(describeLastBackup('2026-08-28T16:00:00.000Z', now).stale).toBe(true)
+  })
+})
+
+describe('import: versions and saved filters', () => {
+  it('accepts backups from before schemaVersion and savedFilters existed', () => {
+    const old = { exportedAt: '2026-01-01T00:00:00.000Z', activities: [], items: [], logs: [] }
+    expect(validateImportPayload(old)).toEqual({ ...old, savedFilters: [] })
+  })
+
+  it('rejects backups from a newer app version', () => {
+    const newer = { app: 'practice-app', schemaVersion: 99, exportedAt: '', activities: [], items: [], logs: [], savedFilters: [] }
+    expect(() => validateImportPayload(newer)).toThrow(NewerSchemaError)
+  })
+
+  it('imports saved filters with the new activity id', () => {
+    const payload = makePayload({ activities: [makeActivity()], savedFilters: [makeFilter()] })
+    executeImport(payload, new Map(), new Map())
+    const act = getActivities()[0]
+    expect(getSavedFilters(act.id).map(f => f.name)).toEqual(['Hard ones'])
+    expect(getSavedFilters(act.id)[0].id).not.toBe('sf-1')
+  })
+
+  it('combine adds only saved filters whose name is new to the existing activity', () => {
+    saveActivity(makeActivity({ id: 'existing' }))
+    upsertSavedFilter(makeFilter({ id: 'mine', activityId: 'existing', name: 'Hard ones' }))
+    const payload = makePayload({
+      activities: [makeActivity()],
+      savedFilters: [makeFilter(), makeFilter({ id: 'sf-2', name: 'Easy ones', expression: '"easy"' })],
+    })
+    executeImport(payload, new Map([['act-1', 'combine']]), new Map())
+    expect(getSavedFilters('existing').map(f => f.name).sort()).toEqual(['Easy ones', 'Hard ones'])
+  })
+
+  it('keep-existing skips saved filters too', () => {
+    saveActivity(makeActivity({ id: 'existing' }))
+    executeImport(makePayload({ activities: [makeActivity()], savedFilters: [makeFilter()] }), new Map([['act-1', 'keep-existing']]), new Map())
+    expect(getSavedFilters('existing')).toEqual([])
   })
 })

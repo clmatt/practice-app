@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem } from '../storage'
+import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem, getLastBackupAt } from '../storage'
 import { localDateKey, daysBetweenKeys } from '../dates'
-import { generateId, exportData } from '../utils'
+import { generateId } from '../utils'
+import { exportData, describeLastBackup } from '../backup'
 import type { Activity } from '../types'
 
 function lastPracticedLabel(activityId: string): string {
@@ -22,8 +23,15 @@ export default function HomeScreen() {
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [itemLabel, setItemLabel] = useState('')
+  const [lastBackupAt, setLastBackupAt] = useState(() => getLastBackupAt())
 
   useEffect(() => { setActivities(getActivities()) }, [])
+
+  async function handleExport() {
+    if (await exportData()) setLastBackupAt(getLastBackupAt())
+  }
+
+  const backup = describeLastBackup(lastBackupAt)
 
   function handleAdd() {
     if (!name.trim()) return
@@ -117,11 +125,16 @@ export default function HomeScreen() {
         )}
 
         <button
-          onClick={exportData}
+          onClick={() => void handleExport()}
           className="w-full text-slate-500 hover:text-slate-300 text-sm py-2 text-center mt-2"
         >
           Export data
         </button>
+        {activities.length > 0 && (
+          <p className={`text-xs text-center -mt-1 mb-1 ${backup.stale ? 'text-amber-400' : 'text-slate-600'}`}>
+            {backup.text}
+          </p>
+        )}
         <button
           onClick={() => navigate('/import')}
           className="w-full text-slate-500 hover:text-slate-300 text-sm py-2 text-center"
