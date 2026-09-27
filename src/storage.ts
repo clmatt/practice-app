@@ -87,8 +87,14 @@ export async function initStorage(): Promise<void> {
     database.close() // an open connection would block deleting/upgrading the database
     throw error
   }
-  db = database
+  db = attachCloseHandler(database)
   void requestPersistentStorage()
+}
+
+/** So a DB_VERSION bump in another tab can proceed instead of being blocked by this connection. */
+function attachCloseHandler(database: IDBDatabase): IDBDatabase {
+  database.onversionchange = () => database.close()
+  return database
 }
 
 async function loadFrom(database: IDBDatabase): Promise<void> {
@@ -130,14 +136,44 @@ async function requestPersistentStorage(): Promise<void> {
 }
 
 function persist(ops: WriteOp[]): void {
-  const database = db
-  if (!database) throw new Error('initStorage() must finish before data can be saved')
+  if (!db) throw new Error('initStorage() must finish before data can be saved')
   writeQueue = writeQueue
-    .then(() => applyOps(database, ops))
+    .then(() => writeWithRetry(ops))
     .catch(error => {
       console.error('Failed to save to IndexedDB', error)
-      for (const listener of errorListeners) listener(error)
+      for (const listener of errorListeners) {
+        try {
+          listener(error)
+        } catch (listenerError) {
+          // A broken listener must not poison writeQueue for every write after it.
+          console.error('Storage error listener threw', listenerError)
+        }
+      }
     })
+}
+
+/**
+ * Applies `ops` against the current connection. iOS/WebKit can silently
+ * close the IndexedDB connection while the app is backgrounded; if that's
+ * why the write failed, reopen once and retry this batch before giving up.
+ */
+async function writeWithRetry(ops: WriteOp[]): Promise<void> {
+  // Read `db` now, not at enqueue time, so a reconnect from an earlier
+  // write in this queue is picked up.
+  const database = db
+  if (!database) throw new Error('initStorage() must finish before data can be saved')
+  try {
+    await applyOps(database, ops)
+  } catch (error) {
+    if (!isConnectionLost(error)) throw error
+    const reopened = attachCloseHandler(await openDb())
+    db = reopened
+    await applyOps(reopened, ops)
+  }
+}
+
+function isConnectionLost(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'InvalidStateError'
 }
 
 export function onStorageError(listener: (error: unknown) => void): () => void {

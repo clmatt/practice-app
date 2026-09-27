@@ -65,16 +65,37 @@ export function applyOps(db: IDBDatabase, ops: WriteOp[]): Promise<void> {
   if (ops.length === 0) return Promise.resolve()
   return new Promise((resolve, reject) => {
     const tx = db.transaction([...new Set(ops.map(op => op.store))], 'readwrite')
-    for (const op of ops) {
-      const store = tx.objectStore(op.store)
-      if (op.store === 'meta') store.put(op.value, op.key)
-      else if (op.type === 'put') store.put(op.value)
-      else if (op.type === 'delete') store.delete(op.id)
-      else store.clear()
+    // Once one of these fires the transaction is done; ignore any further
+    // event (e.g. the onabort that follows our own tx.abort() below).
+    let settled = false
+    const settle = (fn: () => void) => {
+      if (settled) return
+      settled = true
+      fn()
     }
-    tx.oncomplete = () => resolve()
-    tx.onerror = () => reject(tx.error)
-    tx.onabort = () => reject(tx.error ?? new Error('Database write was aborted'))
+    tx.oncomplete = () => settle(resolve)
+    tx.onerror = () => settle(() => reject(tx.error))
+    tx.onabort = () => settle(() => reject(tx.error ?? new Error('Database write was aborted')))
+    try {
+      for (const op of ops) {
+        const store = tx.objectStore(op.store)
+        if (op.store === 'meta') store.put(op.value, op.key)
+        else if (op.type === 'put') store.put(op.value)
+        else if (op.type === 'delete') store.delete(op.id)
+        else store.clear()
+      }
+    } catch (error) {
+      // A request can throw synchronously (e.g. DataError for a bad key)
+      // without aborting the transaction on its own — abort it ourselves so
+      // earlier ops in this batch don't silently commit. settle() runs first
+      // so we reject with the real cause rather than the abort event.
+      settle(() => reject(error))
+      try {
+        tx.abort()
+      } catch {
+        // Transaction already finished — nothing to abort.
+      }
+    }
   })
 }
 
