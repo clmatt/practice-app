@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem, getLastBackupAt } from '../storage'
 import { localDateKey, daysBetweenKeys } from '../dates'
@@ -19,13 +19,11 @@ function lastPracticedLabel(activityId: string): string {
 
 export default function HomeScreen() {
   const navigate = useNavigate()
-  const [activities, setActivities] = useState<Activity[]>([])
+  const [activities, setActivities] = useState<Activity[]>(() => getActivities())
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [itemLabel, setItemLabel] = useState('')
   const [lastBackupAt, setLastBackupAt] = useState(() => getLastBackupAt())
-
-  useEffect(() => { setActivities(getActivities()) }, [])
 
   async function handleExport() {
     if (await exportData()) setLastBackupAt(getLastBackupAt())

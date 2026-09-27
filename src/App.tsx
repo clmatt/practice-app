@@ -29,9 +29,9 @@ export default function App() {
               <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
               <Route path="/activity/:activityId/manual-practice" element={<ManualPracticeScreen />} />
               <Route path="/activity/:activityId/manage" element={<ManageItemsScreen />} />
-              <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen />} />
+              <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen key="add" />} />
               <Route path="/activity/:activityId/manage/:itemId" element={<ItemProgressScreen />} />
-              <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen />} />
+              <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen key="edit" />} />
               <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
               <Route path="/import" element={<ImportScreen />} />
             </Routes>

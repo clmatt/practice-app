@@ -12,8 +12,8 @@ export default function ManualPracticeScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [items, setItems] = useState<Item[]>([])
+  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [items, setItems] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [searchQuery, setSearchQuery] = useState('')
   const [phase, setPhase] = useState<Phase>('list')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
@@ -21,11 +21,8 @@ export default function ManualPracticeScreen() {
   const [noteText, setNoteText] = useState('')
 
   useEffect(() => {
-    const found = getActivities().find(a => a.id === activityId)
-    if (!found) { navigate('/'); return }
-    setActivity(found)
-    setItems(getItems(activityId!))
-  }, [activityId, navigate])
+    if (!activity) navigate('/')
+  }, [activity, navigate])
 
   if (!activity) return null
 

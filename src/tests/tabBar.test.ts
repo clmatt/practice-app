@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getActiveTab } from '../components/TabBar'
+import { getActiveTab } from '../tabs'
 
 describe('getActiveTab', () => {
   const id = 'abc123'

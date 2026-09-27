@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   getActivities, saveActivity, deleteActivity,
-  getItems, saveItem, deleteItem, deleteItemWithLogs,
+  getItems, saveItem, deleteItemWithLogs,
   getLogs, appendLog, getTodayPracticedItemIds,
   getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
@@ -76,12 +76,6 @@ describe('items', () => {
     const all = getItems('act-1')
     expect(all).toHaveLength(1)
     expect(all[0].color).toBe('green')
-  })
-
-  it('deletes an item by id', () => {
-    saveItem(makeItem())
-    deleteItem('item-1')
-    expect(getItems('act-1')).toEqual([])
   })
 })
 

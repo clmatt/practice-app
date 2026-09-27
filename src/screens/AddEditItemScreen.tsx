@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
 import TabBar from '../components/TabBar'
-import { getActivities, getItems, saveItem, deleteItem } from '../storage'
+import { getActivities, getItems, saveItem, deleteItemWithLogs } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Color, Item } from '../types'
 
@@ -11,14 +11,16 @@ export default function AddEditItemScreen() {
   const navigate = useNavigate()
   const isEditing = Boolean(itemId)
 
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [existingItem, setExistingItem] = useState<Item | null>(null)
-  const [name, setName] = useState('')
-  const [color, setColor] = useState<Color | null>(null)
-  const [tags, setTags] = useState<string[]>([])
+  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [existingItem] = useState<Item | null>(() =>
+    itemId ? (getItems(activityId!).find(i => i.id === itemId) ?? null) : null)
+  const [allActivityTags] = useState<string[]>(() =>
+    [...new Set(getItems(activityId!).flatMap(i => i.tags ?? []))].sort())
+  const [name, setName] = useState(() => existingItem?.name ?? '')
+  const [color, setColor] = useState<Color | null>(() => existingItem?.color ?? null)
+  const [tags, setTags] = useState<string[]>(() => [...(existingItem?.tags ?? [])].sort())
   const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
-  const [allActivityTags, setAllActivityTags] = useState<string[]>([])
   const [tagInputKey, setTagInputKey] = useState(0)
   const tagInputRef = useRef<HTMLInputElement>(null)
 
@@ -27,29 +29,9 @@ export default function AddEditItemScreen() {
   }, [tagInputKey])
 
   useEffect(() => {
-    const found = getActivities().find(a => a.id === activityId)
-    if (!found) {
-      navigate('/')
-      return
-    }
-    setActivity(found)
-
-    const allItems = getItems(activityId!)
-    const existingTags = [...new Set(allItems.flatMap(i => i.tags ?? []))].sort()
-    setAllActivityTags(existingTags)
-
-    if (itemId) {
-      const item = getItems(activityId!).find(i => i.id === itemId)
-      if (!item) {
-        navigate(`/activity/${activityId}/manage`)
-        return
-      }
-      setExistingItem(item)
-      setName(item.name)
-      setColor(item.color)
-      setTags([...(item.tags ?? [])].sort())
-    }
-  }, [activityId, itemId, navigate])
+    if (!activity) navigate('/')
+    else if (itemId && !existingItem) navigate(`/activity/${activityId}/manage`)
+  }, [activity, existingItem, itemId, activityId, navigate])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -106,8 +88,8 @@ export default function AddEditItemScreen() {
 
   function handleDelete() {
     if (!existingItem) return
-    if (!window.confirm(`Delete "${existingItem.name}"? This cannot be undone.`)) return
-    deleteItem(existingItem.id)
+    if (!window.confirm(`Delete "${existingItem.name}" and its practice history? This cannot be undone.`)) return
+    deleteItemWithLogs(existingItem.id)
     navigate(`/activity/${activityId}/manage`)
   }
 

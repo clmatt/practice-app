@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildRuns } from '../screens/ItemProgressScreen'
+import { buildRuns } from '../itemRuns'
 import type { Color, PracticeLog } from '../types'
 
 const makeLog = (colorAfter: Color, practicedAt: string, colorBefore: Color = 'red'): PracticeLog => ({

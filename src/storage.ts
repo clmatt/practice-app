@@ -288,18 +288,9 @@ export function getItems(activityId: string): Item[] {
   return state.items.filter(i => i.activityId === activityId)
 }
 
-export function getAllItems(): Item[] {
-  return [...state.items]
-}
-
 export function saveItem(item: Item): void {
   state = { ...state, items: upsert(state.items, item) }
   persist([{ store: 'items', type: 'put', value: item }])
-}
-
-export function deleteItem(id: string): void {
-  state = { ...state, items: state.items.filter(i => i.id !== id) }
-  persist(deletes('items', [id]))
 }
 
 export function deleteItemWithLogs(itemId: string): void {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds, getLastPracticedByItem, getNotesForItem } from '../storage'
 import { selectItem } from '../selection'
@@ -162,86 +162,82 @@ function SessionCompleteDone({ sessionLog, activityName, onNavigateBack }: Sessi
   )
 }
 
+type DrawResult =
+  | { kind: 'item'; item: Item }
+  | { kind: 'filter-exhausted' }
+  | { kind: 'all-done' }
+
+function drawFrom(
+  activity: Activity,
+  items: Item[],
+  activeTags: Set<string>,
+  advancedFilter: string | null,
+  skipped: Set<string>,
+): DrawResult {
+  const excluded = new Set([...getTodayPracticedItemIds(activity.id), ...skipped])
+  const lastPracticedAt = getLastPracticedByItem(activity.id)
+  const recencyBias = activity.recencyBias ?? 0.9
+  const pool = buildFilteredPool(items, activeTags, advancedFilter)
+  const next = selectItem(pool, excluded, activity.weights, recencyBias, lastPracticedAt)
+  if (next) return { kind: 'item', item: next }
+  const filtering = activeTags.size > 0 || advancedFilter !== null
+  if (filtering && selectItem(items, excluded, activity.weights, recencyBias, lastPracticedAt)) {
+    return { kind: 'filter-exhausted' }
+  }
+  return { kind: 'all-done' }
+}
+
+function tagsOf(items: Item[]): string[] {
+  return [...new Set(items.flatMap(i => i.tags ?? []))].sort()
+}
+
 export default function PracticeSessionScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [items, setItems] = useState<Item[]>([])
-  const [phase, setPhase] = useState<Phase>('setup')
-  const [currentItem, setCurrentItem] = useState<Item | null>(null)
+  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [items, setItems] = useState<Item[]>(() => (activity ? getItems(activity.id) : []))
+  const allTags = useMemo(() => tagsOf(items), [items])
+  // With no tags there is nothing to choose in setup, so draw the first item straight away.
+  const [firstDraw] = useState<DrawResult | null>(() =>
+    activity && items.length > 0 && tagsOf(items).length === 0
+      ? drawFrom(activity, items, new Set(), null, new Set())
+      : null)
+  const [phase, setPhase] = useState<Phase>(() =>
+    firstDraw === null ? 'setup' : firstDraw.kind === 'item' ? 'draw' : 'done')
+  const [currentItem, setCurrentItem] = useState<Item | null>(() =>
+    firstDraw?.kind === 'item' ? firstDraw.item : null)
+  const [filterExhausted, setFilterExhausted] = useState(false)
   const [revealed, setRevealed] = useState(false)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
-  const [allTags, setAllTags] = useState<string[]>([])
   const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
-  const [filterExhausted, setFilterExhausted] = useState(false)
   const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
   const [noteText, setNoteText] = useState('')
   const [advancedFilter, setAdvancedFilter] = useState<string | null>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
 
   useEffect(() => {
-    if (!activityId) {
-      navigate('/')
-      return
-    }
-    const activities = getActivities()
-    const found = activities.find(a => a.id === activityId)
-    if (!found) {
-      navigate('/')
-      return
-    }
-    setActivity(found)
-    const loadedItems = getItems(activityId)
-    if (loadedItems.length === 0) {
-      navigate(`/activity/${activityId}`)
-      return
-    }
-    setItems(loadedItems)
-    const tags = [...new Set(loadedItems.flatMap(i => i.tags ?? []))].sort()
-    setAllTags(tags)
-    setActiveTags(new Set())
-    setPhase(tags.length > 0 ? 'setup' : 'draw')
-  }, [activityId, navigate])
+    if (!activity) navigate('/')
+    else if (items.length === 0) navigate(`/activity/${activity.id}`)
+  }, [activity, items.length, navigate])
 
-  const drawNextItem = useCallback((skipped: Set<string> = skippedItemIds) => {
-    if (!activity || !activityId) return
-    const freshItems = getItems(activityId)
+  function drawNextItem(skipped: Set<string> = skippedItemIds) {
+    if (!activity) return
+    const freshItems = getItems(activity.id)
     setItems(freshItems)
-    const todayPracticed = getTodayPracticedItemIds(activityId)
-    const excluded = new Set([...todayPracticed, ...skipped])
-    const lastPracticedAt = getLastPracticedByItem(activityId)
-    const recencyBias = activity.recencyBias ?? 0.9
-
-    const filtered = buildFilteredPool(freshItems, activeTags, advancedFilter)
-    const next = selectItem(filtered, excluded, activity.weights, recencyBias, lastPracticedAt)
-    if (next === null) {
-      if (activeTags.size > 0 || advancedFilter) {
-        const nextUnfiltered = selectItem(freshItems, excluded, activity.weights, recencyBias, lastPracticedAt)
-        if (nextUnfiltered !== null) {
-          setFilterExhausted(true)
-          setPhase('done')
-          setCurrentItem(null)
-          return
-        }
-      }
-      setFilterExhausted(false)
-      setPhase('done')
-      setCurrentItem(null)
-    } else {
-      setCurrentItem(next)
+    const result = drawFrom(activity, freshItems, activeTags, advancedFilter, skipped)
+    if (result.kind === 'item') {
+      setCurrentItem(result.item)
       setPhase('draw')
       setRevealed(false)
       setSelectedColor(null)
+    } else {
+      setFilterExhausted(result.kind === 'filter-exhausted')
+      setPhase('done')
+      setCurrentItem(null)
     }
-  }, [activity, activityId, activeTags, skippedItemIds, advancedFilter])
-
-  useEffect(() => {
-    if (activity && items.length > 0 && phase === 'draw' && currentItem === null) {
-      drawNextItem()
-    }
-  }, [activity, items, phase, currentItem, drawNextItem])
+  }
 
   function formatNoteDate(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })

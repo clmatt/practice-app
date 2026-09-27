@@ -8,29 +8,21 @@ import TabBar from '../components/TabBar'
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [items, setItems] = useState<Item[]>([])
+  const [activity, setActivity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [editingSettings, setEditingSettings] = useState(false)
-  const [draftName, setDraftName] = useState('')
-  const [draftLabel, setDraftLabel] = useState('')
-  const [draftWeights, setDraftWeights] = useState({ red: 60, yellow: 30, green: 10 })
-  const [draftRecencyBias, setDraftRecencyBias] = useState(0.9)
+  const [draftName, setDraftName] = useState(() => activity?.name ?? '')
+  const [draftLabel, setDraftLabel] = useState(() => activity?.itemLabel ?? '')
+  const [draftWeights, setDraftWeights] = useState(() => ({
+    red: Math.round((activity?.weights.red ?? 0.6) * 100),
+    yellow: Math.round((activity?.weights.yellow ?? 0.3) * 100),
+    green: Math.round((activity?.weights.green ?? 0.1) * 100),
+  }))
+  const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? 0.9)
 
   useEffect(() => {
-    if (!activityId) { navigate('/'); return }
-    const a = getActivities().find(a => a.id === activityId)
-    if (!a) { navigate('/'); return }
-    setActivity(a)
-    setItems(getItems(activityId))
-    setDraftName(a.name)
-    setDraftLabel(a.itemLabel)
-    setDraftWeights({
-      red: Math.round(a.weights.red * 100),
-      yellow: Math.round(a.weights.yellow * 100),
-      green: Math.round(a.weights.green * 100),
-    })
-    setDraftRecencyBias(a.recencyBias ?? 0.9)
-  }, [activityId, navigate])
+    if (!activity) navigate('/')
+  }, [activity, navigate])
 
   function handleSaveSettings() {
     if (!activity) return
@@ -100,7 +92,7 @@ export default function ActivityDashboardScreen() {
                     max={100}
                     className="bg-slate-800 rounded-lg px-3 py-2 text-sm w-20 outline-none"
                     value={draftWeights[color]}
-                    onChange={e => setDraftWeights(w => ({ ...w, [color]: Number(e.target.value) }))}
+                    onChange={e => setDraftWeights(w => ({ ...w, [color]: Math.min(100, Math.max(0, Math.round(Number(e.target.value) || 0))) }))}
                   />
                   <span className="text-slate-400 text-sm">%</span>
                 </div>

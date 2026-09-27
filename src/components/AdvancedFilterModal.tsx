@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { parseFilter, evaluateFilter } from '../filterParser'
 import { getSavedFilters, upsertSavedFilter, deleteSavedFilter } from '../storage'
 import { generateId } from '../utils'
@@ -15,13 +15,9 @@ interface Props {
 
 export default function AdvancedFilterModal({ activityId, allTags, items, initialExpression, onApply, onClose }: Props) {
   const [expression, setExpression] = useState(initialExpression)
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([])
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters(activityId))
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    setSavedFilters(getSavedFilters(activityId))
-  }, [activityId])
 
   const trimmed = expression.trim()
   const parseResult = trimmed ? parseFilter(trimmed) : null

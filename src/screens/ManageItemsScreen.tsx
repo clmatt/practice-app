@@ -9,19 +9,13 @@ export default function ManageItemsScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [items, setItems] = useState<Item[]>([])
+  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    const found = getActivities().find(a => a.id === activityId)
-    if (!found) {
-      navigate('/')
-      return
-    }
-    setActivity(found)
-    setItems(getItems(activityId!))
-  }, [activityId, navigate])
+    if (!activity) navigate('/')
+  }, [activity, navigate])
 
   if (!activity) return null
 

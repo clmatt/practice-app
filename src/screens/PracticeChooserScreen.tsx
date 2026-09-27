@@ -7,16 +7,12 @@ import TabBar from '../components/TabBar'
 export default function PracticeChooserScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
-  const [activity, setActivity] = useState<Activity | null>(null)
-  const [items, setItems] = useState<Item[]>([])
+  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
 
   useEffect(() => {
-    if (!activityId) { navigate('/'); return }
-    const a = getActivities().find(a => a.id === activityId)
-    if (!a) { navigate('/'); return }
-    setActivity(a)
-    setItems(getItems(activityId))
-  }, [activityId, navigate])
+    if (!activity) navigate('/')
+  }, [activity, navigate])
 
   if (!activity) return null
 
