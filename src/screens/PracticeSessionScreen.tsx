@@ -308,9 +308,8 @@ export default function PracticeSessionScreen() {
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
   const filteredPool = buildFilteredPool(items, activeTags, advancedFilter)
   const sessionTotal = filteredPool.length
-  const todayDoneCount = activityId
-    ? filteredPool.filter(i => getTodayPracticedItemIds(activityId).has(i.id)).length
-    : 0
+  const practicedToday = activityId ? getTodayPracticedItemIds(activityId) : new Set<string>()
+  const todayDoneCount = filteredPool.filter(i => practicedToday.has(i.id)).length
 
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">

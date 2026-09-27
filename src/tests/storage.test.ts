@@ -5,6 +5,7 @@ import {
   getLogs, appendLog, getTodayPracticedItemIds,
   getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
+  importRecords,
 } from '../storage'
 import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
@@ -292,5 +293,69 @@ describe('savedFilters', () => {
     upsertSavedFilter(makeSavedFilter({ activityId: 'act-1' }))
     deleteActivity('act-1')
     expect(getSavedFilters('act-1')).toEqual([])
+  })
+})
+
+describe('getColorDistributionByDay', () => {
+  it('returns [] with no logs', () => {
+    saveItem(makeItem({ id: 'i1' }))
+    expect(getColorDistributionByDay('act-1')).toEqual([])
+  })
+
+  it('counts each item by its latest rating as of each practice day', () => {
+    saveItem(makeItem({ id: 'i1', color: 'green', createdAt: '2026-05-01T12:00:00.000Z' }))
+    saveItem(makeItem({ id: 'i2', color: 'yellow', createdAt: '2026-05-01T12:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-10T18:00:00.000Z', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-12T18:00:00.000Z', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l3', itemId: 'i1', practicedAt: '2026-05-12T19:00:00.000Z', colorAfter: 'green' }))
+    // i2 never practiced: falls back to its current color
+    expect(getColorDistributionByDay('act-1')).toEqual([
+      { date: '2026-05-10', red: 1, yellow: 1, green: 0 },
+      { date: '2026-05-12', red: 0, yellow: 1, green: 1 },
+    ])
+  })
+
+  it('excludes items created after a given day', () => {
+    saveItem(makeItem({ id: 'i1', color: 'red', createdAt: '2026-05-01T12:00:00.000Z' }))
+    saveItem(makeItem({ id: 'i2', color: 'green', createdAt: '2026-05-11T12:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-10T18:00:00.000Z', colorAfter: 'red' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-12T18:00:00.000Z', colorAfter: 'red' }))
+    expect(getColorDistributionByDay('act-1')).toEqual([
+      { date: '2026-05-10', red: 1, yellow: 0, green: 0 },
+      { date: '2026-05-12', red: 1, yellow: 0, green: 1 },
+    ])
+  })
+
+  it('handles logs stored out of order', () => {
+    saveItem(makeItem({ id: 'i1', color: 'red', createdAt: '2026-05-01T12:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'i1', practicedAt: '2026-05-12T18:00:00.000Z', colorAfter: 'green' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1', practicedAt: '2026-05-10T18:00:00.000Z', colorAfter: 'yellow' }))
+    expect(getColorDistributionByDay('act-1')).toEqual([
+      { date: '2026-05-10', red: 0, yellow: 1, green: 0 },
+      { date: '2026-05-12', red: 0, yellow: 0, green: 1 },
+    ])
+  })
+
+  it('stays fast with two years of daily practice', () => {
+    const items = Array.from({ length: 150 }, (_, i) =>
+      makeItem({ id: `i${i}`, name: `Item ${i}`, createdAt: '2024-01-01T12:00:00.000Z' }))
+    const logs: PracticeLog[] = []
+    const start = Date.parse('2024-01-02T18:00:00.000Z')
+    for (let d = 0; d < 730; d++) {
+      for (let k = 0; k < 20; k++) {
+        logs.push(makeLog({
+          id: `l${d}-${k}`,
+          itemId: `i${(d * 20 + k) % 150}`,
+          practicedAt: new Date(start + d * 86_400_000 + k * 60_000).toISOString(),
+          colorAfter: k % 2 ? 'green' : 'yellow',
+        }))
+      }
+    }
+    importRecords({ items, logs })
+    const t0 = performance.now()
+    const result = getColorDistributionByDay('act-1')
+    const elapsed = performance.now() - t0
+    expect(result).toHaveLength(730)
+    expect(elapsed).toBeLessThan(1000) // was ~10s before
   })
 })

@@ -342,21 +342,28 @@ export function getColorDistributionByDay(
   activityId: string
 ): Array<{ date: string; red: number; yellow: number; green: number }> {
   const items = getItems(activityId)
-  const logs = state.logs.filter(l => items.some(i => i.id === l.itemId))
-  const dates = [...new Set(logs.map(l => localDateKey(l.practicedAt)))].sort()
-  if (dates.length === 0) return []
+  const itemIds = new Set(items.map(i => i.id))
+  const logs = state.logs
+    .filter(l => itemIds.has(l.itemId))
+    .map(l => ({ log: l, date: localDateKey(l.practicedAt) }))
+    .sort((a, b) => a.log.practicedAt.localeCompare(b.log.practicedAt))
+  if (logs.length === 0) return []
 
+  const dates = [...new Set(logs.map(l => l.date))]
+  const createdOn = new Map(items.map(i => [i.id, localDateKey(i.createdAt)]))
+  const colorSoFar = new Map<string, Color>()
+  let next = 0
+
+  // Walk the logs once in time order, snapshotting every item's latest color at the end of each practice day.
   return dates.map(date => {
+    while (next < logs.length && logs[next].date <= date) {
+      colorSoFar.set(logs[next].log.itemId, logs[next].log.colorAfter)
+      next++
+    }
     const counts = { red: 0, yellow: 0, green: 0 }
     for (const item of items) {
-      if (localDateKey(item.createdAt) > date) continue
-      const itemLogs = logs
-        .filter(l => l.itemId === item.id && localDateKey(l.practicedAt) <= date)
-        .sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
-      const color: Color = itemLogs.length > 0
-        ? itemLogs[itemLogs.length - 1].colorAfter
-        : item.color
-      counts[color]++
+      if (createdOn.get(item.id)! > date) continue
+      counts[colorSoFar.get(item.id) ?? item.color]++
     }
     return { date, ...counts }
   })

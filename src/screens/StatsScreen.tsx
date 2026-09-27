@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import {
@@ -39,21 +39,30 @@ export default function StatsScreen() {
     return color ? new Set([color]) : new Set()
   })
 
-  const activity = getActivities().find(a => a.id === activityId)
+  const activity = useMemo(() => getActivities().find(a => a.id === activityId), [activityId])
 
   useEffect(() => {
     if (!activity) navigate('/')
   }, [activity, navigate])
 
+  // Stats never change while this screen is open, so compute once per activity.
+  const data = useMemo(() => {
+    const allItems = getItems(activityId)
+    const practiceCounts = getPracticeCountByItem(activityId)
+    return {
+      allItems,
+      sessions: getSessionHistory(activityId),
+      chartData: getColorDistributionByDay(activityId),
+      lastPracticedAt: getLastPracticedByItem(activityId),
+      practiceCounts,
+      allTags: [...new Set(allItems.flatMap(i => i.tags ?? []))].sort(),
+      totalReps: Object.values(practiceCounts).reduce((sum, n) => sum + n, 0),
+    }
+  }, [activityId])
+
   if (!activity) return null
 
-  const allItems = getItems(activityId)
-  const sessions = getSessionHistory(activityId)
-  const chartData = getColorDistributionByDay(activityId)
-  const lastPracticedAt = getLastPracticedByItem(activityId)
-  const practiceCounts = getPracticeCountByItem(activityId)
-  const allTags = [...new Set(allItems.flatMap(i => i.tags ?? []))].sort()
-  const totalReps = Object.values(practiceCounts).reduce((sum, n) => sum + n, 0)
+  const { allItems, sessions, chartData, lastPracticedAt, practiceCounts, allTags, totalReps } = data
 
   const filteredItems = allItems.filter(item => {
     const searchMatch = searchQuery.trim() === '' || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
