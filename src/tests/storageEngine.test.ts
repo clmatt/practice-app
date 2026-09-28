@@ -137,4 +137,23 @@ describe('storage engine', () => {
     await reopenStorageForTests()
     expect(getLastBackupAt()).toBe('2026-09-01T12:00:00.000Z')
   })
+
+  it('starts up even when a record is missing the field it sorts by', async () => {
+    // Malformed records can arrive via import, which does not validate shape.
+    // A missing createdAt/practicedAt must not throw during startup sorting.
+    const badActivity = { ...activity({ id: 'act-bad' }) } as Partial<Activity>
+    delete badActivity.createdAt
+    const badLog = { ...log({ id: 'log-bad' }) } as Partial<PracticeLog>
+    delete badLog.practicedAt
+    importRecords({
+      activities: [activity(), badActivity as Activity],
+      items: [item()],
+      logs: [log(), badLog as PracticeLog],
+    })
+    await flushWrites()
+
+    await expect(reopenStorageForTests()).resolves.toBeUndefined()
+    expect(getActivities().map(a => a.id)).toEqual(expect.arrayContaining(['act-1', 'act-bad']))
+    expect(getLogs().map(l => l.id)).toEqual(expect.arrayContaining(['log-1', 'log-bad']))
+  })
 })

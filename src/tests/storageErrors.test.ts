@@ -91,4 +91,46 @@ describe('storage write failures', () => {
     expect(getActivities()).toEqual([activity()])
     unsubscribe()
   })
+
+  it('recovers from an UnknownError (the common WebKit lost-connection failure) by reopening and retrying', async () => {
+    vi.mocked(applyOps).mockRejectedValueOnce(new DOMException('lost', 'UnknownError'))
+    const listener = vi.fn()
+    const unsubscribe = onStorageError(listener)
+
+    saveActivity(activity())
+    await flushWrites()
+    expect(listener).not.toHaveBeenCalled()
+
+    await reopenStorageForTests()
+    expect(getActivities()).toEqual([activity()])
+    unsubscribe()
+  })
+
+  it('does not retry a QuotaExceededError (retrying a full disk cannot help)', async () => {
+    vi.mocked(applyOps).mockRejectedValueOnce(new DOMException('Storage full', 'QuotaExceededError'))
+    const listener = vi.fn()
+    const unsubscribe = onStorageError(listener)
+    const callsBefore = vi.mocked(applyOps).mock.calls.length
+
+    saveActivity(activity())
+    await flushWrites()
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(applyOps).mock.calls.length - callsBefore).toBe(1) // no retry attempted
+    unsubscribe()
+  })
+
+  it('notifies listeners once when the connection is lost and the retry also fails', async () => {
+    vi.mocked(applyOps)
+      .mockRejectedValueOnce(new DOMException('lost', 'UnknownError'))
+      .mockRejectedValueOnce(new DOMException('still lost', 'UnknownError'))
+    const listener = vi.fn()
+    const unsubscribe = onStorageError(listener)
+    const callsBefore = vi.mocked(applyOps).mock.calls.length
+
+    saveActivity(activity())
+    await flushWrites()
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(applyOps).mock.calls.length - callsBefore).toBe(2) // the original attempt, then one retry after reopening
+    unsubscribe()
+  })
 })

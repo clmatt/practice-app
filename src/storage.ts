@@ -48,13 +48,17 @@ function readLegacy<T>(key: string): T[] {
   }
 }
 
-const byCreatedAt = <T extends { createdAt: string }>(a: T, b: T) => a.createdAt.localeCompare(b.createdAt)
+// Tolerant of a malformed record (e.g. from an import that skipped validation)
+// missing the field being sorted on — startup must not throw over one bad
+// record. Records with a real value still sort correctly amongst themselves.
+const byCreatedAt = <T extends { createdAt: string }>(a: T, b: T) =>
+  String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? ''))
 
 function inChronologicalOrder(data: DataSnapshot): DataSnapshot {
   return {
     activities: [...data.activities].sort(byCreatedAt),
     items: [...data.items].sort(byCreatedAt),
-    logs: [...data.logs].sort((a, b) => a.practicedAt.localeCompare(b.practicedAt)),
+    logs: [...data.logs].sort((a, b) => String(a.practicedAt ?? '').localeCompare(String(b.practicedAt ?? ''))),
     savedFilters: [...data.savedFilters].sort(byCreatedAt),
   }
 }
@@ -166,15 +170,28 @@ async function writeWithRetry(ops: WriteOp[]): Promise<void> {
   try {
     await applyOps(database, ops)
   } catch (error) {
-    if (!isConnectionLost(error)) throw error
+    if (!isWorthRetrying(error)) throw error
     const reopened = attachCloseHandler(await openDb())
     db = reopened
     await applyOps(reopened, ops)
   }
 }
 
-function isConnectionLost(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'InvalidStateError'
+/**
+ * Whether reopening the connection and retrying this batch might succeed.
+ * WebKit can silently drop the IDB server connection (backgrounding, memory
+ * pressure); in-flight transactions then fail with `UnknownError`, and
+ * sometimes `AbortError` or `InvalidStateError`. Ops are idempotent puts/
+ * deletes/clears and a failed transaction commits nothing, so retrying is
+ * safe. The exceptions are IndexedDB failures that are deterministic and
+ * will just fail the same way again: `QuotaExceededError` (disk really is
+ * full), `DataError` (a bad key/value) and `DataCloneError` (a value that
+ * can't be structured-cloned) — those go straight to the error listeners
+ * instead. A non-IndexedDB error (a bug elsewhere) is not retried either.
+ */
+function isWorthRetrying(error: unknown): boolean {
+  if (!(error instanceof DOMException)) return false
+  return error.name !== 'QuotaExceededError' && error.name !== 'DataError' && error.name !== 'DataCloneError'
 }
 
 export function onStorageError(listener: (error: unknown) => void): () => void {
@@ -314,15 +331,12 @@ export function appendLog(log: PracticeLog): void {
   persist([{ store: 'logs', type: 'put', value: log }])
 }
 
-function isToday(iso: string): boolean {
-  return localDateKey(iso) === localDateKey(new Date())
-}
-
 export function getTodayPracticedItemIds(activityId: string): Set<string> {
   const activityItemIds = new Set(getItems(activityId).map(i => i.id))
+  const todayKey = localDateKey(new Date())
   return new Set(
     state.logs
-      .filter(l => activityItemIds.has(l.itemId) && isToday(l.practicedAt))
+      .filter(l => activityItemIds.has(l.itemId) && localDateKey(l.practicedAt) === todayKey)
       .map(l => l.itemId)
   )
 }
