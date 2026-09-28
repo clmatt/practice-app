@@ -11,9 +11,10 @@ import ImportScreen from './screens/ImportScreen'
 import PracticeChooserScreen from './screens/PracticeChooserScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import StorageErrorBanner from './components/StorageErrorBanner'
+import { lazyWithReload } from './lazyWithReload'
 
 // Stats pulls in the charting library (most of the bundle); load it on demand.
-const StatsScreen = lazy(() => import('./screens/StatsScreen'))
+const StatsScreen = lazy(lazyWithReload(() => import('./screens/StatsScreen')))
 
 export default function App() {
   return (

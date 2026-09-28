@@ -299,7 +299,7 @@ export default function PracticeSessionScreen() {
     else navigate('/')
   }
 
-  if (!activity) return null
+  if (!activity || items.length === 0) return null
 
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
   const filteredPool = buildFilteredPool(items, activeTags, advancedFilter)

@@ -70,7 +70,8 @@ function download(file: File): void {
   a.href = url
   a.download = file.name
   a.click()
-  URL.revokeObjectURL(url)
+  // Revoking immediately can abort the download in Safari; give it a moment.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 /**
