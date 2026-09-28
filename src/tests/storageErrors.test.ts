@@ -7,6 +7,7 @@ vi.mock('../db', async importOriginal => {
 
 import { applyOps } from '../db'
 import { saveActivity, getActivities, onStorageError, flushWrites, reopenStorageForTests } from '../storage'
+import { executeImport } from '../backup'
 import type { Activity } from '../types'
 
 const activity = (o: Partial<Activity> = {}): Activity => ({
@@ -132,5 +133,23 @@ describe('storage write failures', () => {
     expect(listener).toHaveBeenCalledTimes(1)
     expect(vi.mocked(applyOps).mock.calls.length - callsBefore).toBe(2) // the original attempt, then one retry after reopening
     unsubscribe()
+  })
+})
+
+describe('import saves atomically', () => {
+  it('a failed import save leaves the stored data untouched — nothing removed, nothing added', async () => {
+    saveActivity(activity({ id: 'existing', name: 'Juggling' }))
+    await flushWrites()
+    const payload = {
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      activities: [activity({ id: 'imported', name: 'Juggling' })],
+      items: [],
+      logs: [],
+    }
+    vi.mocked(applyOps).mockRejectedValueOnce(new Error('disk gone'))
+    executeImport(payload, new Map([['imported', 'replace']]), new Map())
+    await flushWrites()
+    await reopenStorageForTests()
+    expect(getActivities().map(a => a.id)).toEqual(['existing'])
   })
 })

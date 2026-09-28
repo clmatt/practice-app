@@ -5,7 +5,7 @@ import {
   getLogs, appendLog, getTodayPracticedItemIds,
   getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
-  importRecords,
+  importRecords, undoPracticeLog, reopenStorageForTests,
 } from '../storage'
 import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
@@ -235,6 +235,64 @@ describe('deleteItemWithLogs', () => {
     deleteItemWithLogs('item-1')
     expect(getItems('act-1').map(i => i.id)).toEqual(['item-2'])
     expect(getLogs().map(l => l.id)).toEqual(['l2'])
+  })
+})
+
+describe('undoPracticeLog', () => {
+  it('removes the log and restores the color it changed', async () => {
+    saveItem(makeItem({ id: 'item-1', color: 'yellow' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1', colorBefore: 'red', colorAfter: 'yellow' }))
+    undoPracticeLog('l1')
+    expect(getLogs()).toEqual([])
+    expect(getItems('act-1')[0].color).toBe('red')
+    await reopenStorageForTests()
+    expect(getLogs()).toEqual([])
+    expect(getItems('act-1')[0].color).toBe('red')
+  })
+
+  it('leaves the color alone when the rating did not change it', () => {
+    saveItem(makeItem({ id: 'item-1', color: 'red' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1', colorBefore: 'red', colorAfter: 'red' }))
+    undoPracticeLog('l1')
+    expect(getLogs()).toEqual([])
+    expect(getItems('act-1')[0].color).toBe('red')
+  })
+
+  it('leaves the color alone when the item was rated again since', () => {
+    saveItem(makeItem({ id: 'item-1', color: 'green' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1', practicedAt: '2026-05-16T10:00:00.000Z', colorBefore: 'red', colorAfter: 'yellow' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'item-1', practicedAt: '2026-05-16T11:00:00.000Z', colorBefore: 'yellow', colorAfter: 'green' }))
+    undoPracticeLog('l1')
+    expect(getLogs().map(l => l.id)).toEqual(['l2'])
+    expect(getItems('act-1')[0].color).toBe('green')
+  })
+
+  it('does nothing for an unknown log', () => {
+    saveItem(makeItem({ id: 'item-1' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'item-1' }))
+    undoPracticeLog('nope')
+    expect(getLogs()).toHaveLength(1)
+  })
+})
+
+describe('importRecords with removals', () => {
+  it('removes activities and items with everything belonging to them, and adds records, together', async () => {
+    saveActivity(makeActivity({ id: 'old' }))
+    saveItem(makeItem({ id: 'old-item', activityId: 'old' }))
+    appendLog(makeLog({ id: 'old-log', itemId: 'old-item' }))
+    upsertSavedFilter(makeSavedFilter({ id: 'old-filter', activityId: 'old' }))
+    saveItem(makeItem({ id: 'lone', activityId: 'act-1' }))
+    appendLog(makeLog({ id: 'lone-log', itemId: 'lone' }))
+    importRecords(
+      { activities: [makeActivity({ id: 'new' })], items: [makeItem({ id: 'new-item', activityId: 'new' })] },
+      { activityIds: ['old'], itemIds: ['lone'] },
+    )
+    await reopenStorageForTests()
+    expect(getActivities().map(a => a.id)).toEqual(['new'])
+    expect(getItems('new').map(i => i.id)).toEqual(['new-item'])
+    expect(getItems('act-1')).toEqual([])
+    expect(getLogs()).toEqual([])
+    expect(getSavedFilters('old')).toEqual([])
   })
 })
 

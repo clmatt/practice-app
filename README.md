@@ -4,7 +4,7 @@ A personal practice tracker that runs as an app on your phone's home screen.
 
 **Live app:** https://clmatt.github.io/practice-app/
 
-You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice draws items weighted towards the ones you struggle with and the ones you haven't touched in a while. Stats show how your ratings shift over time.
+You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice draws items weighted towards the ones you struggle with and the ones you haven't touched in a while. Tapped the wrong color? An *Undo* bar appears for a few seconds after each save. Stats show how your ratings shift over time.
 
 ## Using it
 
@@ -61,6 +61,7 @@ src/
   migrations.ts       data schema version + upgrade steps
   backup.ts           export/import file format and import conflict handling
   dates.ts            local-calendar-date helpers
+  autoPractice.ts     what Auto Practice draws next (filters, skips, done states)
   selection.ts        weighted random choice for Auto Practice
   filterParser.ts     advanced tag filter expressions ("a" && !("b" || "c"))
   tabs.ts / itemRuns.ts / utils.ts   small helpers (active tab from route, color-streak grouping, id generation)

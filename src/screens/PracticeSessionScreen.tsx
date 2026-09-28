@@ -1,25 +1,15 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, getTodayPracticedItemIds, getLastPracticedByItem, getNotesForItem } from '../storage'
-import { selectItem } from '../selection'
+import { getActivities, getItems, saveItem, appendLog, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
-import { parseFilter, evaluateFilter } from '../filterParser'
+import UndoBar from '../components/UndoBar'
+import { buildFilteredPool, drawFrom, tagsOf, type DrawResult } from '../autoPractice'
 
 type Phase = 'setup' | 'draw' | 'rate' | 'done'
-
-function buildFilteredPool(items: Item[], activeTags: Set<string>, advancedFilter: string | null): Item[] {
-  if (advancedFilter) {
-    const ast = parseFilter(advancedFilter)
-    return typeof ast === 'string' ? [] : items.filter(i => evaluateFilter(ast, i.tags ?? []))
-  }
-  return activeTags.size === 0
-    ? items
-    : items.filter(i => (i.tags ?? []).some(t => activeTags.has(t)))
-}
 
 interface SetupPhaseProps {
   allTags: string[]
@@ -162,35 +152,6 @@ function SessionCompleteDone({ sessionLog, activityName, onNavigateBack }: Sessi
   )
 }
 
-type DrawResult =
-  | { kind: 'item'; item: Item }
-  | { kind: 'filter-exhausted' }
-  | { kind: 'all-done' }
-
-function drawFrom(
-  activity: Activity,
-  items: Item[],
-  activeTags: Set<string>,
-  advancedFilter: string | null,
-  skipped: Set<string>,
-): DrawResult {
-  const excluded = new Set([...getTodayPracticedItemIds(activity.id), ...skipped])
-  const lastPracticedAt = getLastPracticedByItem(activity.id)
-  const recencyBias = activity.recencyBias ?? 0.9
-  const pool = buildFilteredPool(items, activeTags, advancedFilter)
-  const next = selectItem(pool, excluded, activity.weights, recencyBias, lastPracticedAt)
-  if (next) return { kind: 'item', item: next }
-  const filtering = activeTags.size > 0 || advancedFilter !== null
-  if (filtering && selectItem(items, excluded, activity.weights, recencyBias, lastPracticedAt)) {
-    return { kind: 'filter-exhausted' }
-  }
-  return { kind: 'all-done' }
-}
-
-function tagsOf(items: Item[]): string[] {
-  return [...new Set(items.flatMap(i => i.tags ?? []))].sort()
-}
-
 export default function PracticeSessionScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
@@ -216,6 +177,8 @@ export default function PracticeSessionScreen() {
   const [noteText, setNoteText] = useState('')
   const [advancedFilter, setAdvancedFilter] = useState<string | null>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
+  const clearLastSaved = useCallback(() => setLastSaved(null), [])
 
   useEffect(() => {
     if (!activity) navigate('/')
@@ -271,8 +234,9 @@ export default function PracticeSessionScreen() {
     const colorAfter = selectedColor
     const trimmedNote = noteText.trim()
 
+    const logId = generateId()
     appendLog({
-      id: generateId(),
+      id: logId,
       itemId: currentItem.id,
       practicedAt: new Date().toISOString(),
       colorBefore,
@@ -285,8 +249,19 @@ export default function PracticeSessionScreen() {
     }
 
     setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
+    setLastSaved({ logId, name: currentItem.name })
     setNoteText('')
     drawNextItem()
+  }
+
+  const handleUndo = () => {
+    if (!lastSaved || !activity) return
+    undoPracticeLog(lastSaved.logId)
+    setLastSaved(null)
+    setSessionLog(prev => prev.slice(0, -1))
+    // The undone item can be drawn again; if the session had ended, bring it back.
+    if (phase === 'done') drawNextItem()
+    else setItems(getItems(activity.id))
   }
 
   const handleBackToDraw = () => {
@@ -324,6 +299,10 @@ export default function PracticeSessionScreen() {
           Exit
         </button>
       </div>
+
+      {lastSaved && (
+        <UndoBar key={lastSaved.logId} message={`Saved "${lastSaved.name}"`} onUndo={handleUndo} onExpire={clearLastSaved} />
+      )}
 
       {phase === 'setup' && (
         <SetupPhase

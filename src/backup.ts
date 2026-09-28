@@ -1,6 +1,5 @@
 import {
   getSnapshot, importRecords, recordBackup, getActivities, getItems, getSavedFilters,
-  deleteActivity, deleteItemWithLogs,
 } from './storage'
 import { CURRENT_SCHEMA_VERSION, migrateSnapshot } from './migrations'
 import { localDateKey, daysBetweenKeys } from './dates'
@@ -157,6 +156,9 @@ export function executeImport(
   const newItems: Item[] = []
   const newLogs: PracticeLog[] = []
   const newFilters: SavedFilter[] = []
+  // Removals are saved together with the additions in one atomic write at the end.
+  const removeActivityIds: string[] = []
+  const removeItemIds: string[] = []
   const importedFilters = payload.savedFilters ?? []
 
   function addItemsAndLogs(impItems: Item[], targetActivityId: string) {
@@ -202,7 +204,7 @@ export function executeImport(
           stats.skipped++
           continue
         }
-        if (existingItem && itemRes === 'keep-imported') deleteItemWithLogs(existingItem.id)
+        if (existingItem && itemRes === 'keep-imported') removeItemIds.push(existingItem.id)
         toAdd.push(impItem)
       }
       addItemsAndLogs(toAdd, existingAct.id)
@@ -210,7 +212,7 @@ export function executeImport(
       continue
     }
 
-    if (resolution === 'replace' && existingAct) deleteActivity(existingAct.id)
+    if (resolution === 'replace' && existingAct) removeActivityIds.push(existingAct.id)
 
     const newActId = generateId()
     const actName = resolution === 'keep-both' ? `${impAct.name} (imported)` : impAct.name
@@ -220,6 +222,9 @@ export function executeImport(
     addFilters(impAct.id, newActId, new Set())
   }
 
-  importRecords({ activities: newActivities, items: newItems, logs: newLogs, savedFilters: newFilters })
+  importRecords(
+    { activities: newActivities, items: newItems, logs: newLogs, savedFilters: newFilters },
+    { activityIds: removeActivityIds, itemIds: removeItemIds },
+  )
   return stats
 }

@@ -213,20 +213,57 @@ export function getSnapshot(): DataSnapshot {
   }
 }
 
-/** Adds many records at once (used by import). Records must have fresh ids. */
-export function importRecords(records: Partial<DataSnapshot>): void {
+/**
+ * Removes activities and items along with everything that belongs to them
+ * (an activity's items and saved filters, an item's logs). Returns the
+ * remaining data and the ops that persist the removal; applies nothing.
+ */
+function removal(activityIds: Iterable<string>, itemIds: Iterable<string>): { remaining: DataSnapshot; ops: WriteOp[] } {
+  const actIds = new Set(activityIds)
+  const allItemIds = new Set(itemIds)
+  for (const item of state.items) if (actIds.has(item.activityId)) allItemIds.add(item.id)
+  const logIds = state.logs.filter(l => allItemIds.has(l.itemId)).map(l => l.id)
+  const filterIds = state.savedFilters.filter(f => actIds.has(f.activityId)).map(f => f.id)
+  return {
+    remaining: {
+      activities: state.activities.filter(a => !actIds.has(a.id)),
+      items: state.items.filter(i => !allItemIds.has(i.id)),
+      logs: state.logs.filter(l => !allItemIds.has(l.itemId)),
+      savedFilters: state.savedFilters.filter(f => !actIds.has(f.activityId)),
+    },
+    ops: [
+      ...deletes('activities', actIds),
+      ...deletes('items', allItemIds),
+      ...deletes('logs', logIds),
+      ...deletes('savedFilters', filterIds),
+    ],
+  }
+}
+
+/**
+ * Adds many records at once (used by import), optionally removing existing
+ * activities/items (with everything belonging to them) in the same atomic
+ * save — so an import either fully happens or doesn't happen at all.
+ * Records must have fresh ids.
+ */
+export function importRecords(
+  records: Partial<DataSnapshot>,
+  remove: { activityIds?: string[]; itemIds?: string[] } = {},
+): void {
   const activities = records.activities ?? []
   const items = records.items ?? []
   const logs = records.logs ?? []
   const savedFilters = records.savedFilters ?? []
+  const { remaining, ops } = removal(remove.activityIds ?? [], remove.itemIds ?? [])
   state = {
     ...state,
-    activities: [...state.activities, ...activities],
-    items: [...state.items, ...items],
-    logs: [...state.logs, ...logs],
-    savedFilters: [...state.savedFilters, ...savedFilters],
+    activities: [...remaining.activities, ...activities],
+    items: [...remaining.items, ...items],
+    logs: [...remaining.logs, ...logs],
+    savedFilters: [...remaining.savedFilters, ...savedFilters],
   }
   persist([
+    ...ops,
     ...puts('activities', activities),
     ...puts('items', items),
     ...puts('logs', logs),
@@ -281,22 +318,9 @@ export function saveActivity(activity: Activity): void {
 }
 
 export function deleteActivity(id: string): void {
-  const itemIds = new Set(state.items.filter(i => i.activityId === id).map(i => i.id))
-  const logIds = state.logs.filter(l => itemIds.has(l.itemId)).map(l => l.id)
-  const filterIds = state.savedFilters.filter(f => f.activityId === id).map(f => f.id)
-  state = {
-    ...state,
-    activities: state.activities.filter(a => a.id !== id),
-    items: state.items.filter(i => !itemIds.has(i.id)),
-    logs: state.logs.filter(l => !itemIds.has(l.itemId)),
-    savedFilters: state.savedFilters.filter(f => f.activityId !== id),
-  }
-  persist([
-    ...deletes('activities', [id]),
-    ...deletes('items', itemIds),
-    ...deletes('logs', logIds),
-    ...deletes('savedFilters', filterIds),
-  ])
+  const { remaining, ops } = removal([id], [])
+  state = { ...state, ...remaining }
+  persist(ops)
 }
 
 // --- Items ---
@@ -311,13 +335,9 @@ export function saveItem(item: Item): void {
 }
 
 export function deleteItemWithLogs(itemId: string): void {
-  const logIds = state.logs.filter(l => l.itemId === itemId).map(l => l.id)
-  state = {
-    ...state,
-    items: state.items.filter(i => i.id !== itemId),
-    logs: state.logs.filter(l => l.itemId !== itemId),
-  }
-  persist([...deletes('items', [itemId]), ...deletes('logs', logIds)])
+  const { remaining, ops } = removal([], [itemId])
+  state = { ...state, ...remaining }
+  persist(ops)
 }
 
 // --- Logs ---
@@ -329,6 +349,29 @@ export function getLogs(): PracticeLog[] {
 export function appendLog(log: PracticeLog): void {
   state = { ...state, logs: [...state.logs, log] }
   persist([{ store: 'logs', type: 'put', value: log }])
+}
+
+/**
+ * Undoes a practice rating: deletes the log and, if it changed the item's
+ * color and is still the item's latest rating, puts the old color back.
+ */
+export function undoPracticeLog(logId: string): void {
+  const log = state.logs.find(l => l.id === logId)
+  if (!log) return
+  const item = state.items.find(i => i.id === log.itemId)
+  const ratedSince = state.logs.some(l => l.itemId === log.itemId && l.id !== log.id && l.practicedAt > log.practicedAt)
+  const restored = item && !ratedSince && item.color === log.colorAfter && log.colorBefore !== log.colorAfter
+    ? { ...item, color: log.colorBefore }
+    : null
+  state = {
+    ...state,
+    logs: state.logs.filter(l => l.id !== logId),
+    items: restored ? upsert(state.items, restored) : state.items,
+  }
+  persist([
+    ...deletes('logs', [logId]),
+    ...(restored ? puts('items', [restored]) : []),
+  ])
 }
 
 export function getTodayPracticedItemIds(activityId: string): Set<string> {

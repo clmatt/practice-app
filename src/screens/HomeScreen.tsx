@@ -25,8 +25,16 @@ export default function HomeScreen() {
   const [itemLabel, setItemLabel] = useState('')
   const [lastBackupAt, setLastBackupAt] = useState(() => getLastBackupAt())
 
+  const [exportError, setExportError] = useState<string | null>(null)
+
   async function handleExport() {
-    if (await exportData()) setLastBackupAt(getLastBackupAt())
+    setExportError(null)
+    try {
+      if (await exportData()) setLastBackupAt(getLastBackupAt())
+    } catch (error) {
+      console.error('Export failed', error)
+      setExportError(`Couldn't export: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
 
   const backup = describeLastBackup(lastBackupAt)
@@ -133,6 +141,7 @@ export default function HomeScreen() {
             {backup.text}
           </p>
         )}
+        {exportError && <p className="text-xs text-center text-red-400 mb-1">{exportError}</p>}
         <button
           onClick={() => navigate('/import')}
           className="w-full text-slate-500 hover:text-slate-300 text-sm py-2 text-center"

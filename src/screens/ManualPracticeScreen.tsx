@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, getNotesForItem } from '../storage'
+import { getActivities, getItems, saveItem, appendLog, undoPracticeLog, getNotesForItem } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
+import UndoBar from '../components/UndoBar'
 
 type Phase = 'list' | 'rate'
 
@@ -19,6 +20,8 @@ export default function ManualPracticeScreen() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
   const [noteText, setNoteText] = useState('')
+  const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
+  const clearLastSaved = useCallback(() => setLastSaved(null), [])
 
   useEffect(() => {
     if (!activity) navigate('/')
@@ -45,8 +48,9 @@ export default function ManualPracticeScreen() {
     const colorAfter = selectedColor
     const trimmedNote = noteText.trim()
 
+    const logId = generateId()
     appendLog({
-      id: generateId(),
+      id: logId,
       itemId: selectedItem.id,
       practicedAt: new Date().toISOString(),
       colorBefore,
@@ -59,11 +63,19 @@ export default function ManualPracticeScreen() {
     }
 
     setItems(getItems(activityId))
+    setLastSaved({ logId, name: selectedItem.name })
     setPhase('list')
     setSearchQuery('')
     setSelectedItem(null)
     setSelectedColor(null)
     setNoteText('')
+  }
+
+  function handleUndo() {
+    if (!lastSaved || !activityId) return
+    undoPracticeLog(lastSaved.logId)
+    setLastSaved(null)
+    setItems(getItems(activityId))
   }
 
   function handleBack() {
@@ -140,6 +152,10 @@ export default function ManualPracticeScreen() {
       </button>
 
       <h1 className="text-xl font-bold mb-4 shrink-0">Manual Practice</h1>
+
+      {lastSaved && (
+        <UndoBar key={lastSaved.logId} message={`Saved "${lastSaved.name}"`} onUndo={handleUndo} onExpire={clearLastSaved} />
+      )}
 
       <input
         type="text"
