@@ -31,7 +31,7 @@ npm run preview   # serve the production build locally
 npm run icons     # regenerate public/icon-*.png from scripts/generate-icons.mjs
 ```
 
-`src/tests/` (154 tests covering storage, migrations, backup and the UI safety nets) is the safety net — make sure `npm test` is green before pushing to `main`.
+`src/tests/` (covering storage, migrations, backup and the UI safety nets) is the safety net — make sure `npm test` is green before pushing to `main`.
 
 The dev server uses a separate storage area from the live app (different address), so testing locally never touches your real data.
 
@@ -45,6 +45,7 @@ Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests
 2. `npm test && npm run lint && npm run build` — everything should pass before you change anything.
 3. If `npm ci` or the build fails because the toolchain has aged, that's the moment to update dependencies (`npm outdated`, then update and re-run the checks). The deployed app is static files and keeps working regardless.
 4. If the GitHub Actions deploy starts failing with deprecation errors, bump the action versions in `deploy.yml` to their current majors.
+5. Never deploy or roll back to a version from before the IndexedDB move (September 2026) — export a backup first, since an old version would show only the frozen pre-move localStorage copy and anything saved during the rollback wouldn't carry forward; roll forward with a fix instead.
 
 ## How it works
 

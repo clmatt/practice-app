@@ -3,14 +3,14 @@
 Personal PWA (React 19 + TypeScript + Vite + Tailwind 3) for tracking practice of items rated red/yellow/green. Single user, iPhone home-screen app, no backend. See README.md for the product and layout.
 
 ## Commands
-- `npm test` (Vitest, jsdom, fake-indexeddb, timezone pinned to America/Los_Angeles) — 13 files, 154 tests
+- `npm test` (Vitest, jsdom, fake-indexeddb, timezone pinned to America/Los_Angeles)
 - `npm run lint` — must report 0 problems
 - `npm run build` — type-check (`tsc -b`) + production build
 - `npm run dev` → http://localhost:5173/practice-app/
 - Node 24 (`.nvmrc`, `engines` in package.json)
 
 ## Deploying
-Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflows/deploy.yml` runs lint + test + build on every push, deploys only from `main`). Do feature work on a branch; merge to `main` only when checks pass. The owner's standing preference: push after committing without asking.
+Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflows/deploy.yml` runs lint + test + build on every push, deploys only from `main`). Do feature work on a branch; merge to `main` only when checks pass. The owner's standing preference: push after committing without asking. Never deploy or roll back to a version from before the IndexedDB move (September 2026) — export a backup first; an old version would show only the frozen pre-move localStorage copy, and anything saved during the rollback wouldn't carry forward.
 
 ## Rules that protect the user's data
 - All data access goes through `src/storage.ts`. Reads are synchronous from an in-memory cache; writes update memory and queue an IndexedDB save (`src/db.ts`). Never mutate `state` arrays in place; getters return copies.
