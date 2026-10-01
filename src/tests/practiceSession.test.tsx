@@ -102,3 +102,16 @@ describe('"Choose filter before each item" setting', () => {
     expect(screen.getByText('All done with your current filter.')).toBeInTheDocument()
   })
 })
+
+describe('0% colors in a session', () => {
+  it('leaves 0% items out of the "done" count and ends when only they remain', () => {
+    saveActivity(activity({ weights: { red: 1, yellow: 0, green: 0 } }))
+    saveItem(item('a', 'Slab problem', []))
+    saveItem({ ...item('b', 'Roof problem', []), color: 'yellow' })
+    renderSession()
+    expect(screen.getByText('0 / 1 done')).toBeInTheDocument()
+    expect(screen.getByText('Slab problem')).toBeInTheDocument()
+    rateCurrent()
+    expect(screen.getByText('Session complete')).toBeInTheDocument()
+  })
+})

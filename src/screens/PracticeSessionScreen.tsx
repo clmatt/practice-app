@@ -299,10 +299,11 @@ export default function PracticeSessionScreen() {
   if (!activity || items.length === 0) return null
 
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
-  const filteredPool = buildFilteredPool(items, activeTags, advancedFilter)
-  const sessionTotal = filteredPool.length
+  // Items of a 0%-weight color never come up, so they don't count towards "done".
+  const sessionPool = buildFilteredPool(items, activeTags, advancedFilter).filter(i => activity.weights[i.color] > 0)
+  const sessionTotal = sessionPool.length
   const practicedToday = activityId ? getTodayPracticedItemIds(activityId) : new Set<string>()
-  const todayDoneCount = filteredPool.filter(i => practicedToday.has(i.id)).length
+  const todayDoneCount = sessionPool.filter(i => practicedToday.has(i.id)).length
 
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">

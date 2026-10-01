@@ -109,6 +109,9 @@ export default function ActivityDashboardScreen() {
               <p className="text-xs text-slate-500">
                 Total: {draftWeights.red + draftWeights.yellow + draftWeights.green}% (auto-normalised on save)
               </p>
+              <p className="text-xs text-slate-500">
+                A color at 0% never comes up in Auto Practice. When a color has nothing left, its share is split among the others.
+              </p>
             </div>
           </div>
           <div>

@@ -47,6 +47,27 @@ describe('selectItem', () => {
     expect(seen.has('green')).toBe(true)
   })
 
+  it("renormalizes an empty color's share across the remaining colors in proportion to their weights", () => {
+    const items = [makeItem('y', 'yellow'), makeItem('g', 'green')] // no reds; weights 60/30/10
+    let yellow = 0
+    const n = 4000
+    for (let i = 0; i < n; i++) if (selectItem(items, new Set(), weights)!.color === 'yellow') yellow++
+    expect(yellow / n).toBeGreaterThan(0.71) // expected 0.30 / 0.40 = 75%
+    expect(yellow / n).toBeLessThan(0.79)
+  })
+
+  it('never draws a color whose weight is 0%', () => {
+    const items = [makeItem('r', 'red'), makeItem('y', 'yellow'), makeItem('g', 'green')]
+    for (let i = 0; i < 200; i++) {
+      expect(selectItem(items, new Set(), { red: 0.8, yellow: 0, green: 0.2 })!.color).not.toBe('yellow')
+    }
+  })
+
+  it('returns null when only 0% colors are left, instead of falling back to the next color', () => {
+    const items = [makeItem('r', 'red'), makeItem('y', 'yellow'), makeItem('g', 'green')]
+    expect(selectItem(items, new Set(['r']), { red: 1, yellow: 0, green: 0 })).toBeNull()
+  })
+
   it('skips empty categories and redistributes their weight', () => {
     const items = [makeItem('r', 'red'), makeItem('y', 'yellow')]
     const seen = new Set<string>()

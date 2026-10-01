@@ -72,3 +72,23 @@ describe('tagsOf', () => {
     expect(tagsOf([makeItem('a', ['b', 'a']), makeItem('b', ['a']), makeItem('c')])).toEqual(['a', 'b'])
   })
 })
+
+describe('drawFrom with 0% colors', () => {
+  const redOnly: Activity = { ...activity, weights: { red: 1, yellow: 0, green: 0 } }
+
+  it('ends the session when only 0% colors are left', () => {
+    const items = [makeItem('a'), { ...makeItem('b'), color: 'yellow' as const }]
+    items.forEach(saveItem)
+    practiceToday('a')
+    expect(drawFrom(redOnly, items, new Set(), null, new Set())).toEqual({ kind: 'all-done' })
+  })
+
+  it('reports filter-exhausted only if something drawable remains outside the filter', () => {
+    const items = [makeItem('a', ['V3']), { ...makeItem('b', ['V4']), color: 'yellow' as const }, makeItem('c', ['V4'])]
+    items.forEach(saveItem)
+    practiceToday('a')
+    expect(drawFrom(redOnly, items, new Set(['V3']), null, new Set())).toEqual({ kind: 'filter-exhausted' })
+    practiceToday('c')
+    expect(drawFrom(redOnly, items, new Set(['V3']), null, new Set())).toEqual({ kind: 'all-done' })
+  })
+})

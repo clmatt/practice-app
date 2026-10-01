@@ -44,24 +44,19 @@ export function selectItem(
     green: available.filter(i => i.color === 'green'),
   }
 
+  // Colors with nothing left, or with a 0% weight, are never drawn. The rest
+  // share 100% in proportion to their weights (renormalized). If nothing
+  // drawable is left, there is nothing to practice: return null.
   const colors: Color[] = ['red', 'yellow', 'green']
-  const nonEmpty = colors.filter(c => byColor[c].length > 0)
+  const drawable = colors.filter(c => byColor[c].length > 0 && weights[c] > 0)
+  if (drawable.length === 0) return null
 
-  const emptyWeight = colors
-    .filter(c => byColor[c].length === 0)
-    .reduce((sum, c) => sum + weights[c], 0)
-  const totalNonEmptyWeight = nonEmpty.reduce((sum, c) => sum + weights[c], 0)
-
-  const effective: Record<Color, number> = { red: 0, yellow: 0, green: 0 }
-  for (const c of nonEmpty) {
-    effective[c] = weights[c] + emptyWeight * (weights[c] / totalNonEmptyWeight)
-  }
-
-  const rand = Math.random()
+  const total = drawable.reduce((sum, c) => sum + weights[c], 0)
+  const rand = Math.random() * total
   let cumulative = 0
-  let chosenColor: Color = nonEmpty[0]
-  for (const c of nonEmpty) {
-    cumulative += effective[c]
+  let chosenColor: Color = drawable[drawable.length - 1] // only reached through floating-point rounding
+  for (const c of drawable) {
+    cumulative += weights[c]
     if (rand < cumulative) {
       chosenColor = c
       break
