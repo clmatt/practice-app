@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildColorChart, monotoneSegments, type ChartBox } from '../colorChart'
+import { localDateKey } from '../dates'
 
 const box: ChartBox = { width: 300, height: 200, left: 30, right: 10, top: 10, bottom: 20 }
 // Plot area: x 30..290 (260 wide), y 10..180 (170 tall)
@@ -89,5 +90,37 @@ describe('monotoneSegments (smooth curves)', () => {
     // At the peak the curve arrives and leaves horizontally.
     expect(up.c2[1]).toBe(10)
     expect(down.c1[1]).toBe(10)
+  })
+})
+
+describe('weekly drawing for long histories', () => {
+  // 40 practice days: every weekday from Mon 2026-08-03 to Fri 2026-09-25.
+  const days: string[] = []
+  for (let d = new Date(2026, 7, 3); days.length < 40; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(localDateKey(d))
+  }
+  const rows = days.map((date, i) => row(date, i % 3, 1, i))
+
+  it('draws every day while there are 30 or fewer', () => {
+    const chart = buildColorChart(rows.slice(0, 30), box)!
+    expect(chart.drawn).toHaveLength(30)
+    expect(chart.weekly).toBe(false)
+  })
+
+  it('beyond 30 days, draws the first day and the last practice day of each week', () => {
+    const chart = buildColorChart(rows, box)!
+    expect(chart.weekly).toBe(true)
+    expect(chart.drawn.map(p => p.date)).toEqual([
+      '2026-08-03', '2026-08-07', '2026-08-14', '2026-08-21', '2026-08-28', '2026-09-04', '2026-09-11', '2026-09-18', '2026-09-25',
+    ])
+    // Drawn points sit exactly where those days sit, so the curve and the day positions line up.
+    for (const p of chart.drawn) expect(p.x).toBe(chart.points.find(q => q.date === p.date)!.x)
+  })
+
+  it('still finds the exact day under the pointer, with that day\'s own counts', () => {
+    const chart = buildColorChart(rows, box)!
+    expect(chart.points).toHaveLength(40)
+    const wednesday = chart.points.find(p => p.date === '2026-08-19')!
+    expect(chart.nearest(wednesday.x)).toMatchObject({ date: '2026-08-19', red: 0, yellow: 1, green: 12 })
   })
 })

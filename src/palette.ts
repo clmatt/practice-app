@@ -12,6 +12,3 @@ export const RATING_COLORS: Record<Color, string> = {
   yellow: '#eab308',
   green: '#059669',
 }
-
-/** The page background (Tailwind slate-950); used for the gaps between chart bands. */
-export const SURFACE = '#020617'

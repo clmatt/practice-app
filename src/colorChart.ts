@@ -1,4 +1,4 @@
-import { daysBetweenKeys, formatDateKey } from './dates'
+import { daysBetweenKeys, formatDateKey, weekStartKey } from './dates'
 import type { Color } from './types'
 
 /** Geometry for the Stats colour-distribution chart (a stacked area over time). */
@@ -25,7 +25,12 @@ export interface ChartPoint extends ColorCounts {
 }
 
 export interface ColorChart {
+  /** One per practice day: what the pointer snaps to and the tooltip reports. */
   points: ChartPoint[]
+  /** The points the bands are drawn through (a weekly subset of `points` for long histories). */
+  drawn: ChartPoint[]
+  /** True when the bands are drawn week by week. */
+  weekly: boolean
   /** Bottom to top: red, yellow, green. */
   bands: { color: Color; path: string }[]
   yMax: number
@@ -39,6 +44,8 @@ export interface ColorChart {
 
 const STACK: Color[] = ['red', 'yellow', 'green']
 const LONG_RANGE_DAYS = 300
+/** Beyond this many practice days, day-to-day changes are too dense to draw: draw one point per week. */
+const DAILY_LIMIT = 30
 
 export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart | null {
   if (rows.length === 0) return null
@@ -56,13 +63,20 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
     ? [{ ...rows[0], x: plotLeft }, { ...rows[0], x: plotRight }]
     : rows.map((r, i) => ({ ...r, x: plotLeft + (i / (rows.length - 1)) * (plotRight - plotLeft) }))
 
+  // For long histories draw a smooth trend through the first day and the last practice
+  // day of each week; every day keeps its position, so tapping still finds exact days.
+  const weekly = rows.length > DAILY_LIMIT
+  const drawn = weekly
+    ? points.filter((p, i) => i === 0 || i === points.length - 1 || weekStartKey(points[i + 1].date) !== weekStartKey(p.date))
+    : points
+
   const yMax = Math.max(1, ...rows.map(r => r.red + r.yellow + r.green))
   const y = (value: number) => plotBottom - (value / yMax) * (plotBottom - plotTop)
 
   const bands = STACK.map((color, i) => {
     const below = (p: ChartPoint) => STACK.slice(0, i).reduce((sum, c) => sum + p[c], 0)
-    const top: Pt[] = points.map(p => [p.x, y(below(p) + p[color])])
-    const bottom: Pt[] = points.map(p => [p.x, y(below(p))])
+    const top: Pt[] = drawn.map(p => [p.x, y(below(p) + p[color])])
+    const bottom: Pt[] = drawn.map(p => [p.x, y(below(p))])
     // Along the top edge left→right, then back along the bottom edge right→left, both smoothed.
     const forward = monotoneSegments(top).map(s => `C${xy(s.c1)} ${xy(s.c2)} ${xy(s.to)}`).join('')
     const backward = monotoneSegments(bottom).reverse().map(s => `C${xy(s.c2)} ${xy(s.c1)} ${xy(s.from)}`).join('')
@@ -81,7 +95,7 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
   const yTickValues = yMax >= 2 ? [0, Math.round(yMax / 2), yMax] : [0, yMax]
   const yTicks = [...new Set(yTickValues)].map(v => ({ y: y(v), label: String(v) }))
 
-  return { points, bands, yMax, y, xTicks, yTicks, nearest: x => nearestPoint(points, x) }
+  return { points, drawn, weekly, bands, yMax, y, xTicks, yTicks, nearest: x => nearestPoint(points, x) }
 }
 
 type Pt = [number, number]

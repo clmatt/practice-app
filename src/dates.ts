@@ -20,6 +20,14 @@ export function daysBetweenKeys(from: string, to: string): number {
   return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000)
 }
 
+/** The Monday (as 'YYYY-MM-DD') of the week containing a 'YYYY-MM-DD' day. */
+export function weekStartKey(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  date.setDate(d - ((date.getDay() + 6) % 7))
+  return localDateKey(date)
+}
+
 /** Formats a 'YYYY-MM-DD' key for display (en-US), e.g. "May 15, 2026". */
 export function formatDateKey(key: string, options: Intl.DateTimeFormatOptions): string {
   return new Date(key + 'T00:00:00').toLocaleDateString('en-US', options)

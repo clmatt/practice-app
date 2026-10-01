@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDateKey, daysBetweenKeys, formatDateKey } from '../dates'
+import { localDateKey, daysBetweenKeys, formatDateKey, weekStartKey } from '../dates'
 
 describe('test environment', () => {
   it('runs in America/Los_Angeles', () => {
@@ -38,5 +38,18 @@ describe('daysBetweenKeys', () => {
 describe('formatDateKey', () => {
   it('formats a key without shifting the day', () => {
     expect(formatDateKey('2026-05-15', { month: 'long', day: 'numeric', year: 'numeric' })).toBe('May 15, 2026')
+  })
+})
+
+describe('weekStartKey', () => {
+  it('gives the Monday that starts the week', () => {
+    expect(weekStartKey('2026-09-28')).toBe('2026-09-28') // Monday
+    expect(weekStartKey('2026-09-30')).toBe('2026-09-28') // Wednesday
+    expect(weekStartKey('2026-10-04')).toBe('2026-09-28') // Sunday belongs to the same week
+    expect(weekStartKey('2026-10-05')).toBe('2026-10-05') // next Monday
+  })
+
+  it('works across month and year boundaries', () => {
+    expect(weekStartKey('2027-01-01')).toBe('2026-12-28')
   })
 })

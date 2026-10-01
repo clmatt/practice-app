@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { buildColorChart, type ChartBox, type ChartPoint, type ColorCounts } from '../colorChart'
 import { formatDateKey } from '../dates'
-import { RATING_COLORS, SURFACE } from '../palette'
+import { RATING_COLORS } from '../palette'
 import type { Color } from '../types'
 
 const BOX: ChartBox = { width: 340, height: 220, left: 28, right: 8, top: 8, bottom: 24 }
@@ -43,7 +43,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
 
   return (
     <div>
-      <ul aria-label="Legend" className="flex gap-4 mb-2 text-xs text-slate-300">
+      <ul aria-label="Legend" className={`flex gap-4 text-xs text-slate-300 ${chart.weekly ? 'mb-1' : 'mb-2'}`}>
         {LEGEND_ORDER.map(color => (
           <li key={color} className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLORS[color] }} />
@@ -51,6 +51,9 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
           </li>
         ))}
       </ul>
+      {chart.weekly && (
+        <p className="text-xs text-slate-500 mb-2">Drawn week by week. Tap for any day's exact counts.</p>
+      )}
 
       <div ref={plotRef} className="relative">
         <svg
@@ -71,9 +74,9 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
             </g>
           ))}
 
-          {/* The surface-coloured stroke is the thin gap that separates neighbouring bands. */}
+          {/* A same-colour edge closes the hairline seams where neighbouring bands meet. */}
           {chart.bands.map(b => (
-            <path key={b.color} d={b.path} fill={RATING_COLORS[b.color]} stroke={SURFACE} strokeWidth={1.25} strokeLinejoin="round" />
+            <path key={b.color} d={b.path} fill={RATING_COLORS[b.color]} stroke={RATING_COLORS[b.color]} strokeWidth={1} strokeLinejoin="round" />
           ))}
 
           {LEGEND_ORDER.map((color, i) => {

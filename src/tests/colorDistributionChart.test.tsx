@@ -55,3 +55,38 @@ describe('ColorDistributionChart', () => {
     expect(within(table).getByText('Sep 1')).toBeInTheDocument()
   })
 })
+
+describe('ColorDistributionChart with a long history', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  // 35 consecutive days; red alternates 0/5 day to day (the kind of jitter that looked spiky).
+  const longRows = Array.from({ length: 35 }, (_, i) => {
+    const d = new Date(2026, 7, 3 + i)
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return { date, red: i % 2 === 0 ? 0 : 5, yellow: 2, green: 10 }
+  })
+
+  it('says it is drawn week by week', () => {
+    render(<ColorDistributionChart rows={longRows} />)
+    expect(screen.getByText("Drawn week by week. Tap for any day's exact counts.")).toBeInTheDocument()
+  })
+
+  it("still shows a single day's exact counts on tap", () => {
+    render(<ColorDistributionChart rows={longRows} />)
+    const svg = screen.getByRole('img')
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 340, height: 220, right: 340, bottom: 220, x: 0, y: 0, toJSON: () => ({}) })
+    // Day 13 is Aug 16 (red 5); the plot runs from x 28 to 332 across the 35 days.
+    const x = 28 + (13 / 34) * (340 - 28 - 8)
+    fireEvent.pointerDown(svg, { clientX: x, clientY: 100, pointerType: 'touch' })
+    const tooltip = screen.getByRole('status')
+    expect(tooltip).toHaveTextContent('Aug 16')
+    expect(tooltip).toHaveTextContent('5Red')
+    expect(tooltip).toHaveTextContent('2Yellow')
+    expect(tooltip).toHaveTextContent('10Green')
+  })
+
+  it('short histories have no weekly note', () => {
+    render(<ColorDistributionChart rows={longRows.slice(0, 20)} />)
+    expect(screen.queryByText(/Drawn week by week/)).toBeNull()
+  })
+})
