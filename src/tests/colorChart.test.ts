@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildColorChart, type ChartBox } from '../colorChart'
+import { buildColorChart, monotoneSegments, type ChartBox } from '../colorChart'
 
 const box: ChartBox = { width: 300, height: 200, left: 30, right: 10, top: 10, bottom: 20 }
 // Plot area: x 30..290 (260 wide), y 10..180 (170 tall)
@@ -28,10 +28,14 @@ describe('buildColorChart', () => {
     const chart = buildColorChart([row('2026-09-01', 2, 1, 1), row('2026-09-02', 2, 1, 1)], box)!
     expect(chart.bands.map(b => b.color)).toEqual(['red', 'yellow', 'green'])
     const y = (v: number) => 180 - (v / 4) * 170
-    // Each band's path runs along its top edge left→right, then back along its bottom edge.
-    expect(chart.bands[0].path).toBe(`M30,${y(2)}L290,${y(2)}L290,${y(0)}L30,${y(0)}Z`)
-    expect(chart.bands[1].path).toBe(`M30,${y(3)}L290,${y(3)}L290,${y(2)}L30,${y(2)}Z`)
-    expect(chart.bands[2].path).toBe(`M30,${y(4)}L290,${y(4)}L290,${y(3)}L30,${y(3)}Z`)
+    // Each band runs along its top edge left→right as a smooth curve, then back along its bottom edge.
+    const third = 260 / 3
+    const band = (top: number, bottom: number) =>
+      `M30,${y(top)}C${30 + third},${y(top)} ${290 - third},${y(top)} 290,${y(top)}` +
+      `L290,${y(bottom)}C${290 - third},${y(bottom)} ${30 + third},${y(bottom)} 30,${y(bottom)}Z`
+    expect(chart.bands[0].path).toBe(band(2, 0))
+    expect(chart.bands[1].path).toBe(band(3, 2))
+    expect(chart.bands[2].path).toBe(band(4, 3))
   })
 
   it('stretches a single day across the full width', () => {
@@ -54,5 +58,35 @@ describe('buildColorChart', () => {
     expect(chart.nearest(0).date).toBe('2026-09-01')
     expect(chart.nearest(60).date).toBe('2026-09-02')
     expect(chart.nearest(200).date).toBe('2026-09-11')
+  })
+})
+
+describe('monotoneSegments (smooth curves)', () => {
+  it('never overshoots: curve handles stay within the neighbouring values', () => {
+    // A plateau, a jump, another plateau: straight lines look pointy here, and a naive spline would bulge.
+    const segs = monotoneSegments([[0, 0], [1, 0], [2, 10], [3, 10]])
+    for (const s of segs) {
+      const lo = Math.min(s.from[1], s.to[1])
+      const hi = Math.max(s.from[1], s.to[1])
+      for (const c of [s.c1, s.c2]) {
+        expect(c[1]).toBeGreaterThanOrEqual(lo)
+        expect(c[1]).toBeLessThanOrEqual(hi)
+      }
+    }
+  })
+
+  it('keeps flat stretches flat and straight lines straight', () => {
+    const flat = monotoneSegments([[0, 5], [10, 5], [20, 5]])
+    expect(flat.every(s => s.c1[1] === 5 && s.c2[1] === 5)).toBe(true)
+    const line = monotoneSegments([[0, 0], [10, 10], [20, 20]])
+    expect(line[0].c1[1]).toBeCloseTo(10 / 3)
+    expect(line[0].c2[1]).toBeCloseTo(20 / 3)
+  })
+
+  it('bends smoothly through a peak instead of making a point', () => {
+    const [up, down] = monotoneSegments([[0, 0], [10, 10], [20, 0]])
+    // At the peak the curve arrives and leaves horizontally.
+    expect(up.c2[1]).toBe(10)
+    expect(down.c1[1]).toBe(10)
   })
 })

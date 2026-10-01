@@ -60,9 +60,9 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
             </g>
           ))}
 
-          {/* The surface-coloured stroke is the 2px gap that separates neighbouring bands. */}
+          {/* The surface-coloured stroke is the thin gap that separates neighbouring bands. */}
           {chart.bands.map(b => (
-            <path key={b.color} d={b.path} fill={RATING_COLORS[b.color]} stroke={SURFACE} strokeWidth={2} strokeLinejoin="round" />
+            <path key={b.color} d={b.path} fill={RATING_COLORS[b.color]} stroke={SURFACE} strokeWidth={1.25} strokeLinejoin="round" />
           ))}
 
           {LEGEND_ORDER.map((color, i) => {

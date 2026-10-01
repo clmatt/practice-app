@@ -60,9 +60,12 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
 
   const bands = STACK.map((color, i) => {
     const below = (p: ChartPoint) => STACK.slice(0, i).reduce((sum, c) => sum + p[c], 0)
-    const top = points.map(p => `${p.x},${y(below(p) + p[color])}`)
-    const bottom = [...points].reverse().map(p => `${p.x},${y(below(p))}`)
-    return { color, path: `M${top.join('L')}L${bottom.join('L')}Z` }
+    const top: Pt[] = points.map(p => [p.x, y(below(p) + p[color])])
+    const bottom: Pt[] = points.map(p => [p.x, y(below(p))])
+    // Along the top edge left→right, then back along the bottom edge right→left, both smoothed.
+    const forward = monotoneSegments(top).map(s => `C${xy(s.c1)} ${xy(s.c2)} ${xy(s.to)}`).join('')
+    const backward = monotoneSegments(bottom).reverse().map(s => `C${xy(s.c2)} ${xy(s.c1)} ${xy(s.from)}`).join('')
+    return { color, path: `M${xy(top[0])}${forward}L${xy(bottom[bottom.length - 1])}${backward}Z` }
   })
 
   const longRange = span > LONG_RANGE_DAYS
@@ -78,6 +81,54 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
   const yTicks = [...new Set(yTickValues)].map(v => ({ y: y(v), label: String(v) }))
 
   return { points, bands, yMax, y, xTicks, yTicks, nearest: x => nearestPoint(points, x) }
+}
+
+type Pt = [number, number]
+const xy = (p: Pt) => `${p[0]},${p[1]}`
+
+export interface CurveSegment {
+  from: Pt
+  c1: Pt
+  c2: Pt
+  to: Pt
+}
+
+/**
+ * Cubic Bézier segments for a smooth curve through `pts` (x increasing) that
+ * never overshoots the data: between two points it stays within their values,
+ * and it is flat at peaks, troughs and plateaus. This is the "monotone X"
+ * curve (Fritsch–Carlson / Steffen tangents) that d3 and Recharts use.
+ */
+export function monotoneSegments(pts: Pt[]): CurveSegment[] {
+  const n = pts.length
+  if (n < 2) return []
+  const h: number[] = []
+  const slope: number[] = []
+  for (let i = 0; i < n - 1; i++) {
+    h[i] = pts[i + 1][0] - pts[i][0]
+    slope[i] = h[i] ? (pts[i + 1][1] - pts[i][1]) / h[i] : 0
+  }
+
+  // Tangent at each point.
+  const t: number[] = []
+  if (n === 2) {
+    t[0] = t[1] = slope[0] // two points: a straight line
+  } else {
+    for (let i = 1; i < n - 1; i++) {
+      const [s0, s1, h0, h1] = [slope[i - 1], slope[i], h[i - 1], h[i]]
+      const p = (s0 * h1 + s1 * h0) / (h0 + h1)
+      // Zero where the direction changes (a peak or trough), otherwise limited so the curve can't overshoot.
+      t[i] = (Math.sign(s0) + Math.sign(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0
+    }
+    t[0] = (3 * slope[0] - t[1]) / 2
+    t[n - 1] = (3 * slope[n - 2] - t[n - 2]) / 2
+  }
+
+  return pts.slice(0, -1).map((from, i) => {
+    const to = pts[i + 1]
+    const third = h[i] / 3
+    return { from, to, c1: [from[0] + third, from[1] + t[i] * third], c2: [to[0] - third, to[1] - t[i + 1] * third] }
+  })
 }
 
 function nearestPoint(points: ChartPoint[], x: number): ChartPoint {
