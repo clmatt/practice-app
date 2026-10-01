@@ -19,6 +19,7 @@ export default function ActivityDashboardScreen() {
     green: Math.round((activity?.weights.green ?? 0.1) * 100),
   }))
   const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? 0.9)
+  const [draftChooseFilter, setDraftChooseFilter] = useState(() => activity?.chooseFilterEachItem ?? false)
 
   useEffect(() => {
     if (!activity) navigate('/')
@@ -38,6 +39,7 @@ export default function ActivityDashboardScreen() {
         green: draftWeights.green / total,
       },
       recencyBias: draftRecencyBias,
+      chooseFilterEachItem: draftChooseFilter,
     }
     saveActivity(updated)
     setActivity(updated)
@@ -124,6 +126,23 @@ export default function ActivityDashboardScreen() {
               1 = uniform, lower = prefer items practiced longest ago
             </p>
           </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={draftChooseFilter}
+            onClick={() => setDraftChooseFilter(v => !v)}
+            className="flex items-center gap-3 w-full bg-slate-800 rounded-xl px-4 py-3 text-left"
+          >
+            <span className="flex-1">
+              <span className="block text-sm">Choose filter before each item</span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                Auto Practice asks which tags to draw from after every rating (e.g. raising the grade as you go)
+              </span>
+            </span>
+            <span className={`w-10 h-6 rounded-full p-0.5 shrink-0 transition-colors ${draftChooseFilter ? 'bg-violet-600' : 'bg-slate-600'}`}>
+              <span className={`block w-5 h-5 rounded-full bg-white transition-transform ${draftChooseFilter ? 'translate-x-4' : ''}`} />
+            </span>
+          </button>
           <button
             onClick={handleSaveSettings}
             className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold"

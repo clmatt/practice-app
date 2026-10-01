@@ -6,6 +6,8 @@ export interface Activity {
   itemLabel: string
   weights: { red: number; yellow: number; green: number }
   recencyBias?: number
+  /** Auto Practice: after each rating, show the filter step before drawing the next item. */
+  chooseFilterEachItem?: boolean
   createdAt: string
 }
 

@@ -9,22 +9,28 @@ import AdvancedFilterModal from '../components/AdvancedFilterModal'
 import UndoBar from '../components/UndoBar'
 import { buildFilteredPool, drawFrom, tagsOf, type DrawResult } from '../autoPractice'
 
-type Phase = 'setup' | 'draw' | 'rate' | 'done'
+// 'next-filter' is the filter step between items: same screen as setup, for the next draw.
+type Phase = 'setup' | 'next-filter' | 'draw' | 'rate' | 'done'
 
 interface SetupPhaseProps {
   allTags: string[]
   activeTags: Set<string>
   advancedFilter: string | null
+  /** Choosing the filter for the item after this one, mid-session, rather than starting. */
+  forNextItem: boolean
   onToggleTag: (tag: string) => void
   onOpenFilterModal: () => void
   onStart: () => void
 }
 
-function SetupPhase({ allTags, activeTags, advancedFilter, onToggleTag, onOpenFilterModal, onStart }: SetupPhaseProps) {
+function SetupPhase({ allTags, activeTags, advancedFilter, forNextItem, onToggleTag, onOpenFilterModal, onStart }: SetupPhaseProps) {
+  const startLabel = forNextItem
+    ? 'Next item'
+    : advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'
   return (
     <div className="flex flex-col flex-1 gap-6">
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
-        <h2 className="text-xl font-bold">What are you focusing on?</h2>
+        <h2 className="text-xl font-bold">{forNextItem ? 'Filter for next item' : 'What are you focusing on?'}</h2>
         {advancedFilter ? (
           <>
             <p className="text-slate-400 text-sm">Advanced filter active.</p>
@@ -38,7 +44,9 @@ function SetupPhase({ allTags, activeTags, advancedFilter, onToggleTag, onOpenFi
           </>
         ) : (
           <>
-            <p className="text-slate-400 text-sm">Select tags to filter, or start with everything.</p>
+            <p className="text-slate-400 text-sm">
+              {forNextItem ? 'Adjust the tags, or keep them as they are.' : 'Select tags to filter, or start with everything.'}
+            </p>
             <div className="flex flex-wrap gap-2">
               {allTags.map(tag => (
                 <button
@@ -70,9 +78,36 @@ function SetupPhase({ allTags, activeTags, advancedFilter, onToggleTag, onOpenFi
           onClick={onStart}
           className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full"
         >
-          {advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'}
+          {startLabel}
         </button>
       </div>
+    </div>
+  )
+}
+
+/** One line saying what's being drawn from, with a way to change it. */
+function FilterLine({ activeTags, advancedFilter, onChange }: {
+  activeTags: Set<string>
+  advancedFilter: string | null
+  onChange: () => void
+}) {
+  const filter = advancedFilter ? `⚡ ${advancedFilter}` : activeTags.size > 0 ? [...activeTags].sort().join(', ') : 'all items'
+  return (
+    <div className="flex items-center justify-between gap-3 w-full text-xs mb-2">
+      <span className="text-slate-500 truncate">Filter: {filter}</span>
+      <button onClick={onChange} className="text-violet-400 font-medium shrink-0">Change</button>
+    </div>
+  )
+}
+
+/** The current item's own tags, as plain labels. */
+function ItemTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null
+  return (
+    <div className="flex flex-wrap justify-center gap-1.5">
+      {[...tags].sort().map(tag => (
+        <span key={tag} className="bg-slate-800 rounded-full px-2.5 py-0.5 text-xs text-slate-400">{tag}</span>
+      ))}
     </div>
   )
 }
@@ -251,7 +286,14 @@ export default function PracticeSessionScreen() {
     setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
     setLastSaved({ logId, name: currentItem.name })
     setNoteText('')
-    drawNextItem()
+    if (activity?.chooseFilterEachItem) openFilterStep()
+    else drawNextItem()
+  }
+
+  /** Pick the filter for the next draw; the current item (if any) goes back in the pool. */
+  function openFilterStep() {
+    setCurrentItem(null)
+    setPhase('next-filter')
   }
 
   const handleUndo = () => {
@@ -285,7 +327,7 @@ export default function PracticeSessionScreen() {
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
       <div className="flex justify-between items-center mb-6">
-        {(phase === 'draw' || phase === 'rate') ? (
+        {(phase === 'draw' || phase === 'rate' || phase === 'next-filter') ? (
           <div className="flex flex-col">
             <span className="text-slate-400 text-sm">{todayDoneCount} / {sessionTotal} done</span>
             {skippedItemIds.size > 0 && (
@@ -304,11 +346,12 @@ export default function PracticeSessionScreen() {
         <UndoBar key={lastSaved.logId} message={`Saved "${lastSaved.name}"`} onUndo={handleUndo} onExpire={clearLastSaved} />
       )}
 
-      {phase === 'setup' && (
+      {(phase === 'setup' || phase === 'next-filter') && (
         <SetupPhase
           allTags={allTags}
           activeTags={activeTags}
           advancedFilter={advancedFilter}
+          forNextItem={phase === 'next-filter'}
           onToggleTag={toggleTag}
           onOpenFilterModal={() => setShowFilterModal(true)}
           onStart={() => drawNextItem()}
@@ -335,31 +378,12 @@ export default function PracticeSessionScreen() {
       {phase === 'draw' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {advancedFilter ? (
-              <button
-                onClick={() => setShowFilterModal(true)}
-                className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-3 py-2 w-full mb-2"
-              >
-                <span className="text-violet-400 text-xs font-mono text-left truncate">⚡ {advancedFilter}</span>
-                <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
-              </button>
-            ) : allTags.length > 0 && (
-              <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
-                {allTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      activeTags.has(tag) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
+            {(allTags.length > 0 || advancedFilter) && (
+              <FilterLine activeTags={activeTags} advancedFilter={advancedFilter} onChange={openFilterStep} />
             )}
 
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
+            <ItemTags tags={currentItem.tags ?? []} />
 
             {revealed ? (
               <div className="flex items-center gap-2">
@@ -398,30 +422,8 @@ export default function PracticeSessionScreen() {
       {phase === 'rate' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {advancedFilter ? (
-              <button
-                onClick={() => setShowFilterModal(true)}
-                className="flex items-center justify-between bg-slate-800 border border-violet-600 rounded-xl px-3 py-2 w-full mb-2"
-              >
-                <span className="text-violet-400 text-xs font-mono text-left truncate">⚡ {advancedFilter}</span>
-                <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
-              </button>
-            ) : allTags.length > 0 && (
-              <div className="flex gap-2 mb-2 overflow-x-auto w-full pb-1">
-                {allTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      activeTags.has(tag) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            )}
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
+            <ItemTags tags={currentItem.tags ?? []} />
             <p className="text-slate-400 text-sm">How did it go?</p>
           </div>
 
