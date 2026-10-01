@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getActiveTab } from '../tabs'
+import { getActivities } from '../storage'
 
 interface TabBarProps {
   activityId: string
@@ -57,6 +58,12 @@ function BarChartIcon() {
   )
 }
 
+/** "trick" → "Tricks"; "Items" if the activity can't be found. */
+function itemsTabLabel(activityId: string): string {
+  const label = getActivities().find(a => a.id === activityId)?.itemLabel.trim()
+  return label ? `${label.charAt(0).toUpperCase()}${label.slice(1)}s` : 'Items'
+}
+
 export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -101,7 +108,7 @@ export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
           className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'items' ? activeClass : inactive}`}
         >
           <ListIcon />
-          <span className="text-[10px] font-medium">Items</span>
+          <span className="text-[10px] font-medium max-w-[4.5rem] truncate">{itemsTabLabel(activityId)}</span>
         </button>
 
         <button
