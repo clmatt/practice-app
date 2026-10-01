@@ -32,6 +32,21 @@ describe('ColorDistributionChart', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('on touch, keeps the summary until you tap somewhere outside the chart', () => {
+    render(<><ColorDistributionChart rows={rows} /><p>elsewhere</p></>)
+    const svg = screen.getByRole('img')
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 340, height: 220, right: 340, bottom: 220, x: 0, y: 0, toJSON: () => ({}) })
+    fireEvent.pointerDown(svg, { clientX: 330, clientY: 100, pointerType: 'touch' })
+    fireEvent.pointerLeave(svg, { pointerType: 'touch' })
+    expect(screen.getByRole('status')).toHaveTextContent('Sep 11')
+
+    fireEvent.pointerDown(svg, { clientX: 10, clientY: 100, pointerType: 'touch' })
+    expect(screen.getByRole('status')).toHaveTextContent('Sep 1')
+
+    fireEvent.pointerDown(screen.getByText('elsewhere'), { pointerType: 'touch' })
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
   it('offers the numbers as a table', () => {
     render(<ColorDistributionChart rows={rows} />)
     fireEvent.click(screen.getByText('Show as table'))

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { buildColorChart, type ChartBox, type ChartPoint, type ColorCounts } from '../colorChart'
 import { formatDateKey } from '../dates'
 import { RATING_COLORS, SURFACE } from '../palette'
@@ -17,6 +17,17 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
   const chart = useMemo(() => buildColorChart(rows, BOX), [rows])
   const svgRef = useRef<SVGSVGElement>(null)
   const [active, setActive] = useState<ChartPoint | null>(null)
+  const plotRef = useRef<HTMLDivElement>(null)
+
+  // On a phone the summary stays after you lift your finger; tapping anywhere outside the chart closes it.
+  useEffect(() => {
+    if (!active) return
+    function closeIfOutside(e: globalThis.PointerEvent) {
+      if (!plotRef.current?.contains(e.target as Node)) setActive(null)
+    }
+    document.addEventListener('pointerdown', closeIfOutside)
+    return () => document.removeEventListener('pointerdown', closeIfOutside)
+  }, [active])
 
   if (!chart) return null
 
@@ -41,7 +52,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
         ))}
       </ul>
 
-      <div className="relative">
+      <div ref={plotRef} className="relative">
         <svg
           ref={svgRef}
           role="img"

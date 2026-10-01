@@ -11,9 +11,10 @@ describe('buildColorChart', () => {
     expect(buildColorChart([], box)).toBeNull()
   })
 
-  it('spaces days by real time, not by practice day', () => {
+  it('gives every practice day the same width, however far apart the dates are', () => {
+    // Spacing by real time squeezed bursts of daily practice into spikes.
     const chart = buildColorChart([row('2026-09-01', 1, 0, 0), row('2026-09-02', 1, 0, 0), row('2026-09-11', 1, 0, 0)], box)!
-    expect(chart.points.map(p => Math.round(p.x))).toEqual([30, 56, 290])
+    expect(chart.points.map(p => Math.round(p.x))).toEqual([30, 160, 290])
   })
 
   it('scales y to the largest total, with 0 at the bottom', () => {
@@ -56,8 +57,8 @@ describe('buildColorChart', () => {
   it('finds the nearest day to a horizontal position', () => {
     const chart = buildColorChart([row('2026-09-01', 1, 0, 0), row('2026-09-02', 2, 0, 0), row('2026-09-11', 3, 0, 0)], box)!
     expect(chart.nearest(0).date).toBe('2026-09-01')
-    expect(chart.nearest(60).date).toBe('2026-09-02')
-    expect(chart.nearest(200).date).toBe('2026-09-11')
+    expect(chart.nearest(140).date).toBe('2026-09-02')
+    expect(chart.nearest(250).date).toBe('2026-09-11')
   })
 })
 

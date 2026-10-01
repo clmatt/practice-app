@@ -48,12 +48,13 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
   const plotTop = box.top
   const plotBottom = box.height - box.bottom
 
-  const first = rows[0].date
-  const span = daysBetweenKeys(first, rows[rows.length - 1].date)
-  const points: ChartPoint[] = span === 0
+  const span = daysBetweenKeys(rows[0].date, rows[rows.length - 1].date)
+  // Every practice day gets the same width. Spacing by calendar time squeezed
+  // bursts of daily practice into narrow spikes next to long empty gaps.
+  const points: ChartPoint[] = rows.length === 1
     // A single day: show it as a flat band across the whole width.
-    ? [{ ...rows[0], x: plotLeft }, { ...rows[rows.length - 1], x: plotRight }]
-    : rows.map(r => ({ ...r, x: plotLeft + (daysBetweenKeys(first, r.date) / span) * (plotRight - plotLeft) }))
+    ? [{ ...rows[0], x: plotLeft }, { ...rows[0], x: plotRight }]
+    : rows.map((r, i) => ({ ...r, x: plotLeft + (i / (rows.length - 1)) * (plotRight - plotLeft) }))
 
   const yMax = Math.max(1, ...rows.map(r => r.red + r.yellow + r.green))
   const y = (value: number) => plotBottom - (value / yMax) * (plotBottom - plotTop)
