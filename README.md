@@ -62,6 +62,7 @@ src/
   backup.ts           export/import file format and import conflict handling
   dates.ts            local-calendar-date helpers
   autoPractice.ts     what Auto Practice draws next (filters, skips, done states)
+  itemList.ts         search, sort and filters for the Items list (kept in the URL)
   selection.ts        weighted random choice for Auto Practice
   filterParser.ts     advanced tag filter expressions ("a" && !("b" || "c"))
   tabs.ts / itemRuns.ts / utils.ts   small helpers (active tab from route, color-streak grouping, id generation)

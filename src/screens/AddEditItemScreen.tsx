@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import ColorPicker from '../components/ColorPicker'
 import TabBar from '../components/TabBar'
 import { getActivities, getItems, saveItem, deleteItemWithLogs } from '../storage'
@@ -9,6 +9,7 @@ import type { Activity, Color, Item } from '../types'
 export default function AddEditItemScreen() {
   const { activityId, itemId } = useParams<{ activityId: string; itemId?: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const isEditing = Boolean(itemId)
 
   const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
@@ -65,7 +66,10 @@ export default function AddEditItemScreen() {
       })
     }
 
-    navigate(`/activity/${activityId}/manage`)
+    if (!isEditing) navigate(`/activity/${activityId}/manage`)
+    // Editing is opened from the item's page: go back to it rather than stacking another copy.
+    else if (location.key !== 'default') navigate(-1)
+    else navigate(`/activity/${activityId}/manage/${itemId}`, { replace: true })
   }
 
   function toggleActivityTag(tag: string) {

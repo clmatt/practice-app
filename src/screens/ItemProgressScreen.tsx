@@ -31,8 +31,10 @@ export default function ItemProgressScreen() {
   const item = activity ? getItems(activityId!).find(i => i.id === itemId) : undefined
 
   useEffect(() => {
-    if (!activity || !item) navigate('/')
-  }, [activity, item, navigate])
+    // A deleted item sends you back to the list; an unknown activity to Home.
+    if (!activity) navigate('/')
+    else if (!item) navigate(`/activity/${activityId}/manage`, { replace: true })
+  }, [activity, item, activityId, navigate])
 
   if (!activity || !item) return null
 
@@ -44,12 +46,28 @@ export default function ItemProgressScreen() {
   return (
     <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
-        <h1 className="text-xl font-bold mb-1">{item.name}</h1>
-        <p className="text-slate-400 text-sm mb-4">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <h1 className="text-xl font-bold">{item.name}</h1>
+          <button
+            onClick={() => navigate(`/activity/${activityId}/manage/${item.id}/edit`)}
+            className="shrink-0 bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-1.5 text-sm font-semibold"
+          >
+            Edit
+          </button>
+        </div>
+        <p className="text-slate-400 text-sm mb-2">
           <span style={{ color: BAR_COLOR[item.color] }}>●</span>{' '}
           Currently {item.color}
           {totalSessions > 0 && ` · ${totalSessions} session${totalSessions === 1 ? '' : 's'} total`}
         </p>
+        {(item.tags ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {[...(item.tags ?? [])].sort().map(tag => (
+              <span key={tag} className="bg-slate-800 rounded-full px-2 py-0.5 text-xs text-slate-400">{tag}</span>
+            ))}
+          </div>
+        )}
+        <div className="mb-2" />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
