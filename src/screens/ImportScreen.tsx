@@ -6,13 +6,8 @@ import {
   type ImportPayload, type ActivityResolution, type ItemResolution, type ImportStats, type ItemConflict,
 } from '../backup'
 import { NewerSchemaError } from '../migrations'
-import type { Activity, Color } from '../types'
-
-const DOT: Record<Color, string> = {
-  red: '#dc2626',
-  yellow: '#eab308',
-  green: '#22c55e',
-}
+import type { Activity } from '../types'
+import { RATING_COLORS } from '../palette'
 
 type WizardStep = 'select' | 'activity' | 'item' | 'summary'
 
@@ -268,7 +263,7 @@ export default function ImportScreen() {
               <div className="flex-1">
                 <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Existing</div>
                 <div className="flex items-center gap-1.5 text-sm text-slate-300">
-                  <span style={{ color: DOT[currentItemConflict.existingItem.color] }}>●</span>
+                  <span style={{ color: RATING_COLORS[currentItemConflict.existingItem.color] }}>●</span>
                   {currentItemConflict.existingItem.color} ·{' '}
                   {getLogs().filter(l => l.itemId === currentItemConflict.existingItem.id).length} sessions
                 </div>
@@ -277,7 +272,7 @@ export default function ImportScreen() {
               <div className="flex-1">
                 <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Importing</div>
                 <div className="flex items-center gap-1.5 text-sm text-slate-300">
-                  <span style={{ color: DOT[currentItemConflict.importedItem.color] }}>●</span>
+                  <span style={{ color: RATING_COLORS[currentItemConflict.importedItem.color] }}>●</span>
                   {currentItemConflict.importedItem.color} ·{' '}
                   {payload!.logs.filter(l => l.itemId === currentItemConflict.importedItem.id).length} sessions
                 </div>

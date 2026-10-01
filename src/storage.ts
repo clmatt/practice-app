@@ -2,6 +2,7 @@ import type { Activity, Item, PracticeLog, Color, SessionSummary, SavedFilter } 
 import { openDb, readAll, applyOps, deleteDb, type Meta, type RecordStore, type WriteOp } from './db'
 import { CURRENT_SCHEMA_VERSION, migrateSnapshot, type DataSnapshot } from './migrations'
 import { localDateKey } from './dates'
+import { compareNatural } from './sorting'
 
 export type { SessionSummary, SavedFilter } from './types'
 
@@ -481,7 +482,7 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
         colorBefore: firstLogByItem.get(itemId)!.colorBefore,
         colorAfter: lastLogByItem.get(itemId)!.colorAfter,
       }))
-      .sort((a, b) => a.itemName.localeCompare(b.itemName))
+      .sort((a, b) => compareNatural(a.itemName, b.itemName))
 
     const changes = allPracticed.filter(p => p.colorBefore !== p.colorAfter)
 

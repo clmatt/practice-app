@@ -8,6 +8,9 @@ import ColorPicker from '../components/ColorPicker'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
 import UndoBar from '../components/UndoBar'
 import { buildFilteredPool, drawFrom, tagsOf, type DrawResult } from '../autoPractice'
+import { sortTags } from '../sorting'
+import ToggleChip from '../components/ToggleChip'
+import TagList from '../components/TagList'
 
 // 'next-filter' is the filter step between items: same screen as setup, for the next draw.
 type Phase = 'setup' | 'next-filter' | 'draw' | 'rate' | 'done'
@@ -49,17 +52,9 @@ function SetupPhase({ allTags, activeTags, advancedFilter, forNextItem, onToggle
             </p>
             <div className="flex flex-wrap gap-2">
               {allTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => onToggleTag(tag)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    activeTags.has(tag)
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-slate-700 text-slate-300'
-                  }`}
-                >
+                <ToggleChip key={tag} size="md" selected={activeTags.has(tag)} onClick={() => onToggleTag(tag)}>
                   {tag}
-                </button>
+                </ToggleChip>
               ))}
             </div>
           </>
@@ -91,7 +86,7 @@ function FilterLine({ activeTags, advancedFilter, onChange }: {
   advancedFilter: string | null
   onChange: () => void
 }) {
-  const filter = advancedFilter ? `⚡ ${advancedFilter}` : activeTags.size > 0 ? [...activeTags].sort().join(', ') : 'all items'
+  const filter = advancedFilter ? `⚡ ${advancedFilter}` : activeTags.size > 0 ? sortTags(activeTags).join(', ') : 'all items'
   return (
     <div className="flex items-center justify-between gap-3 w-full text-xs mb-2">
       <span className="text-slate-500 truncate">Filter: {filter}</span>
@@ -100,17 +95,6 @@ function FilterLine({ activeTags, advancedFilter, onChange }: {
   )
 }
 
-/** The current item's own tags, as plain labels. */
-function ItemTags({ tags }: { tags: string[] }) {
-  if (tags.length === 0) return null
-  return (
-    <div className="flex flex-wrap justify-center gap-1.5">
-      {[...tags].sort().map(tag => (
-        <span key={tag} className="bg-slate-800 rounded-full px-2.5 py-0.5 text-xs text-slate-400">{tag}</span>
-      ))}
-    </div>
-  )
-}
 
 interface FilterExhaustedDoneProps {
   advancedFilter: string | null
@@ -127,11 +111,7 @@ function FilterExhaustedDone({ advancedFilter, activeTags, onChangeFilter, onEnd
         {advancedFilter ? (
           <p className="text-xs text-slate-400 font-mono bg-slate-800 px-3 py-2 rounded-lg">{advancedFilter}</p>
         ) : activeTags.size > 0 && (
-          <div className="flex flex-wrap gap-2 justify-center">
-            {[...activeTags].map(tag => (
-              <span key={tag} className="bg-slate-700 rounded-full px-3 py-1 text-xs text-slate-300">{tag}</span>
-            ))}
-          </div>
+          <TagList tags={[...activeTags]} className="justify-center" />
         )}
       </div>
       <div className="flex flex-col gap-3 w-full">
@@ -383,7 +363,7 @@ export default function PracticeSessionScreen() {
             )}
 
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
-            <ItemTags tags={currentItem.tags ?? []} />
+            <TagList tags={currentItem.tags} className="justify-center" />
 
             {revealed ? (
               <div className="flex items-center gap-2">
@@ -423,7 +403,7 @@ export default function PracticeSessionScreen() {
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
-            <ItemTags tags={currentItem.tags ?? []} />
+            <TagList tags={currentItem.tags} className="justify-center" />
             <p className="text-slate-400 text-sm">How did it go?</p>
           </div>
 

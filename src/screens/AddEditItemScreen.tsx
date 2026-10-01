@@ -5,6 +5,8 @@ import TabBar from '../components/TabBar'
 import { getActivities, getItems, saveItem, deleteItemWithLogs } from '../storage'
 import { generateId } from '../utils'
 import type { Activity, Color, Item } from '../types'
+import { sortTags } from '../sorting'
+import ToggleChip from '../components/ToggleChip'
 
 export default function AddEditItemScreen() {
   const { activityId, itemId } = useParams<{ activityId: string; itemId?: string }>()
@@ -16,10 +18,10 @@ export default function AddEditItemScreen() {
   const [existingItem] = useState<Item | null>(() =>
     itemId ? (getItems(activityId!).find(i => i.id === itemId) ?? null) : null)
   const [allActivityTags] = useState<string[]>(() =>
-    [...new Set(getItems(activityId!).flatMap(i => i.tags ?? []))].sort())
+    sortTags(getItems(activityId!).flatMap(i => i.tags ?? [])))
   const [name, setName] = useState(() => existingItem?.name ?? '')
   const [color, setColor] = useState<Color | null>(() => existingItem?.color ?? null)
-  const [tags, setTags] = useState<string[]>(() => [...(existingItem?.tags ?? [])].sort())
+  const [tags, setTags] = useState<string[]>(() => sortTags(existingItem?.tags ?? []))
   const [tagInput, setTagInput] = useState('')
   const [error, setError] = useState('')
   const [tagInputKey, setTagInputKey] = useState(0)
@@ -79,7 +81,7 @@ export default function AddEditItemScreen() {
   function addTag() {
     const trimmed = tagInput.trim().replace(/"/g, '')
     if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed].sort())
+      setTags(sortTags([...tags, trimmed]))
     }
     setTagInput('')
     // Increment key to remount the input — gives iOS a fresh element so auto-capitalize resets
@@ -142,18 +144,9 @@ export default function AddEditItemScreen() {
             {allActivityTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {allActivityTags.map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleActivityTag(tag)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      tags.includes(tag)
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-700 text-slate-300'
-                    }`}
-                  >
+                  <ToggleChip key={tag} selected={tags.includes(tag)} onClick={() => toggleActivityTag(tag)}>
                     {tag}
-                  </button>
+                  </ToggleChip>
                 ))}
               </div>
             )}

@@ -6,6 +6,7 @@ import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import UndoBar from '../components/UndoBar'
+import { compareNatural } from '../sorting'
 
 type Phase = 'list' | 'rate'
 
@@ -32,7 +33,7 @@ export default function ManualPracticeScreen() {
   const filtered = searchQuery.trim() === ''
     ? items
     : items.filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-  const filteredItems = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+  const filteredItems = [...filtered].sort((a, b) => compareNatural(a.name, b.name))
 
   function handleSelectItem(item: Item) {
     setSelectedItem(item)

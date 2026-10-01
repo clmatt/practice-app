@@ -1,4 +1,5 @@
 import type { Color, Item } from './types'
+import { compareNatural, sortTags } from './sorting'
 
 /** Search, filter and sort for the Items list. */
 
@@ -49,7 +50,7 @@ export function writeListView(view: ItemListView): URLSearchParams {
   if (view.query !== '') params.set('q', view.query)
   if (view.sort !== 'name-asc') params.set('sort', view.sort)
   if (view.colors.size > 0) params.set('color', COLORS.filter(c => view.colors.has(c)).join(','))
-  for (const tag of [...view.tags].sort()) params.append('tag', tag)
+  for (const tag of sortTags(view.tags)) params.append('tag', tag)
   return params
 }
 
@@ -77,8 +78,8 @@ export function filterAndSortItems(
 
   return kept.sort((a, b) => {
     switch (sort) {
-      case 'name-asc': return a.name.localeCompare(b.name)
-      case 'name-desc': return b.name.localeCompare(a.name)
+      case 'name-asc': return compareNatural(a.name, b.name)
+      case 'name-desc': return compareNatural(b.name, a.name)
       case 'practiced-recent': return byLastPracticed(lastPracticedAt[a.id], lastPracticedAt[b.id], true)
       case 'practiced-oldest': return byLastPracticed(lastPracticedAt[a.id], lastPracticedAt[b.id], false)
       case 'date-newest': return b.createdAt.localeCompare(a.createdAt)

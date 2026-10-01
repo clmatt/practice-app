@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import {
   getActivities, getItems, getSessionHistory, getColorDistributionByDay, getPracticeCountByItem,
 } from '../storage'
 import { formatDateKey } from '../dates'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
+import ColorDistributionChart from '../components/ColorDistributionChart'
 
 function formatDate(dateKey: string): string {
   return formatDateKey(dateKey, { month: 'long', day: 'numeric', year: 'numeric' })
@@ -91,21 +91,12 @@ export default function StatsScreen() {
             </div>
 
             <div>
-              <h2 className="text-base font-semibold mb-3">Color Distribution</h2>
+              <h2 className="text-base font-semibold mb-1">Ratings over time</h2>
+              <p className="text-xs text-slate-500 mb-3">How many {activity.itemLabel}s were each color at the end of each practice day.</p>
               {chartData.length === 0 ? (
                 <p className="text-slate-400 text-sm">No practice data yet.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={chartData}>
-                    <CartesianGrid stroke="#334155" />
-                    <XAxis dataKey="date" tickFormatter={(val: string) => val.slice(5)} />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="red" stackId="a" stroke="#ef4444" fill="#ef4444" />
-                    <Area type="monotone" dataKey="yellow" stackId="a" stroke="#eab308" fill="#eab308" />
-                    <Area type="monotone" dataKey="green" stackId="a" stroke="#22c55e" fill="#22c55e" />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <ColorDistributionChart rows={chartData} />
               )}
             </div>
           </div>

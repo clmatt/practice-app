@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import HomeScreen from './screens/HomeScreen'
 import ActivityDashboardScreen from './screens/ActivityDashboardScreen'
@@ -11,10 +10,7 @@ import ImportScreen from './screens/ImportScreen'
 import PracticeChooserScreen from './screens/PracticeChooserScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import StorageErrorBanner from './components/StorageErrorBanner'
-import { lazyWithReload } from './lazyWithReload'
-
-// Stats pulls in the charting library (most of the bundle); load it on demand.
-const StatsScreen = lazy(lazyWithReload(() => import('./screens/StatsScreen')))
+import StatsScreen from './screens/StatsScreen'
 
 export default function App() {
   return (
@@ -22,21 +18,19 @@ export default function App() {
       <div className="h-screen overflow-hidden bg-slate-950 text-slate-100 max-w-md mx-auto" style={{ paddingTop: 'env(safe-area-inset-top)', height: '100dvh' }}>
         <StorageErrorBanner />
         <ErrorBoundary>
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/" element={<HomeScreen />} />
-              <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />
-              <Route path="/activity/:activityId/practice-chooser" element={<PracticeChooserScreen />} />
-              <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
-              <Route path="/activity/:activityId/manual-practice" element={<ManualPracticeScreen />} />
-              <Route path="/activity/:activityId/manage" element={<ManageItemsScreen />} />
-              <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen key="add" />} />
-              <Route path="/activity/:activityId/manage/:itemId" element={<ItemProgressScreen />} />
-              <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen key="edit" />} />
-              <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
-              <Route path="/import" element={<ImportScreen />} />
-            </Routes>
-          </Suspense>
+          <Routes>
+            <Route path="/" element={<HomeScreen />} />
+            <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />
+            <Route path="/activity/:activityId/practice-chooser" element={<PracticeChooserScreen />} />
+            <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
+            <Route path="/activity/:activityId/manual-practice" element={<ManualPracticeScreen />} />
+            <Route path="/activity/:activityId/manage" element={<ManageItemsScreen />} />
+            <Route path="/activity/:activityId/manage/add" element={<AddEditItemScreen key="add" />} />
+            <Route path="/activity/:activityId/manage/:itemId" element={<ItemProgressScreen />} />
+            <Route path="/activity/:activityId/manage/:itemId/edit" element={<AddEditItemScreen key="edit" />} />
+            <Route path="/activity/:activityId/stats" element={<StatsScreen />} />
+            <Route path="/import" element={<ImportScreen />} />
+          </Routes>
         </ErrorBoundary>
       </div>
     </HashRouter>

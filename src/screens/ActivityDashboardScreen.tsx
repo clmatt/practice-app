@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getActivities, getItems, saveActivity } from '../storage'
+import { getActivities, getItems, saveActivity, deleteActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
@@ -44,6 +44,13 @@ export default function ActivityDashboardScreen() {
     saveActivity(updated)
     setActivity(updated)
     setEditingSettings(false)
+  }
+
+  function handleDeleteActivity() {
+    if (!activity) return
+    if (!window.confirm(`Delete "${activity.name}" and all its ${activity.itemLabel}s and practice history? This cannot be undone.`)) return
+    deleteActivity(activity.id)
+    navigate('/', { replace: true })
   }
 
   if (!activity) return null
@@ -148,6 +155,12 @@ export default function ActivityDashboardScreen() {
             className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold"
           >
             Save Settings
+          </button>
+          <button
+            onClick={handleDeleteActivity}
+            className="mt-6 mb-2 text-red-400 text-sm font-medium py-2 w-full text-center"
+          >
+            Delete activity
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { getTodayPracticedItemIds, getLastPracticedByItem } from './storage'
 import { selectItem } from './selection'
 import { parseFilter, evaluateFilter } from './filterParser'
 import type { Activity, Item } from './types'
+import { sortTags } from './sorting'
 
 /** Decision logic for Auto Practice: which items are in play and what to draw next. */
 
@@ -47,5 +48,5 @@ export function drawFrom(
 }
 
 export function tagsOf(items: Item[]): string[] {
-  return [...new Set(items.flatMap(i => i.tags ?? []))].sort()
+  return sortTags(items.flatMap(i => i.tags ?? []))
 }

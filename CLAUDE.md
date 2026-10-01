@@ -25,4 +25,6 @@ Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflow
 - `tsconfig.app.json` has `erasableSyntaxOnly: true`: no enums, namespaces or constructor parameter properties.
 - Only components are exported from `.tsx` files (`react-refresh/only-export-components` lint rule); put helpers in `.ts` modules.
 - Screens read storage directly in `useState` initialisers; effects are only for redirects (`react-hooks/set-state-in-effect` is enforced).
+- Rating colors come from `RATING_COLORS` in `src/palette.ts` — never hard-code red/yellow/green hex values or Tailwind color classes for ratings. (Green is emerald on purpose: it was chosen with a colour-blindness validator.)
+- Show tags with `components/TagList` (labels) or `components/ToggleChip` (selectable); sort tags/names with `sortTags`/`compareNatural` from `src/sorting.ts`, never plain `.sort()`.
 - Design specs and plans live in `docs/superpowers/`.

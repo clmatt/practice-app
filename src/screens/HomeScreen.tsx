@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActivities, saveActivity, deleteActivity, getLastPracticedByItem, getLastBackupAt } from '../storage'
+import { getActivities, saveActivity, getLastPracticedByItem, getLastBackupAt } from '../storage'
 import { localDateKey, daysBetweenKeys } from '../dates'
 import { generateId } from '../utils'
 import { exportData, describeLastBackup } from '../backup'
@@ -55,12 +55,6 @@ export default function HomeScreen() {
     setAdding(false)
   }
 
-  function handleDelete(id: string, name: string) {
-    if (!window.confirm(`Delete "${name}" and all its items? This cannot be undone.`)) return
-    deleteActivity(id)
-    setActivities(getActivities())
-  }
-
   return (
     <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4 pb-2">
@@ -74,19 +68,18 @@ export default function HomeScreen() {
 
         <div className="flex flex-col gap-3 mb-6">
           {activities.map(a => (
-            <div key={a.id} className="flex items-center bg-slate-800 rounded-xl px-4 py-3">
-              <button className="flex-1 text-left" onClick={() => navigate(`/activity/${a.id}`)}>
-                <div className="font-semibold">{a.name}</div>
-                <div className="text-xs text-slate-400 capitalize">{a.itemLabel}s</div>
-                <div className="text-xs text-slate-500 mt-0.5">{lastPracticedLabel(a.id)}</div>
-              </button>
-              <button
-                onClick={() => handleDelete(a.id, a.name)}
-                className="text-slate-500 hover:text-red-400 text-sm ml-4"
-              >
-                Delete
-              </button>
-            </div>
+            <button
+              key={a.id}
+              onClick={() => navigate(`/activity/${a.id}`)}
+              className="flex items-center bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-3 text-left"
+            >
+              <span className="flex-1">
+                <span className="block font-semibold">{a.name}</span>
+                <span className="block text-xs text-slate-400 capitalize">{a.itemLabel}s</span>
+                <span className="block text-xs text-slate-500 mt-0.5">{lastPracticedLabel(a.id)}</span>
+              </span>
+              <span className="text-violet-400 text-sm ml-4">›</span>
+            </button>
           ))}
         </div>
 

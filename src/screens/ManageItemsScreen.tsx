@@ -6,6 +6,9 @@ import { getActivities, getItems, getLastPracticedByItem, getPracticeCountByItem
 import { filterAndSortItems, readListView, writeListView, ITEM_SORT_LABELS, type ItemListView, type ItemSort } from '../itemList'
 import { formatDateKey, localDateKey } from '../dates'
 import type { Activity, Color, Item } from '../types'
+import { sortTags } from '../sorting'
+import ToggleChip from '../components/ToggleChip'
+import TagList from '../components/TagList'
 
 const COLORS: Color[] = ['red', 'yellow', 'green']
 
@@ -47,7 +50,7 @@ export default function ManageItemsScreen() {
   if (!activity) return null
 
   const label = activity.itemLabel
-  const allTags = [...new Set(items.flatMap(i => i.tags ?? []))].sort()
+  const allTags = sortTags(items.flatMap(i => i.tags ?? []))
   const activeFilterCount = colors.size + tags.size
   const shown = filterAndSortItems(items, { query, colors, tags }, sort, lastPracticedAt)
 
@@ -99,30 +102,18 @@ export default function ManageItemsScreen() {
           <div className="flex flex-col gap-2 mb-3">
             <div className="flex gap-2">
               {COLORS.map(color => (
-                <button
-                  key={color}
-                  onClick={() => update({ colors: toggled(colors, color) })}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
-                    colors.has(color) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
-                  }`}
-                >
+                <ToggleChip key={color} selected={colors.has(color)} onClick={() => update({ colors: toggled(colors, color) })}>
                   <ColorDot color={color} size="sm" />
                   <span className="capitalize">{color}</span>
-                </button>
+                </ToggleChip>
               ))}
             </div>
             {allTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {allTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => update({ tags: toggled(tags, tag) })}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      tags.has(tag) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'
-                    }`}
-                  >
+                  <ToggleChip key={tag} selected={tags.has(tag)} onClick={() => update({ tags: toggled(tags, tag) })}>
                     {tag}
-                  </button>
+                  </ToggleChip>
                 ))}
               </div>
             )}
@@ -165,15 +156,7 @@ export default function ManageItemsScreen() {
                     </div>
                     <span className="text-violet-400 text-sm">›</span>
                   </div>
-                  {(item.tags ?? []).length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {[...(item.tags ?? [])].sort().map(tag => (
-                        <span key={tag} className="bg-slate-700 rounded-full px-2 py-0.5 text-xs text-slate-300">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <TagList tags={item.tags} />
                 </Link>
               </li>
             ))}

@@ -49,7 +49,7 @@ Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests
 
 ## How it works
 
-**Stack:** React 19, TypeScript, React Router 7 (hash routing, so it works on GitHub Pages), Tailwind CSS 3, Recharts, Vite, vite-plugin-pwa.
+**Stack:** React 19, TypeScript, React Router 7 (hash routing, so it works on GitHub Pages), Tailwind CSS 3, Vite, vite-plugin-pwa. The Stats chart is a small hand-written SVG component (no charting library).
 
 ```
 src/
@@ -63,6 +63,9 @@ src/
   dates.ts            local-calendar-date helpers
   autoPractice.ts     what Auto Practice draws next (filters, skips, done states)
   itemList.ts         search, sort and filters for the Items list (kept in the URL)
+  colorChart.ts       geometry for the Stats chart (drawn by components/ColorDistributionChart.tsx)
+  palette.ts          the red/yellow/green rating colors, used everywhere
+  sorting.ts          natural text order (V2 before V10) for tags and names
   selection.ts        weighted random choice for Auto Practice
   filterParser.ts     advanced tag filter expressions ("a" && !("b" || "c"))
   tabs.ts / itemRuns.ts / utils.ts   small helpers (active tab from route, color-streak grouping, id generation)

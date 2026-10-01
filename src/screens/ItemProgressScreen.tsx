@@ -2,21 +2,10 @@ import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getActivities, getItems, getLogs, getNotesForItem } from '../storage'
 import { formatDateKey } from '../dates'
-import type { Color } from '../types'
 import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
-
-const BAR_COLOR: Record<Color, string> = {
-  red: '#dc2626',
-  yellow: '#eab308',
-  green: '#22c55e',
-}
-
-const TEXT_CLASS: Record<Color, string> = {
-  red: 'text-red-400',
-  yellow: 'text-yellow-400',
-  green: 'text-green-400',
-}
+import TagList from '../components/TagList'
+import { RATING_COLORS } from '../palette'
 
 function formatDateRange(start: string, end: string): string {
   const fmt = (d: string) => formatDateKey(d, { month: 'short', day: 'numeric' })
@@ -56,17 +45,11 @@ export default function ItemProgressScreen() {
           </button>
         </div>
         <p className="text-slate-400 text-sm mb-2">
-          <span style={{ color: BAR_COLOR[item.color] }}>●</span>{' '}
+          <span style={{ color: RATING_COLORS[item.color] }}>●</span>{' '}
           Currently {item.color}
           {totalSessions > 0 && ` · ${totalSessions} session${totalSessions === 1 ? '' : 's'} total`}
         </p>
-        {(item.tags ?? []).length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {[...(item.tags ?? [])].sort().map(tag => (
-              <span key={tag} className="bg-slate-800 rounded-full px-2 py-0.5 text-xs text-slate-400">{tag}</span>
-            ))}
-          </div>
-        )}
+        <TagList tags={item.tags} className="mb-2" />
         <div className="mb-2" />
       </div>
 
@@ -82,8 +65,8 @@ export default function ItemProgressScreen() {
                   key={i}
                   style={{
                     height: `${run.count * 48}px`,
-                    backgroundColor: BAR_COLOR[run.color],
-                    boxShadow: i === runs.length - 1 ? `0 0 8px ${BAR_COLOR[run.color]}88` : undefined,
+                    backgroundColor: RATING_COLORS[run.color],
+                    boxShadow: i === runs.length - 1 ? `0 0 8px ${RATING_COLORS[run.color]}88` : undefined,
                   }}
                 />
               ))}
@@ -99,7 +82,7 @@ export default function ItemProgressScreen() {
                     className="flex flex-col justify-center"
                     style={{ height: `${run.count * 48}px` }}
                   >
-                    <span className={`text-sm font-semibold ${TEXT_CLASS[run.color]}`}>
+                    <span className="text-sm font-semibold" style={{ color: RATING_COLORS[run.color] }}>
                       {run.color.charAt(0).toUpperCase() + run.color.slice(1)}
                       {isCurrent && <span className="text-slate-500 font-normal"> · current</span>}
                     </span>
