@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import PracticeSessionScreen from '../screens/PracticeSessionScreen'
-import { saveActivity, saveItem } from '../storage'
+import { saveActivity, saveItem, recordPractice, getItems } from '../storage'
 import type { Activity, Item } from '../types'
 
 const activity = (o: Partial<Activity> = {}): Activity => ({
@@ -21,7 +21,7 @@ function seed(o: Partial<Activity> = {}) {
 }
 
 function renderSession() {
-  render(
+  return render(
     <MemoryRouter initialEntries={['/activity/act-1/practice']}>
       <Routes>
         <Route path="/activity/:activityId/practice" element={<PracticeSessionScreen />} />
@@ -160,5 +160,55 @@ describe('archived items', () => {
     click('Start — practice all')
     expect(screen.getByText('Roof problem')).toBeInTheDocument()
     expect(screen.getByText('0 / 1 done')).toBeInTheDocument()
+  })
+})
+
+describe('resuming a session', () => {
+  it('reopening Auto Practice continues where it was, with the summary', () => {
+    seed()
+    const first = renderSession()
+    startWith('V3')
+    first.unmount()
+
+    renderSession()
+    expect(screen.getByText('Slab problem')).toBeInTheDocument()
+    expect(screen.getByText(/Filter: V3/)).toBeInTheDocument()
+    rateCurrent()
+    click('End session')
+    expect(screen.getByText('You practiced 1 item')).toBeInTheDocument()
+  })
+
+  it('keeps the summary of items rated before the app restarted', () => {
+    seed()
+    const first = renderSession()
+    startWith('V3')
+    rateCurrent()
+    first.unmount()
+
+    renderSession()
+    click('End session')
+    expect(screen.getByText('You practiced 1 item')).toBeInTheDocument()
+  })
+
+  it('draws a fresh item when the saved current item was practised', () => {
+    seed()
+    const first = renderSession()
+    startWith('V3')
+    first.unmount()
+    recordPractice({ item: getItems('act-1').find(i => i.id === 'a')!, color: 'green' })
+
+    renderSession()
+    expect(screen.getByText('All done with your current filter.')).toBeInTheDocument()
+  })
+
+  it('Exit ends the session', () => {
+    seed()
+    const first = renderSession()
+    startWith('V3')
+    click('Exit')
+    first.unmount()
+
+    renderSession()
+    expect(screen.getByText('What are you focusing on?')).toBeInTheDocument()
   })
 })

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useActivity } from '../useActivity'
 import { getItems, getActiveItems, recordPractice, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
 import { toggled } from '../utils'
+import { localDateKey } from '../dates'
+import { loadSession, saveSession, clearSession, type SessionEntry } from '../sessionResume'
 import { RATING_ORDER } from '../palette'
 import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
@@ -144,7 +146,7 @@ function FilterExhaustedDone({ filter, onChangeFilter, onEndSession }: FilterExh
 }
 
 interface SessionCompleteDoneProps {
-  sessionLog: Array<{ name: string; colorBefore: Color; colorAfter: Color }>
+  sessionLog: SessionEntry[]
   activityName: string
   onNavigateBack: () => void
 }
@@ -191,17 +193,33 @@ export default function PracticeSessionScreen() {
   const [activity] = useActivity()
   const [items, setItems] = useState<Item[]>(() => (activity ? getActiveItems(activity.id) : []))
   const allTags = useMemo(() => tagsOf(items), [items])
-  const [phase, setPhase] = useState<Phase>('setup')
-  const [currentItem, setCurrentItem] = useState<Item | null>(null)
-  const [filterExhausted, setFilterExhausted] = useState(false)
+  // A session from earlier today (the app was closed or reloaded mid-session) carries on.
+  const [resumed] = useState(() => (activity ? loadSession(activity.id) : null))
+  const [activeTags, setActiveTags] = useState<Set<string>>(() => new Set(resumed?.tags ?? []))
+  const [activeColors, setActiveColors] = useState<Set<Color>>(() => new Set(resumed?.colors ?? []))
+  const [advancedFilter, setAdvancedFilter] = useState<string | null>(() => resumed?.advanced ?? null)
+  const [sessionLog, setSessionLog] = useState<SessionEntry[]>(() => resumed?.sessionLog ?? [])
+  const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(() => new Set(resumed?.skipped ?? []))
+  // Where a resumed session picks up: its item if still due, otherwise the next draw.
+  const [start] = useState<{ phase: Phase; item: Item | null; exhausted: boolean }>(() => {
+    if (!activity || !resumed) return { phase: 'setup', item: null, exhausted: false }
+    const active = getActiveItems(activity.id)
+    const saved = active.find(i => i.id === resumed.currentItemId)
+    if (saved && !getTodayPracticedItemIds(activity.id).has(saved.id) && !resumed.skipped.includes(saved.id)) {
+      return { phase: 'draw', item: saved, exhausted: false }
+    }
+    const savedFilter = { tags: new Set(resumed.tags), colors: new Set(resumed.colors), advanced: resumed.advanced }
+    const result = drawFrom(activity, active, savedFilter, new Set(resumed.skipped))
+    return result.kind === 'item'
+      ? { phase: 'draw', item: result.item, exhausted: false }
+      : { phase: 'done', item: null, exhausted: result.kind === 'filter-exhausted' }
+  })
+  const [phase, setPhase] = useState<Phase>(start.phase)
+  const [currentItem, setCurrentItem] = useState<Item | null>(start.item)
+  const [filterExhausted, setFilterExhausted] = useState(start.exhausted)
   const [revealed, setRevealed] = useState(false)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
-  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
-  const [activeColors, setActiveColors] = useState<Set<Color>>(new Set())
-  const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
-  const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
   const [noteText, setNoteText] = useState('')
-  const [advancedFilter, setAdvancedFilter] = useState<string | null>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
   const clearLastSaved = useCallback(() => setLastSaved(null), [])
@@ -211,11 +229,26 @@ export default function PracticeSessionScreen() {
     if (activity && items.length === 0) navigate(`/activity/${activity.id}`)
   }, [activity, items.length, navigate])
 
-  function drawNextItem(skipped: Set<string> = skippedItemIds) {
+  /** Saves the session so it survives the app restarting. Takes new values explicitly: state updates aren't visible yet. */
+  function remember(next: { log?: SessionEntry[]; skipped?: Set<string>; currentItemId: string | null }) {
+    if (!activity) return
+    saveSession(activity.id, {
+      day: localDateKey(new Date()),
+      tags: [...activeTags],
+      colors: [...activeColors],
+      advanced: advancedFilter,
+      skipped: [...(next.skipped ?? skippedItemIds)],
+      sessionLog: next.log ?? sessionLog,
+      currentItemId: next.currentItemId,
+    })
+  }
+
+  function drawNextItem({ skipped = skippedItemIds, log = sessionLog }: { skipped?: Set<string>; log?: SessionEntry[] } = {}) {
     if (!activity) return
     const freshItems = getActiveItems(activity.id)
     setItems(freshItems)
     const result = drawFrom(activity, freshItems, filter, skipped)
+    remember({ log, skipped, currentItemId: result.kind === 'item' ? result.item.id : null })
     if (result.kind === 'item') {
       setCurrentItem(result.item)
       setPhase('draw')
@@ -237,7 +270,7 @@ export default function PracticeSessionScreen() {
     if (!currentItem) return
     const updated = new Set([...skippedItemIds, currentItem.id])
     setSkippedItemIds(updated)
-    drawNextItem(updated)
+    drawNextItem({ skipped: updated })
   }
 
   const handleSave = () => {
@@ -247,27 +280,33 @@ export default function PracticeSessionScreen() {
     const colorAfter = selectedColor
     const logId = recordPractice({ item: currentItem, color: colorAfter, note: noteText })
 
-    setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
+    const log = [...sessionLog, { name: currentItem.name, colorBefore, colorAfter }]
+    setSessionLog(log)
     setLastSaved({ logId, name: currentItem.name })
     setNoteText('')
-    if (activity?.chooseFilterEachItem) openFilterStep()
-    else drawNextItem()
+    if (activity?.chooseFilterEachItem) openFilterStep(log)
+    else drawNextItem({ log })
   }
 
   /** Pick the filter for the next draw; the current item (if any) goes back in the pool. */
-  function openFilterStep() {
+  function openFilterStep(log: SessionEntry[] = sessionLog) {
     setCurrentItem(null)
     setPhase('next-filter')
+    remember({ log, currentItemId: null })
   }
 
   const handleUndo = () => {
     if (!lastSaved || !activity) return
     undoPracticeLog(lastSaved.logId)
     setLastSaved(null)
-    setSessionLog(prev => prev.slice(0, -1))
+    const log = sessionLog.slice(0, -1)
+    setSessionLog(log)
     // The undone item can be drawn again; if the session had ended, bring it back.
-    if (phase === 'done') drawNextItem()
-    else setItems(getActiveItems(activity.id))
+    if (phase === 'done') drawNextItem({ log })
+    else {
+      setItems(getActiveItems(activity.id))
+      remember({ log, currentItemId: currentItem?.id ?? null })
+    }
   }
 
   const handleBackToDraw = () => {
@@ -275,9 +314,10 @@ export default function PracticeSessionScreen() {
     setNoteText('')
   }
 
+  /** Leaving on purpose ends the session (a reload or the app closing doesn't). */
   const handleExit = () => {
-    if (activityId) navigate(`/activity/${activityId}`)
-    else navigate('/')
+    if (activity) clearSession(activity.id)
+    navigate(`/activity/${activityId}`)
   }
 
   if (!activity || items.length === 0) return null
@@ -336,7 +376,7 @@ export default function PracticeSessionScreen() {
         <SessionCompleteDone
           sessionLog={sessionLog}
           activityName={activity.name}
-          onNavigateBack={() => navigate(`/activity/${activityId}`)}
+          onNavigateBack={handleExit}
         />
       )}
 
