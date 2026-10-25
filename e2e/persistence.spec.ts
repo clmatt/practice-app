@@ -1,5 +1,18 @@
 import { test, expect, type Page } from '@playwright/test'
 
+// Fail on anything the Content-Security-Policy blocks: the app must work entirely within it.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const seen: string[] = []
+    ;(window as unknown as { cspViolations: string[] }).cspViolations = seen
+    document.addEventListener('securitypolicyviolation', e => seen.push(`${e.violatedDirective} ${e.blockedURI}`))
+  })
+})
+
+test.afterEach(async ({ page }) => {
+  expect(await page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations)).toEqual([])
+})
+
 /** Number of practice logs saved in IndexedDB (not just in memory). */
 function savedLogCount(page: Page): Promise<number> {
   return page.evaluate(() => new Promise<number>((resolve, reject) => {
@@ -40,4 +53,12 @@ test('a rating is saved to the database and survives a reload', async ({ page })
   await expect(page.getByText('Practiced today')).toBeVisible()
   await page.getByRole('button', { name: /Juggling/ }).click()
   await expect(page.getByRole('link', { name: /green/i })).toContainText('1')
+
+  // The chart and the backup export also work within the Content-Security-Policy.
+  await page.getByRole('button', { name: 'Stats' }).click()
+  await expect(page.getByRole('img', { name: /Ratings over time/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Activities' }).click()
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export data' }).click()
+  expect((await download).suggestedFilename()).toMatch(/^practice-backup-\d{4}-\d{2}-\d{2}\.json$/)
 })
