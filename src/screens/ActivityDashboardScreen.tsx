@@ -4,6 +4,7 @@ import { getActivities, getItems, saveActivity, deleteActivity } from '../storag
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
+import { RATING_ORDER } from '../palette'
 
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -91,7 +92,7 @@ export default function ActivityDashboardScreen() {
               Selection weights (must add to 100)
             </label>
             <div className="flex flex-col gap-2">
-              {(['red', 'yellow', 'green'] as const).map(color => (
+              {RATING_ORDER.map(color => (
                 <div key={color} className="flex items-center gap-3">
                   <ColorDot color={color} />
                   <span className="text-sm capitalize w-14">{color}</span>
@@ -185,7 +186,7 @@ export default function ActivityDashboardScreen() {
         <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
 
         <div className="flex gap-3 shrink-0 mb-4">
-          {(['red', 'yellow', 'green'] as const).map(color => (
+          {RATING_ORDER.map(color => (
             <Link
               key={color}
               to={`/activity/${activityId}/manage?color=${color}`}

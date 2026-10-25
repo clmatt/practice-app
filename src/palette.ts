@@ -12,3 +12,28 @@ export const RATING_COLORS: Record<Color, string> = {
   yellow: '#eab308',
   green: '#059669',
 }
+
+export interface Rating {
+  color: Color
+  /** "Red", for legends and filters. */
+  name: string
+  /** What the rating means when you give it. */
+  label: string
+}
+
+/** The ratings in order, worst first. Use this instead of listing the colors by hand. */
+export const RATINGS: Rating[] = [
+  { color: 'red', name: 'Red', label: 'Struggled' },
+  { color: 'yellow', name: 'Yellow', label: 'Okay' },
+  { color: 'green', name: 'Green', label: 'Solid' },
+]
+
+export const RATING_ORDER: Color[] = RATINGS.map(r => r.color)
+
+export function isColor(value: unknown): value is Color {
+  return RATING_ORDER.includes(value as Color)
+}
+
+export function ratingName(color: Color): string {
+  return RATINGS.find(r => r.color === color)!.name
+}

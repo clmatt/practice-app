@@ -1,4 +1,5 @@
 import type { Activity, Item, Color } from './types'
+import { RATING_ORDER } from './palette'
 
 export function computeRecencyWeights(
   pool: Item[],
@@ -47,8 +48,7 @@ export function selectItem(
   // Colors with nothing left, or with a 0% weight, are never drawn. The rest
   // share 100% in proportion to their weights (renormalized). If nothing
   // drawable is left, there is nothing to practice: return null.
-  const colors: Color[] = ['red', 'yellow', 'green']
-  const drawable = colors.filter(c => byColor[c].length > 0 && weights[c] > 0)
+  const drawable = RATING_ORDER.filter(c => byColor[c].length > 0 && weights[c] > 0)
   if (drawable.length === 0) return null
 
   const total = drawable.reduce((sum, c) => sum + weights[c], 0)

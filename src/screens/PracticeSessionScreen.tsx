@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getActivities, getItems, saveItem, appendLog, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
-import { generateId } from '../utils'
+import { generateId, toggled } from '../utils'
+import { RATING_ORDER } from '../palette'
 import type { Activity, Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
 import UndoBar from '../components/UndoBar'
 import {
-  PRACTICE_COLORS, buildFilteredPool, describeFilter, drawFrom, isFiltering, practiceWeights, tagsOf, type PracticeFilter,
+  buildFilteredPool, describeFilter, drawFrom, isFiltering, practiceWeights, tagsOf, type PracticeFilter,
 } from '../autoPractice'
 import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
@@ -41,7 +42,7 @@ function SetupPhase({ allTags, filter, forNextItem, onToggleTag, onToggleColor, 
         <h2 className="text-xl font-bold">{forNextItem ? 'Filter for next item' : 'What are you focusing on?'}</h2>
         {!advancedFilter && <p className="text-slate-400 text-sm">{hint}</p>}
         <div className="flex flex-wrap gap-2">
-          {PRACTICE_COLORS.map(color => (
+          {RATING_ORDER.map(color => (
             <ToggleChip key={color} size="md" selected={colors.has(color)} onClick={() => onToggleColor(color)}>
               <ColorDot color={color} size="sm" />
               <span className="capitalize">{color}</span>
@@ -114,7 +115,7 @@ function FilterExhaustedDone({ filter, onChangeFilter, onEndSession }: FilterExh
         <p className="text-xl font-bold text-slate-100">All done with your current filter.</p>
         {colors.size > 0 && (
           <div className="flex flex-wrap justify-center gap-3">
-            {PRACTICE_COLORS.filter(c => colors.has(c)).map(c => (
+            {RATING_ORDER.filter(c => colors.has(c)).map(c => (
               <span key={c} className="flex items-center gap-1.5 text-xs text-slate-300 capitalize">
                 <ColorDot color={c} size="sm" />
                 {c}
@@ -228,13 +229,6 @@ export default function PracticeSessionScreen() {
 
   function formatNoteDate(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  }
-
-  function toggled<T>(set: Set<T>, value: T): Set<T> {
-    const next = new Set(set)
-    if (next.has(value)) next.delete(value)
-    else next.add(value)
-    return next
   }
 
   const handleIPracticed = () => {

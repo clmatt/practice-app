@@ -1,11 +1,5 @@
 import type { Color } from '../types'
-import { RATING_COLORS } from '../palette'
-
-const OPTIONS: { color: Color; label: string }[] = [
-  { color: 'red', label: 'Struggled' },
-  { color: 'yellow', label: 'Okay' },
-  { color: 'green', label: 'Solid' },
-]
+import { RATING_COLORS, RATINGS } from '../palette'
 
 export default function ColorPicker({
   value,
@@ -16,7 +10,7 @@ export default function ColorPicker({
 }) {
   return (
     <div className="flex gap-3">
-      {OPTIONS.map(({ color, label }) => (
+      {RATINGS.map(({ color, label }) => (
         <button
           key={color}
           type="button"

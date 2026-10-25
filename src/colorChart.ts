@@ -1,5 +1,6 @@
 import { daysBetweenKeys, formatDateKey, weekStartKey } from './dates'
 import type { Color } from './types'
+import { RATING_ORDER } from './palette'
 
 /** Geometry for the Stats colour-distribution chart (a stacked area over time). */
 
@@ -42,7 +43,7 @@ export interface ColorChart {
   nearest: (x: number) => ChartPoint
 }
 
-const STACK: Color[] = ['red', 'yellow', 'green']
+const STACK: Color[] = RATING_ORDER
 const LONG_RANGE_DAYS = 300
 /** Beyond this many practice days, day-to-day changes are too dense to draw: draw one point per week. */
 const DAILY_LIMIT = 30

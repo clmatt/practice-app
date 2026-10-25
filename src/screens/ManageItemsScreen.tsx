@@ -5,24 +5,17 @@ import TabBar from '../components/TabBar'
 import { getActivities, getItems, getLastPracticedByItem, getPracticeCountByItem } from '../storage'
 import { filterAndSortItems, readListView, writeListView, ITEM_SORT_LABELS, type ItemListView, type ItemSort } from '../itemList'
 import { formatDateKey, localDateKey } from '../dates'
-import type { Activity, Color, Item } from '../types'
+import type { Activity, Item } from '../types'
 import { sortTags } from '../sorting'
 import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
-
-const COLORS: Color[] = ['red', 'yellow', 'green']
+import { RATING_ORDER } from '../palette'
+import { toggled } from '../utils'
 
 function practiceSummary(lastPracticed: string | undefined, count: number): string {
   if (!lastPracticed) return 'Never practiced'
   const date = formatDateKey(localDateKey(lastPracticed), { month: 'long', day: 'numeric' })
   return `Last practiced ${date} · ${count} session${count === 1 ? '' : 's'}`
-}
-
-function toggled<T>(set: Set<T>, value: T): Set<T> {
-  const next = new Set(set)
-  if (next.has(value)) next.delete(value)
-  else next.add(value)
-  return next
 }
 
 export default function ManageItemsScreen() {
@@ -101,7 +94,7 @@ export default function ManageItemsScreen() {
         {showFilters && (
           <div className="flex flex-col gap-2 mb-3">
             <div className="flex gap-2">
-              {COLORS.map(color => (
+              {RATING_ORDER.map(color => (
                 <ToggleChip key={color} selected={colors.has(color)} onClick={() => update({ colors: toggled(colors, color) })}>
                   <ColorDot color={color} size="sm" />
                   <span className="capitalize">{color}</span>

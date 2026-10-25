@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { buildColorChart, type ChartBox, type ChartPoint, type ColorCounts } from '../colorChart'
 import { formatDateKey } from '../dates'
-import { RATING_COLORS } from '../palette'
+import { RATING_COLORS, RATING_ORDER, ratingName } from '../palette'
 import type { Color } from '../types'
 
 const BOX: ChartBox = { width: 340, height: 220, left: 28, right: 8, top: 8, bottom: 24 }
-const NAMES: Record<Color, string> = { red: 'Red', yellow: 'Yellow', green: 'Green' }
-const LEGEND_ORDER: Color[] = ['red', 'yellow', 'green']
-const TOOLTIP_ORDER: Color[] = ['green', 'yellow', 'red'] // top to bottom, as stacked
+const TOOLTIP_ORDER: Color[] = [...RATING_ORDER].reverse() // top to bottom, as stacked
 const MIN_LABEL_BAND = 14 // SVG units: only write a count inside a band this tall
 
 const shortDate = (date: string) => formatDateKey(date, { month: 'short', day: 'numeric' })
@@ -44,10 +42,10 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
   return (
     <div>
       <ul aria-label="Legend" className={`flex gap-4 text-xs text-slate-300 ${chart.weekly ? 'mb-1' : 'mb-2'}`}>
-        {LEGEND_ORDER.map(color => (
+        {RATING_ORDER.map(color => (
           <li key={color} className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLORS[color] }} />
-            {NAMES[color]}
+            {ratingName(color)}
           </li>
         ))}
       </ul>
@@ -79,8 +77,8 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
             <path key={b.color} d={b.path} fill={RATING_COLORS[b.color]} stroke={RATING_COLORS[b.color]} strokeWidth={1} strokeLinejoin="round" />
           ))}
 
-          {LEGEND_ORDER.map((color, i) => {
-            const below = LEGEND_ORDER.slice(0, i).reduce((sum, c) => sum + last[c], 0)
+          {RATING_ORDER.map((color, i) => {
+            const below = RATING_ORDER.slice(0, i).reduce((sum, c) => sum + last[c], 0)
             const height = chart.y(below) - chart.y(below + last[color])
             if (last[color] === 0 || height < MIN_LABEL_BAND) return null
             return (
@@ -116,7 +114,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
               <div key={color} className="flex items-center gap-2">
                 <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: RATING_COLORS[color] }} />
                 <span className="font-semibold text-slate-100 tabular-nums w-5 text-right">{active[color]}</span>
-                <span className="text-slate-400">{NAMES[color]}</span>
+                <span className="text-slate-400">{ratingName(color)}</span>
               </div>
             ))}
           </div>
@@ -129,14 +127,14 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
           <thead>
             <tr className="text-slate-500">
               <th className="text-left font-normal py-1">Day</th>
-              {LEGEND_ORDER.map(c => <th key={c} className="text-right font-normal py-1">{NAMES[c]}</th>)}
+              {RATING_ORDER.map(c => <th key={c} className="text-right font-normal py-1">{ratingName(c)}</th>)}
             </tr>
           </thead>
           <tbody>
             {[...rows].reverse().map(r => (
               <tr key={r.date} className="border-t border-slate-800">
                 <td className="py-1">{shortDate(r.date)}</td>
-                {LEGEND_ORDER.map(c => <td key={c} className="text-right tabular-nums py-1">{r[c]}</td>)}
+                {RATING_ORDER.map(c => <td key={c} className="text-right tabular-nums py-1">{r[c]}</td>)}
               </tr>
             ))}
           </tbody>

@@ -1,5 +1,6 @@
 import type { Color, Item } from './types'
 import { compareNatural, sortTags } from './sorting'
+import { RATING_ORDER, isColor } from './palette'
 
 /** Search, filter and sort for the Items list. */
 
@@ -32,15 +33,13 @@ export interface ItemListView extends ItemListFilter {
   sort: ItemSort
 }
 
-const COLORS: Color[] = ['red', 'yellow', 'green']
-
 /** Reads the list view from the URL query, e.g. `?q=mills&sort=name-desc&color=red,green&tag=hard`. */
 export function readListView(params: URLSearchParams): ItemListView {
   const sort = params.get('sort')
   return {
     query: params.get('q') ?? '',
     sort: sort && sort in ITEM_SORT_LABELS ? sort as ItemSort : 'name-asc',
-    colors: new Set((params.get('color') ?? '').split(',').filter((c): c is Color => COLORS.includes(c as Color))),
+    colors: new Set((params.get('color') ?? '').split(',').filter(isColor)),
     tags: new Set(params.getAll('tag')),
   }
 }
@@ -49,12 +48,10 @@ export function writeListView(view: ItemListView): URLSearchParams {
   const params = new URLSearchParams()
   if (view.query !== '') params.set('q', view.query)
   if (view.sort !== 'name-asc') params.set('sort', view.sort)
-  if (view.colors.size > 0) params.set('color', COLORS.filter(c => view.colors.has(c)).join(','))
+  if (view.colors.size > 0) params.set('color', RATING_ORDER.filter(c => view.colors.has(c)).join(','))
   for (const tag of sortTags(view.tags)) params.append('tag', tag)
   return params
 }
-
-const COLOR_ORDER: Record<Color, number> = { red: 0, yellow: 1, green: 2 }
 
 /** Compares last-practiced times; never-practiced items go last when newest-first, first when oldest-first. */
 function byLastPracticed(a: string | undefined, b: string | undefined, newestFirst: boolean): number {
@@ -84,7 +81,7 @@ export function filterAndSortItems(
       case 'practiced-oldest': return byLastPracticed(lastPracticedAt[a.id], lastPracticedAt[b.id], false)
       case 'date-newest': return b.createdAt.localeCompare(a.createdAt)
       case 'date-oldest': return a.createdAt.localeCompare(b.createdAt)
-      case 'color': return COLOR_ORDER[a.color] - COLOR_ORDER[b.color]
+      case 'color': return RATING_ORDER.indexOf(a.color) - RATING_ORDER.indexOf(b.color)
     }
   })
 }

@@ -5,7 +5,7 @@ import { formatDateKey } from '../dates'
 import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
 import TagList from '../components/TagList'
-import { RATING_COLORS } from '../palette'
+import { RATING_COLORS, ratingName } from '../palette'
 
 function formatDateRange(start: string, end: string): string {
   const fmt = (d: string) => formatDateKey(d, { month: 'short', day: 'numeric' })
@@ -83,7 +83,7 @@ export default function ItemProgressScreen() {
                     style={{ height: `${run.count * 48}px` }}
                   >
                     <span className="text-sm font-semibold" style={{ color: RATING_COLORS[run.color] }}>
-                      {run.color.charAt(0).toUpperCase() + run.color.slice(1)}
+                      {ratingName(run.color)}
                       {isCurrent && <span className="text-slate-500 font-normal"> · current</span>}
                     </span>
                     <span className="text-xs text-slate-500">

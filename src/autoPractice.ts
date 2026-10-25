@@ -3,6 +3,7 @@ import { selectItem } from './selection'
 import { parseFilter, evaluateFilter } from './filterParser'
 import type { Activity, Color, Item } from './types'
 import { sortTags } from './sorting'
+import { RATING_ORDER, ratingName } from './palette'
 
 /** Decision logic for Auto Practice: which items are in play and what to draw next. */
 
@@ -15,15 +16,13 @@ export interface PracticeFilter {
   advanced: string | null
 }
 
-export const PRACTICE_COLORS: Color[] = ['red', 'yellow', 'green']
-
 export function isFiltering(filter: PracticeFilter): boolean {
   return filter.tags.size > 0 || filter.colors.size > 0 || filter.advanced !== null
 }
 
 /** One-line summary, e.g. "Green · V3, slab" or "all items". */
 export function describeFilter(filter: PracticeFilter): string {
-  const colors = PRACTICE_COLORS.filter(c => filter.colors.has(c)).map(c => c[0].toUpperCase() + c.slice(1)).join(', ')
+  const colors = RATING_ORDER.filter(c => filter.colors.has(c)).map(ratingName).join(', ')
   const rest = filter.advanced ? `⚡ ${filter.advanced}` : sortTags(filter.tags).join(', ')
   return [colors, rest].filter(Boolean).join(' · ') || 'all items'
 }
