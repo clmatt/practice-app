@@ -1,6 +1,7 @@
 name: Build, test and deploy
 
-# Every push runs lint, tests and a build. Only pushes to main deploy to GitHub Pages.
+# Every push runs lint, tests, a build and the WebKit e2e test. Only pushes to main
+# deploy to GitHub Pages; green Dependabot updates merge themselves (automerge job).
 on:
   push:
   workflow_dispatch:
@@ -44,3 +45,49 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v5
         id: deployment
+
+  # Dependabot updates that passed every check above merge themselves, then
+  # deploy. Which updates qualify: scripts/dependabot-automerge-policy.ts
+  # (npm majors stay open for you). A merge made with GITHUB_TOKEN doesn't
+  # start a workflow run by itself, so this starts the deploy, which re-runs
+  # every check on main before publishing anything.
+  automerge:
+    if: github.actor == 'dependabot[bot]' && startsWith(github.ref_name, 'dependabot/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Find the pull request
+        run: |
+          # Dependabot opens the pull request just after pushing; give it a moment.
+          for attempt in 1 2 3 4 5 6; do
+            gh pr list --head "$BRANCH" --state open --json number,title,author,headRefOid --jq '.[0] // empty' > "$RUNNER_TEMP/pr.json"
+            [ -s "$RUNNER_TEMP/pr.json" ] && break
+            sleep 20
+          done
+          cat "$RUNNER_TEMP/pr.json"
+      - name: Decide
+        id: decide
+        run: node scripts/dependabot-automerge.ts "$RUNNER_TEMP/pr.json" "$BRANCH" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+      - name: Merge and deploy
+        if: steps.decide.outputs.merge == 'true'
+        # Outside the checkout, so gh only touches the remote branch.
+        working-directory: ${{ runner.temp }}
+        env:
+          PR_NUMBER: ${{ steps.decide.outputs.number }}
+        run: |
+          gh pr merge "$PR_NUMBER" --squash --delete-branch --match-head-commit "$GITHUB_SHA"
+          gh workflow run deploy.yml --ref main
