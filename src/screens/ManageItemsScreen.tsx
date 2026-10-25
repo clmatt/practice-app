@@ -17,7 +17,7 @@ import { pluralLabel } from '../labels'
 function practiceSummary(lastPracticed: string | undefined, count: number): string {
   if (!lastPracticed) return 'Never practiced'
   const date = formatDateKey(localDateKey(lastPracticed), { month: 'long', day: 'numeric' })
-  return `Last practiced ${date} · ${count} session${count === 1 ? '' : 's'}`
+  return `Last practiced ${date} · ${count} rep${count === 1 ? '' : 's'}`
 }
 
 export default function ManageItemsScreen() {

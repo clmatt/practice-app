@@ -8,6 +8,7 @@ import {
 import { NewerSchemaError } from '../migrations'
 import type { Activity } from '../types'
 import { RATING_COLORS } from '../palette'
+import { isRep } from '../logs'
 
 type WizardStep = 'select' | 'activity' | 'item' | 'summary'
 
@@ -172,7 +173,7 @@ export default function ImportScreen() {
                 <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Existing</div>
                 <div className="text-sm text-slate-300">
                   {getItems(existActForConflict.id).length} items ·{' '}
-                  {Object.values(getPracticeCountByItem(existActForConflict.id)).reduce((a, b) => a + b, 0)} sessions
+                  {Object.values(getPracticeCountByItem(existActForConflict.id)).reduce((a, b) => a + b, 0)} reps
                 </div>
               </div>
               <div className="w-px bg-slate-700" />
@@ -181,8 +182,8 @@ export default function ImportScreen() {
                 <div className="text-sm text-slate-300">
                   {payload.items.filter(i => i.activityId === currentActConflict.id).length} items ·{' '}
                   {payload.logs.filter(l =>
-                    payload.items.some(i => i.activityId === currentActConflict.id && i.id === l.itemId)
-                  ).length} sessions
+                    isRep(l) && payload.items.some(i => i.activityId === currentActConflict.id && i.id === l.itemId)
+                  ).length} reps
                 </div>
               </div>
             </div>
@@ -265,7 +266,7 @@ export default function ImportScreen() {
                 <div className="flex items-center gap-1.5 text-sm text-slate-300">
                   <span style={{ color: RATING_COLORS[currentItemConflict.existingItem.color] }}>●</span>
                   {currentItemConflict.existingItem.color} ·{' '}
-                  {getLogs().filter(l => l.itemId === currentItemConflict.existingItem.id).length} sessions
+                  {getLogs().filter(l => l.itemId === currentItemConflict.existingItem.id && isRep(l)).length} reps
                 </div>
               </div>
               <div className="w-px bg-slate-700" />
@@ -274,7 +275,7 @@ export default function ImportScreen() {
                 <div className="flex items-center gap-1.5 text-sm text-slate-300">
                   <span style={{ color: RATING_COLORS[currentItemConflict.importedItem.color] }}>●</span>
                   {currentItemConflict.importedItem.color} ·{' '}
-                  {payload!.logs.filter(l => l.itemId === currentItemConflict.importedItem.id).length} sessions
+                  {payload!.logs.filter(l => l.itemId === currentItemConflict.importedItem.id && isRep(l)).length} reps
                 </div>
               </div>
             </div>
@@ -344,7 +345,7 @@ export default function ImportScreen() {
                 <p>{stats.itemsAdded} {stats.itemsAdded === 1 ? 'item' : 'items'} added</p>
               )}
               {stats.logsAdded > 0 && (
-                <p>{stats.logsAdded} {stats.logsAdded === 1 ? 'session' : 'sessions'} imported</p>
+                <p>{stats.logsAdded} {stats.logsAdded === 1 ? 'rep' : 'reps'} imported</p>
               )}
               {stats.skipped > 0 && (
                 <p>{stats.skipped} skipped</p>

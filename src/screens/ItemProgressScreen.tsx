@@ -5,6 +5,7 @@ import { getItems, getLogs, getNotesForItem } from '../storage'
 import { formatDateKey } from '../dates'
 import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
+import { isRep } from '../logs'
 import TagList from '../components/TagList'
 import { RATING_COLORS, ratingName } from '../palette'
 
@@ -29,7 +30,7 @@ export default function ItemProgressScreen() {
 
   const logs = getLogs().filter(l => l.itemId === itemId)
   const runs = buildRuns(logs)
-  const totalSessions = logs.length
+  const totalReps = logs.filter(isRep).length
   const notes = getNotesForItem(itemId!)
 
   return (
@@ -47,7 +48,7 @@ export default function ItemProgressScreen() {
         <p className="text-slate-400 text-sm mb-2">
           <span style={{ color: RATING_COLORS[item.color] }}>●</span>{' '}
           Currently {item.color}
-          {totalSessions > 0 && ` · ${totalSessions} session${totalSessions === 1 ? '' : 's'} total`}
+          {totalReps > 0 && ` · ${totalReps} rep${totalReps === 1 ? '' : 's'} total`}
         </p>
         <TagList tags={item.tags} className="mb-2" />
         <div className="mb-2" />
@@ -55,7 +56,7 @@ export default function ItemProgressScreen() {
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
         {runs.length === 0 ? (
-          <p className="text-slate-400 text-sm">No practice sessions recorded yet.</p>
+          <p className="text-slate-400 text-sm">No practice recorded yet.</p>
         ) : (
           <div className="flex gap-4">
             {/* Vertical color bar */}
@@ -64,7 +65,7 @@ export default function ItemProgressScreen() {
                 <div
                   key={i}
                   style={{
-                    height: `${run.count * 48}px`,
+                    height: `${Math.max(run.count, 0.5) * 48}px`,
                     backgroundColor: RATING_COLORS[run.color],
                     boxShadow: i === runs.length - 1 ? `0 0 8px ${RATING_COLORS[run.color]}88` : undefined,
                   }}
@@ -80,14 +81,16 @@ export default function ItemProgressScreen() {
                   <div
                     key={i}
                     className="flex flex-col justify-center"
-                    style={{ height: `${run.count * 48}px` }}
+                    style={{ height: `${Math.max(run.count, 0.5) * 48}px` }}
                   >
                     <span className="text-sm font-semibold" style={{ color: RATING_COLORS[run.color] }}>
                       {ratingName(run.color)}
                       {isCurrent && <span className="text-slate-500 font-normal"> · current</span>}
                     </span>
                     <span className="text-xs text-slate-500">
-                      {run.count} session{run.count === 1 ? '' : 's'} · {formatDateRange(run.startDate, run.endDate)}
+                      {run.edited && 'Set manually · '}
+                      {run.count > 0 && `${run.count} rep${run.count === 1 ? '' : 's'} · `}
+                      {formatDateRange(run.startDate, run.endDate)}
                     </span>
                   </div>
                 )

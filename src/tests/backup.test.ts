@@ -418,3 +418,15 @@ describe('import: versions and saved filters', () => {
     expect(getSavedFilters('existing')).toEqual([])
   })
 })
+
+describe('import: colour-edit records', () => {
+  it('come along with their item but are not counted as reps', () => {
+    const stats = executeImport(makePayload({
+      activities: [makeActivity()],
+      items: [makeItem()],
+      logs: [makeLog({ id: 'l1' }), makeLog({ id: 'l2', source: 'edit' })],
+    }), new Map(), new Map())
+    expect(stats.logsAdded).toBe(1)
+    expect(getLogs()).toHaveLength(2)
+  })
+})

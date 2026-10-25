@@ -52,7 +52,7 @@ describe('Items list', () => {
     renderAt('/activity/act-1/manage')
     const mills = within(rows().find(r => r.textContent!.includes('Mills Mess'))!)
     expect(mills.getByText('hard')).toBeInTheDocument()
-    expect(mills.getByText('Last practiced September 21 · 2 sessions')).toBeInTheDocument()
+    expect(mills.getByText('Last practiced September 21 · 2 reps')).toBeInTheDocument()
     const box = within(rows().find(r => r.textContent!.includes('Box'))!)
     expect(box.getByText('Never practiced')).toBeInTheDocument()
   })
@@ -113,5 +113,15 @@ describe('Items list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(screen.getByRole('heading', { name: "Mills' Mess" })).toBeInTheDocument()
     expect(screen.getByText(/Currently red/)).toBeInTheDocument()
+  })
+})
+
+describe('Item page', () => {
+  it('counts reps and marks a colour changed by hand', () => {
+    seed()
+    saveItem(item('a', 'Mills Mess', { color: 'green', tags: ['3-ball', 'hard'] }))
+    renderAt('/activity/act-1/manage/a')
+    expect(screen.getByText(/2 reps total/)).toBeInTheDocument()
+    expect(screen.getByText(/Set manually/)).toBeInTheDocument()
   })
 })

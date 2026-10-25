@@ -17,7 +17,7 @@ describe('buildRuns', () => {
 
   it('returns single run for one log', () => {
     const runs = buildRuns([makeLog('red', '2026-05-01T10:00:00.000Z')])
-    expect(runs).toEqual([{ color: 'red', count: 1, startDate: '2026-05-01', endDate: '2026-05-01' }])
+    expect(runs).toEqual([{ color: 'red', count: 1, startDate: '2026-05-01', endDate: '2026-05-01', edited: false }])
   })
 
   it('groups consecutive same-color logs into one run', () => {
@@ -28,7 +28,7 @@ describe('buildRuns', () => {
     ]
     const runs = buildRuns(logs)
     expect(runs).toHaveLength(1)
-    expect(runs[0]).toEqual({ color: 'yellow', count: 3, startDate: '2026-05-01', endDate: '2026-05-03' })
+    expect(runs[0]).toEqual({ color: 'yellow', count: 3, startDate: '2026-05-01', endDate: '2026-05-03', edited: false })
   })
 
   it('starts a new run when color changes', () => {
@@ -38,8 +38,8 @@ describe('buildRuns', () => {
     ]
     const runs = buildRuns(logs)
     expect(runs).toHaveLength(2)
-    expect(runs[0]).toEqual({ color: 'red', count: 1, startDate: '2026-05-01', endDate: '2026-05-01' })
-    expect(runs[1]).toEqual({ color: 'yellow', count: 1, startDate: '2026-05-02', endDate: '2026-05-02' })
+    expect(runs[0]).toEqual({ color: 'red', count: 1, startDate: '2026-05-01', endDate: '2026-05-01', edited: false })
+    expect(runs[1]).toEqual({ color: 'yellow', count: 1, startDate: '2026-05-02', endDate: '2026-05-02', edited: false })
   })
 
   it('handles regression — same color appears twice as separate runs', () => {
@@ -61,13 +61,32 @@ describe('buildRuns', () => {
     ]
     const runs = buildRuns(logs)
     expect(runs).toHaveLength(2)
-    expect(runs[0]).toEqual({ color: 'red', count: 2, startDate: '2026-05-01', endDate: '2026-05-02' })
-    expect(runs[1]).toEqual({ color: 'yellow', count: 1, startDate: '2026-05-03', endDate: '2026-05-03' })
+    expect(runs[0]).toEqual({ color: 'red', count: 2, startDate: '2026-05-01', endDate: '2026-05-02', edited: false })
+    expect(runs[1]).toEqual({ color: 'yellow', count: 1, startDate: '2026-05-03', endDate: '2026-05-03', edited: false })
   })
 
   it('dates runs by local day', () => {
     // 8pm PDT May 1
     const runs = buildRuns([makeLog('green', '2026-05-02T03:00:00.000Z')])
     expect(runs[0].startDate).toBe('2026-05-01')
+  })
+
+  it('starts a zero-rep run, flagged edited, when the colour was changed by hand', () => {
+    const runs = buildRuns([
+      makeLog('red', '2026-05-01T18:00:00.000Z'),
+      { ...makeLog('green', '2026-05-03T18:00:00.000Z', 'red'), source: 'edit' },
+    ])
+    expect(runs).toEqual([
+      { color: 'red', count: 1, startDate: '2026-05-01', endDate: '2026-05-01', edited: false },
+      { color: 'green', count: 0, startDate: '2026-05-03', endDate: '2026-05-03', edited: true },
+    ])
+  })
+
+  it('reps after an edit join its run', () => {
+    const runs = buildRuns([
+      { ...makeLog('green', '2026-05-03T18:00:00.000Z', 'red'), source: 'edit' },
+      makeLog('green', '2026-05-04T18:00:00.000Z', 'green'),
+    ])
+    expect(runs).toEqual([{ color: 'green', count: 1, startDate: '2026-05-03', endDate: '2026-05-04', edited: true }])
   })
 })

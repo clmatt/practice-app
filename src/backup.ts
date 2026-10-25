@@ -4,6 +4,7 @@ import {
 import { CURRENT_SCHEMA_VERSION, migrateSnapshot } from './migrations'
 import { localDateKey, daysBetweenKeys } from './dates'
 import { generateId } from './utils'
+import { isRep } from './logs'
 import type { Activity, Item, PracticeLog, SavedFilter } from './types'
 
 /*
@@ -37,6 +38,7 @@ export type ItemResolution = 'keep-existing' | 'keep-imported' | 'keep-both'
 export interface ImportStats {
   activitiesAdded: number
   itemsAdded: number
+  /** Practice reps added (colour-edit records come along but aren't counted). */
   logsAdded: number
   skipped: number
 }
@@ -173,7 +175,7 @@ export function executeImport(
       const newItemId = idMap.get(log.itemId)
       if (!newItemId) continue
       newLogs.push({ ...log, id: generateId(), itemId: newItemId })
-      stats.logsAdded++
+      if (isRep(log)) stats.logsAdded++
     }
   }
 
