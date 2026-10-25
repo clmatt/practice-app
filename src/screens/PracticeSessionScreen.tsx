@@ -7,8 +7,9 @@ import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
 import UndoBar from '../components/UndoBar'
-import { buildFilteredPool, drawFrom, tagsOf, type DrawResult } from '../autoPractice'
-import { sortTags } from '../sorting'
+import {
+  PRACTICE_COLORS, buildFilteredPool, describeFilter, drawFrom, isFiltering, practiceWeights, tagsOf, type PracticeFilter,
+} from '../autoPractice'
 import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
 
@@ -17,23 +18,36 @@ type Phase = 'setup' | 'next-filter' | 'draw' | 'rate' | 'done'
 
 interface SetupPhaseProps {
   allTags: string[]
-  activeTags: Set<string>
-  advancedFilter: string | null
+  filter: PracticeFilter
   /** Choosing the filter for the item after this one, mid-session, rather than starting. */
   forNextItem: boolean
   onToggleTag: (tag: string) => void
+  onToggleColor: (color: Color) => void
   onOpenFilterModal: () => void
   onStart: () => void
 }
 
-function SetupPhase({ allTags, activeTags, advancedFilter, forNextItem, onToggleTag, onOpenFilterModal, onStart }: SetupPhaseProps) {
+function SetupPhase({ allTags, filter, forNextItem, onToggleTag, onToggleColor, onOpenFilterModal, onStart }: SetupPhaseProps) {
+  const { tags: activeTags, colors, advanced: advancedFilter } = filter
   const startLabel = forNextItem
     ? 'Next item'
-    : advancedFilter ? 'Start with filter' : activeTags.size > 0 ? 'Start with selected' : 'Start — practice all'
+    : advancedFilter ? 'Start with filter' : isFiltering(filter) ? 'Start with selected' : 'Start — practice all'
+  const hint = allTags.length === 0
+    ? 'Pick colors to filter, or start with everything.'
+    : forNextItem ? 'Adjust the colors and tags, or keep them as they are.' : 'Pick colors or tags to filter, or start with everything.'
   return (
     <div className="flex flex-col flex-1 gap-6">
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center gap-4">
         <h2 className="text-xl font-bold">{forNextItem ? 'Filter for next item' : 'What are you focusing on?'}</h2>
+        {!advancedFilter && <p className="text-slate-400 text-sm">{hint}</p>}
+        <div className="flex flex-wrap gap-2">
+          {PRACTICE_COLORS.map(color => (
+            <ToggleChip key={color} size="md" selected={colors.has(color)} onClick={() => onToggleColor(color)}>
+              <ColorDot color={color} size="sm" />
+              <span className="capitalize">{color}</span>
+            </ToggleChip>
+          ))}
+        </div>
         {advancedFilter ? (
           <>
             <p className="text-slate-400 text-sm">Advanced filter active.</p>
@@ -45,23 +59,18 @@ function SetupPhase({ allTags, activeTags, advancedFilter, forNextItem, onToggle
               <span className="text-slate-400 text-xs ml-2 shrink-0">edit</span>
             </button>
           </>
-        ) : (
-          <>
-            <p className="text-slate-400 text-sm">
-              {forNextItem ? 'Adjust the tags, or keep them as they are.' : 'Select tags to filter, or start with everything.'}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {allTags.map(tag => (
-                <ToggleChip key={tag} size="md" selected={activeTags.has(tag)} onClick={() => onToggleTag(tag)}>
-                  {tag}
-                </ToggleChip>
-              ))}
-            </div>
-          </>
+        ) : allTags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {allTags.map(tag => (
+              <ToggleChip key={tag} size="md" selected={activeTags.has(tag)} onClick={() => onToggleTag(tag)}>
+                {tag}
+              </ToggleChip>
+            ))}
+          </div>
         )}
       </div>
       <div className="flex flex-col gap-3">
-        {!advancedFilter && (
+        {!advancedFilter && allTags.length > 0 && (
           <button
             onClick={onOpenFilterModal}
             className="bg-transparent border border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-400 rounded-xl py-3 text-sm w-full transition-colors"
@@ -81,15 +90,10 @@ function SetupPhase({ allTags, activeTags, advancedFilter, forNextItem, onToggle
 }
 
 /** One line saying what's being drawn from, with a way to change it. */
-function FilterLine({ activeTags, advancedFilter, onChange }: {
-  activeTags: Set<string>
-  advancedFilter: string | null
-  onChange: () => void
-}) {
-  const filter = advancedFilter ? `⚡ ${advancedFilter}` : activeTags.size > 0 ? sortTags(activeTags).join(', ') : 'all items'
+function FilterLine({ filter, onChange }: { filter: PracticeFilter; onChange: () => void }) {
   return (
     <div className="flex items-center justify-between gap-3 w-full text-xs mb-2">
-      <span className="text-slate-500 truncate">Filter: {filter}</span>
+      <span className="text-slate-500 truncate">Filter: {describeFilter(filter)}</span>
       <button onClick={onChange} className="text-violet-400 font-medium shrink-0">Change</button>
     </div>
   )
@@ -97,17 +101,27 @@ function FilterLine({ activeTags, advancedFilter, onChange }: {
 
 
 interface FilterExhaustedDoneProps {
-  advancedFilter: string | null
-  activeTags: Set<string>
+  filter: PracticeFilter
   onChangeFilter: () => void
   onEndSession: () => void
 }
 
-function FilterExhaustedDone({ advancedFilter, activeTags, onChangeFilter, onEndSession }: FilterExhaustedDoneProps) {
+function FilterExhaustedDone({ filter, onChangeFilter, onEndSession }: FilterExhaustedDoneProps) {
+  const { tags: activeTags, colors, advanced: advancedFilter } = filter
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
         <p className="text-xl font-bold text-slate-100">All done with your current filter.</p>
+        {colors.size > 0 && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {PRACTICE_COLORS.filter(c => colors.has(c)).map(c => (
+              <span key={c} className="flex items-center gap-1.5 text-xs text-slate-300 capitalize">
+                <ColorDot color={c} size="sm" />
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
         {advancedFilter ? (
           <p className="text-xs text-slate-400 font-mono bg-slate-800 px-3 py-2 rounded-lg">{advancedFilter}</p>
         ) : activeTags.size > 0 && (
@@ -174,19 +188,13 @@ export default function PracticeSessionScreen() {
   const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
   const [items, setItems] = useState<Item[]>(() => (activity ? getItems(activity.id) : []))
   const allTags = useMemo(() => tagsOf(items), [items])
-  // With no tags there is nothing to choose in setup, so draw the first item straight away.
-  const [firstDraw] = useState<DrawResult | null>(() =>
-    activity && items.length > 0 && tagsOf(items).length === 0
-      ? drawFrom(activity, items, new Set(), null, new Set())
-      : null)
-  const [phase, setPhase] = useState<Phase>(() =>
-    firstDraw === null ? 'setup' : firstDraw.kind === 'item' ? 'draw' : 'done')
-  const [currentItem, setCurrentItem] = useState<Item | null>(() =>
-    firstDraw?.kind === 'item' ? firstDraw.item : null)
+  const [phase, setPhase] = useState<Phase>('setup')
+  const [currentItem, setCurrentItem] = useState<Item | null>(null)
   const [filterExhausted, setFilterExhausted] = useState(false)
   const [revealed, setRevealed] = useState(false)
   const [selectedColor, setSelectedColor] = useState<Color | null>(null)
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
+  const [activeColors, setActiveColors] = useState<Set<Color>>(new Set())
   const [sessionLog, setSessionLog] = useState<Array<{ name: string; colorBefore: Color; colorAfter: Color }>>([])
   const [skippedItemIds, setSkippedItemIds] = useState<Set<string>>(new Set())
   const [noteText, setNoteText] = useState('')
@@ -194,6 +202,7 @@ export default function PracticeSessionScreen() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
   const clearLastSaved = useCallback(() => setLastSaved(null), [])
+  const filter: PracticeFilter = { tags: activeTags, colors: activeColors, advanced: advancedFilter }
 
   useEffect(() => {
     if (!activity) navigate('/')
@@ -204,7 +213,7 @@ export default function PracticeSessionScreen() {
     if (!activity) return
     const freshItems = getItems(activity.id)
     setItems(freshItems)
-    const result = drawFrom(activity, freshItems, activeTags, advancedFilter, skipped)
+    const result = drawFrom(activity, freshItems, filter, skipped)
     if (result.kind === 'item') {
       setCurrentItem(result.item)
       setPhase('draw')
@@ -221,13 +230,11 @@ export default function PracticeSessionScreen() {
     return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   }
 
-  function toggleTag(tag: string) {
-    setActiveTags(prev => {
-      const next = new Set(prev)
-      if (next.has(tag)) next.delete(tag)
-      else next.add(tag)
-      return next
-    })
+  function toggled<T>(set: Set<T>, value: T): Set<T> {
+    const next = new Set(set)
+    if (next.has(value)) next.delete(value)
+    else next.add(value)
+    return next
   }
 
   const handleIPracticed = () => {
@@ -300,7 +307,8 @@ export default function PracticeSessionScreen() {
 
   const pastNotes = currentItem ? getNotesForItem(currentItem.id) : []
   // Items of a 0%-weight color never come up, so they don't count towards "done".
-  const sessionPool = buildFilteredPool(items, activeTags, advancedFilter).filter(i => activity.weights[i.color] > 0)
+  const weights = practiceWeights(activity.weights, activeColors)
+  const sessionPool = buildFilteredPool(items, filter).filter(i => weights[i.color] > 0)
   const sessionTotal = sessionPool.length
   const practicedToday = activityId ? getTodayPracticedItemIds(activityId) : new Set<string>()
   const todayDoneCount = sessionPool.filter(i => practicedToday.has(i.id)).length
@@ -330,10 +338,10 @@ export default function PracticeSessionScreen() {
       {(phase === 'setup' || phase === 'next-filter') && (
         <SetupPhase
           allTags={allTags}
-          activeTags={activeTags}
-          advancedFilter={advancedFilter}
+          filter={filter}
           forNextItem={phase === 'next-filter'}
-          onToggleTag={toggleTag}
+          onToggleTag={tag => setActiveTags(prev => toggled(prev, tag))}
+          onToggleColor={color => setActiveColors(prev => toggled(prev, color))}
           onOpenFilterModal={() => setShowFilterModal(true)}
           onStart={() => drawNextItem()}
         />
@@ -341,8 +349,7 @@ export default function PracticeSessionScreen() {
 
       {phase === 'done' && filterExhausted && (
         <FilterExhaustedDone
-          advancedFilter={advancedFilter}
-          activeTags={activeTags}
+          filter={filter}
           onChangeFilter={() => setPhase('setup')}
           onEndSession={() => setFilterExhausted(false)}
         />
@@ -359,9 +366,7 @@ export default function PracticeSessionScreen() {
       {phase === 'draw' && currentItem && (
         <div className="flex flex-col flex-1 gap-6">
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {(allTags.length > 0 || advancedFilter) && (
-              <FilterLine activeTags={activeTags} advancedFilter={advancedFilter} onChange={openFilterStep} />
-            )}
+            <FilterLine filter={filter} onChange={openFilterStep} />
 
             <p className="text-3xl font-bold text-center">{currentItem.name}</p>
             <TagList tags={currentItem.tags} className="justify-center" />
