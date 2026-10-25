@@ -61,3 +61,25 @@ describe('Dependabot auto-merge decision', () => {
     expect(decide(null, npm)).toEqual({ merge: false, reason: expect.stringMatching(/no open pull request/) })
   })
 })
+
+describe('real Dependabot titles (prefixed in the repo commit style, lower-case "bump")', () => {
+  it('merges the prefixed minor-and-patch group', () => {
+    expect(decide(pr('build(deps): bump the minor-and-patch group with 13 updates'), { branch: 'dependabot/npm_and_yarn/minor-and-patch-5c0214e722', sha: SHA }).merge).toBe(true)
+  })
+
+  it('merges a prefixed single minor or patch update', () => {
+    expect(decide(pr('chore(deps): bump undici from 7.25.0 to 7.30.1'), { branch: 'dependabot/npm_and_yarn/undici-7.30.1', sha: SHA }).merge).toBe(true)
+    expect(decide(pr('chore(deps-dev): bump fast-uri from 3.1.2 to 3.1.9'), { branch: 'dependabot/npm_and_yarn/fast-uri-3.1.9', sha: SHA }).merge).toBe(true)
+    expect(decide(pr('deps: bump vite from 8.0.13 to 8.3.5'), npm).merge).toBe(true)
+  })
+
+  it('still leaves prefixed majors and multi-package updates', () => {
+    expect(decide(pr('build(deps-dev): bump jsdom from 29.1.1 to 30.1.3'), npm).merge).toBe(false)
+    expect(decide(pr('build(deps-dev): bump sharp from 0.34.5 to 0.35.5'), npm).merge).toBe(false)
+    expect(decide(pr('build(deps): bump postcss-selector-parser and tailwindcss'), npm).merge).toBe(false)
+  })
+
+  it('merges prefixed updates to GitHub actions', () => {
+    expect(decide(pr('ci(deps): bump actions/checkout from 7 to 8'), actions).merge).toBe(true)
+  })
+})

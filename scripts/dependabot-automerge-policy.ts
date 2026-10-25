@@ -46,12 +46,14 @@ export function decide(pr: PullRequest | null, run: { branch: string; sha: strin
   const ecosystem = run.branch.split('/')[1]
   const yes = (reason: string): Decision => ({ merge: true, number: pr.number, reason })
 
-  const group = /^Bump the (\S+) group\b/.exec(pr.title)
+  // Dependabot follows the repo's commit style: "build(deps): bump …", "deps: bump …" or "Bump …".
+  const title = pr.title.replace(/^[\w-]+(\([\w-]+\))?!?: /, '')
+  const group = /^bump the (\S+) group\b/i.exec(title)
   if (group) {
     return SAFE_GROUPS[ecosystem] === group[1] ? yes(`${group[1]} group`) : no(`unknown group ${group[1]}`)
   }
 
-  const single = /^Bump (\S+) from (\S+) to (\S+)(?: in \S+)?$/.exec(pr.title)
+  const single = /^bump (\S+) from (\S+) to (\S+)(?: in \S+)?$/i.exec(title)
   if (!single) return no(`can't tell what "${pr.title}" updates`)
   const [, name, from, to] = single
   if (ecosystem === 'github_actions') {

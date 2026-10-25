@@ -64,8 +64,10 @@ jobs:
       GH_REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
     steps:
+      # The rules come from main, so a fix to them also applies to pull requests already open.
       - uses: actions/checkout@v7
         with:
+          ref: main
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
