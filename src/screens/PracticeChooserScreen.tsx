@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getActivities, getItems } from '../storage'
 import type { Activity, Item } from '../types'
 import TabBar from '../components/TabBar'
+import { pluralLabel } from '../labels'
 
 export default function PracticeChooserScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -25,7 +26,7 @@ export default function PracticeChooserScreen() {
 
         {!hasItems && (
           <p className="text-slate-400 text-sm mb-2">
-            Add some {activity.itemLabel}s first to start practicing.
+            Add some {pluralLabel(activity)} first to start practicing.
           </p>
         )}
 

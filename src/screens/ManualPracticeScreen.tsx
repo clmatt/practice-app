@@ -7,6 +7,7 @@ import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import UndoBar from '../components/UndoBar'
 import { compareNatural } from '../sorting'
+import { pluralLabel } from '../labels'
 
 type Phase = 'list' | 'rate'
 
@@ -160,7 +161,7 @@ export default function ManualPracticeScreen() {
 
       <input
         type="text"
-        placeholder={`Search ${activity.itemLabel}s`}
+        placeholder={`Search ${pluralLabel(activity)}`}
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
         className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-4 shrink-0"
@@ -168,9 +169,9 @@ export default function ManualPracticeScreen() {
 
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 ? (
-          <p className="text-slate-400 text-sm">No {activity.itemLabel}s yet</p>
+          <p className="text-slate-400 text-sm">No {pluralLabel(activity)} yet</p>
         ) : filteredItems.length === 0 ? (
-          <p className="text-slate-400 text-sm">No {activity.itemLabel}s match your search.</p>
+          <p className="text-slate-400 text-sm">No {pluralLabel(activity)} match your search.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {filteredItems.map(item => (

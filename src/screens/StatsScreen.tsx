@@ -7,6 +7,7 @@ import { formatDateKey } from '../dates'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
 import ColorDistributionChart from '../components/ColorDistributionChart'
+import { pluralLabel } from '../labels'
 
 function formatDate(dateKey: string): string {
   return formatDateKey(dateKey, { month: 'long', day: 'numeric', year: 'numeric' })
@@ -86,13 +87,13 @@ export default function StatsScreen() {
               </div>
               <div className="flex-1 bg-slate-800 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold">{allItems.length}</div>
-                <div className="text-xs text-slate-400 mt-0.5">Total {activity.itemLabel}s</div>
+                <div className="text-xs text-slate-400 mt-0.5">Total {pluralLabel(activity)}</div>
               </div>
             </div>
 
             <div>
               <h2 className="text-base font-semibold mb-1">Ratings over time</h2>
-              <p className="text-xs text-slate-500 mb-3">How many {activity.itemLabel}s were each color at the end of each practice day.</p>
+              <p className="text-xs text-slate-500 mb-3">How many {pluralLabel(activity)} were each color at the end of each practice day.</p>
               {chartData.length === 0 ? (
                 <p className="text-slate-400 text-sm">No practice data yet.</p>
               ) : (

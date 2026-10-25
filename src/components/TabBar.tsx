@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getActiveTab } from '../tabs'
 import { getActivities } from '../storage'
+import { capitalize, pluralLabel } from '../labels'
 
 interface TabBarProps {
   activityId: string
@@ -60,8 +61,8 @@ function BarChartIcon() {
 
 /** "trick" → "Tricks"; "Items" if the activity can't be found. */
 function itemsTabLabel(activityId: string): string {
-  const label = getActivities().find(a => a.id === activityId)?.itemLabel.trim()
-  return label ? `${label.charAt(0).toUpperCase()}${label.slice(1)}s` : 'Items'
+  const activity = getActivities().find(a => a.id === activityId)
+  return activity && activity.itemLabel.trim() ? capitalize(pluralLabel(activity)) : 'Items'
 }
 
 export default function TabBar({ activityId, activityName = '' }: TabBarProps) {

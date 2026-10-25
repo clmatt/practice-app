@@ -5,6 +5,7 @@ import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
 import { RATING_ORDER } from '../palette'
+import { pluralLabel, pluralize } from '../labels'
 
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -14,6 +15,7 @@ export default function ActivityDashboardScreen() {
   const [editingSettings, setEditingSettings] = useState(false)
   const [draftName, setDraftName] = useState(() => activity?.name ?? '')
   const [draftLabel, setDraftLabel] = useState(() => activity?.itemLabel ?? '')
+  const [draftPlural, setDraftPlural] = useState(() => activity?.itemLabelPlural ?? '')
   const [draftWeights, setDraftWeights] = useState(() => ({
     red: Math.round((activity?.weights.red ?? 0.6) * 100),
     yellow: Math.round((activity?.weights.yellow ?? 0.3) * 100),
@@ -34,6 +36,7 @@ export default function ActivityDashboardScreen() {
       ...activity,
       name: draftName.trim() || activity.name,
       itemLabel: draftLabel.trim() || activity.itemLabel,
+      itemLabelPlural: draftPlural.trim() || undefined,
       weights: {
         red: draftWeights.red / total,
         yellow: draftWeights.yellow / total,
@@ -49,7 +52,7 @@ export default function ActivityDashboardScreen() {
 
   function handleDeleteActivity() {
     if (!activity) return
-    if (!window.confirm(`Delete "${activity.name}" and all its ${activity.itemLabel}s and practice history? This cannot be undone.`)) return
+    if (!window.confirm(`Delete "${activity.name}" and all its ${pluralLabel(activity)} and practice history? This cannot be undone.`)) return
     deleteActivity(activity.id)
     navigate('/', { replace: true })
   }
@@ -85,6 +88,16 @@ export default function ActivityDashboardScreen() {
               placeholder="e.g. trick, route, exercise"
               value={draftLabel}
               onChange={e => setDraftLabel(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="item-label-plural" className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Plural (optional)</label>
+            <input
+              id="item-label-plural"
+              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
+              placeholder={pluralize(draftLabel.trim() || activity.itemLabel)}
+              value={draftPlural}
+              onChange={e => setDraftPlural(e.target.value)}
             />
           </div>
           <div>
@@ -183,7 +196,7 @@ export default function ActivityDashboardScreen() {
             Settings
           </button>
         </div>
-        <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{activity.itemLabel}s</p>
+        <p className="text-slate-400 text-sm mb-6 capitalize shrink-0">{pluralLabel(activity)}</p>
 
         <div className="flex gap-3 shrink-0 mb-4">
           {RATING_ORDER.map(color => (

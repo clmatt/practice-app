@@ -5,6 +5,7 @@ import { localDateKey, daysBetweenKeys } from '../dates'
 import { generateId } from '../utils'
 import { exportData, describeLastBackup } from '../backup'
 import type { Activity } from '../types'
+import { pluralLabel } from '../labels'
 
 function lastPracticedLabel(activityId: string): string {
   const last = getLastPracticedByItem(activityId)
@@ -75,7 +76,7 @@ export default function HomeScreen() {
             >
               <span className="flex-1">
                 <span className="block font-semibold">{a.name}</span>
-                <span className="block text-xs text-slate-400 capitalize">{a.itemLabel}s</span>
+                <span className="block text-xs text-slate-400 capitalize">{pluralLabel(a)}</span>
                 <span className="block text-xs text-slate-500 mt-0.5">{lastPracticedLabel(a.id)}</span>
               </span>
               <span className="text-violet-400 text-sm ml-4">›</span>

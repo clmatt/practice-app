@@ -52,3 +52,18 @@ describe('deleting an activity', () => {
     expect(getActivities()).toHaveLength(1)
   })
 })
+
+describe('item label plural', () => {
+  it('shows automatic plurals and saves an override from Settings', () => {
+    saveActivity({ id: 'act-1', name: 'Cooking', itemLabel: 'dish', weights: { red: 0.6, yellow: 0.3, green: 0.1 }, createdAt: '2026-01-01T00:00:00.000Z' })
+    renderAt('/activity/act-1')
+    expect(screen.getByText('dishes')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const plural = screen.getByLabelText('Plural (optional)')
+    expect(plural).toHaveAttribute('placeholder', 'dishes')
+    fireEvent.change(plural, { target: { value: 'meals' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
+    expect(getActivities()[0].itemLabelPlural).toBe('meals')
+    expect(screen.getByText('meals')).toBeInTheDocument()
+  })
+})

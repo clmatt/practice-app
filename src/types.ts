@@ -4,6 +4,8 @@ export interface Activity {
   id: string
   name: string
   itemLabel: string
+  /** Plural of itemLabel when the automatic one is wrong (e.g. "cacti"). */
+  itemLabelPlural?: string
   weights: { red: number; yellow: number; green: number }
   recencyBias?: number
   /** Auto Practice: after each rating, show the filter step before drawing the next item. */

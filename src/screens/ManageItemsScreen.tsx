@@ -11,6 +11,7 @@ import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
 import { RATING_ORDER } from '../palette'
 import { toggled } from '../utils'
+import { pluralLabel } from '../labels'
 
 function practiceSummary(lastPracticed: string | undefined, count: number): string {
   if (!lastPracticed) return 'Never practiced'
@@ -43,6 +44,7 @@ export default function ManageItemsScreen() {
   if (!activity) return null
 
   const label = activity.itemLabel
+  const plural = pluralLabel(activity)
   const allTags = sortTags(items.flatMap(i => i.tags ?? []))
   const activeFilterCount = colors.size + tags.size
   const shown = filterAndSortItems(items, { query, colors, tags }, sort, lastPracticedAt)
@@ -51,7 +53,7 @@ export default function ManageItemsScreen() {
     <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
       <div className="shrink-0 px-4 pt-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold capitalize">{label}s</h1>
+          <h1 className="text-xl font-bold capitalize">{plural}</h1>
           <button
             onClick={() => navigate(`/activity/${activityId}/manage/add`)}
             className="bg-violet-600 hover:bg-violet-500 rounded-xl px-4 py-2 text-sm font-semibold"
@@ -62,7 +64,7 @@ export default function ManageItemsScreen() {
 
         <input
           type="text"
-          placeholder={`Search ${label}s`}
+          placeholder={`Search ${plural}`}
           value={query}
           onChange={e => update({ query: e.target.value })}
           className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-3"
@@ -122,15 +124,15 @@ export default function ManageItemsScreen() {
         )}
 
         {(activeFilterCount > 0 || query.trim() !== '') && items.length > 0 && (
-          <p className="text-slate-500 text-xs mb-3">Showing {shown.length} of {items.length} {label}s</p>
+          <p className="text-slate-500 text-xs mb-3">Showing {shown.length} of {items.length} {plural}</p>
         )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-8">
         {items.length === 0 ? (
-          <p className="text-slate-400 text-sm">No {label}s yet</p>
+          <p className="text-slate-400 text-sm">No {plural} yet</p>
         ) : shown.length === 0 ? (
-          <p className="text-slate-400 text-sm">No {label}s match your search or filters.</p>
+          <p className="text-slate-400 text-sm">No {plural} match your search or filters.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {shown.map(item => (
