@@ -6,6 +6,7 @@ import {
   getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
   importRecords, undoPracticeLog, reopenStorageForTests,
+  recordPractice, getPracticeCountByItem, getLastPracticedByItem,
 } from '../storage'
 import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
@@ -409,5 +410,91 @@ describe('getColorDistributionByDay', () => {
     const elapsed = performance.now() - t0
     expect(result).toHaveLength(730)
     expect(elapsed).toBeLessThan(1000) // was ~10s before
+  })
+})
+
+/** Runs fn with the clock set to iso (Date only, so IndexedDB's timers still run). */
+function at(iso: string, fn: () => void) {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(iso))
+  try {
+    fn()
+  } finally {
+    vi.useRealTimers()
+  }
+}
+
+describe('colour edits', () => {
+  it('saving an item with a new colour logs the edit', () => {
+    saveItem(makeItem({ color: 'red' }))
+    at('2026-05-02T18:00:00.000Z', () => saveItem(makeItem({ color: 'green' })))
+    expect(getLogs()).toEqual([expect.objectContaining({
+      itemId: 'item-1', colorBefore: 'red', colorAfter: 'green', source: 'edit', practicedAt: '2026-05-02T18:00:00.000Z',
+    })])
+  })
+
+  it('saving with the same colour, or a new item, logs nothing', () => {
+    saveItem(makeItem())
+    saveItem(makeItem({ name: 'Renamed' }))
+    expect(getLogs()).toEqual([])
+  })
+
+  it('an edit does not count as practice', () => {
+    saveActivity(makeActivity())
+    saveItem(makeItem({ color: 'red' }))
+    saveItem(makeItem({ color: 'green' }))
+    expect(getTodayPracticedItemIds('act-1').size).toBe(0)
+    expect(getPracticeCountByItem('act-1')).toEqual({})
+    expect(getLastPracticedByItem('act-1')).toEqual({})
+    expect(getSessionHistory('act-1')).toEqual([])
+  })
+
+  it('the chart shows the edit, and the colour before the first log on earlier days', () => {
+    saveActivity(makeActivity())
+    saveItem(makeItem({ color: 'red', createdAt: '2026-05-01T18:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', practicedAt: '2026-05-01T18:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    at('2026-05-03T18:00:00.000Z', () => saveItem(makeItem({ color: 'green', createdAt: '2026-05-01T18:00:00.000Z' })))
+    expect(getColorDistributionByDay('act-1')).toEqual([
+      { date: '2026-05-01', red: 1, yellow: 0, green: 0 },
+      { date: '2026-05-03', red: 0, yellow: 0, green: 1 },
+    ])
+  })
+
+  it('a never-practised item keeps its first colour on days before it was edited', () => {
+    saveActivity(makeActivity())
+    saveItem(makeItem({ id: 'a', color: 'red', createdAt: '2026-05-01T18:00:00.000Z' }))
+    saveItem(makeItem({ id: 'b', color: 'yellow', createdAt: '2026-05-01T18:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'a', practicedAt: '2026-05-01T18:00:00.000Z', colorBefore: 'red', colorAfter: 'red' }))
+    at('2026-05-03T18:00:00.000Z', () => saveItem(makeItem({ id: 'b', color: 'green', createdAt: '2026-05-01T18:00:00.000Z' })))
+    expect(getColorDistributionByDay('act-1')[0]).toEqual({ date: '2026-05-01', red: 1, yellow: 1, green: 0 })
+  })
+
+  it('undo leaves an edited colour alone', () => {
+    saveItem(makeItem({ color: 'red' }))
+    const logId = recordPractice({ item: makeItem({ color: 'red' }), color: 'yellow' })
+    saveItem({ ...getItems('act-1')[0], color: 'green' })
+    undoPracticeLog(logId)
+    expect(getItems('act-1')[0].color).toBe('green')
+  })
+})
+
+describe('recordPractice', () => {
+  it('logs the rep and updates the colour', () => {
+    saveItem(makeItem({ color: 'red' }))
+    const id = recordPractice({ item: makeItem({ color: 'red' }), color: 'green', note: '  felt good  ', at: new Date('2026-05-02T18:00:00.000Z') })
+    expect(getLogs()).toEqual([{ id, itemId: 'item-1', practicedAt: '2026-05-02T18:00:00.000Z', colorBefore: 'red', colorAfter: 'green', note: 'felt good' }])
+    expect(getItems('act-1')[0].color).toBe('green')
+  })
+
+  it('takes colorBefore from the stored item, not a stale copy', () => {
+    saveItem(makeItem({ color: 'yellow' }))
+    recordPractice({ item: makeItem({ color: 'red' }), color: 'green' })
+    expect(getLogs()[0].colorBefore).toBe('yellow')
+  })
+
+  it('leaves out an empty note', () => {
+    saveItem(makeItem())
+    recordPractice({ item: makeItem(), color: 'red', note: '   ' })
+    expect(getLogs()[0]).not.toHaveProperty('note')
   })
 })

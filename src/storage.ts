@@ -3,6 +3,8 @@ import { openDb, readAll, applyOps, deleteDb, type Meta, type RecordStore, type 
 import { CURRENT_SCHEMA_VERSION, migrateSnapshot, type DataSnapshot } from './migrations'
 import { localDateKey } from './dates'
 import { compareNatural } from './sorting'
+import { isRep } from './logs'
+import { generateId } from './utils'
 
 export type { SessionSummary, SavedFilter } from './types'
 
@@ -302,6 +304,9 @@ export async function reopenStorageForTests(): Promise<void> {
   await initStorage()
 }
 
+/** Practice reps only: leaves out the logs that record a colour edited by hand. */
+const reps = (): PracticeLog[] => state.logs.filter(isRep)
+
 function upsert<T extends { id: string }>(list: T[], record: T): T[] {
   const idx = list.findIndex(r => r.id === record.id)
   return idx >= 0 ? list.map((r, i) => (i === idx ? record : r)) : [...list, record]
@@ -330,9 +335,14 @@ export function getItems(activityId: string): Item[] {
   return state.items.filter(i => i.activityId === activityId)
 }
 
+/** Saves an item. Changing an existing item's colour also logs the edit, in the same save. */
 export function saveItem(item: Item): void {
-  state = { ...state, items: upsert(state.items, item) }
-  persist([{ store: 'items', type: 'put', value: item }])
+  const existing = state.items.find(i => i.id === item.id)
+  const edit: PracticeLog | null = existing && existing.color !== item.color
+    ? { id: generateId(), itemId: item.id, practicedAt: new Date().toISOString(), colorBefore: existing.color, colorAfter: item.color, source: 'edit' }
+    : null
+  state = { ...state, items: upsert(state.items, item), logs: edit ? [...state.logs, edit] : state.logs }
+  persist([...puts('items', [item]), ...(edit ? puts('logs', [edit]) : [])])
 }
 
 export function deleteItemWithLogs(itemId: string): void {
@@ -350,6 +360,31 @@ export function getLogs(): PracticeLog[] {
 export function appendLog(log: PracticeLog): void {
   state = { ...state, logs: [...state.logs, log] }
   persist([{ store: 'logs', type: 'put', value: log }])
+}
+
+/**
+ * Saves a practice rating: the log and, if the colour changed, the item —
+ * in one transaction. Returns the new log's id (for Undo).
+ */
+export function recordPractice({ item, color, note, at = new Date() }: { item: Item; color: Color; note?: string; at?: Date }): string {
+  const current = state.items.find(i => i.id === item.id) ?? item
+  const trimmed = note?.trim()
+  const log: PracticeLog = {
+    id: generateId(),
+    itemId: current.id,
+    practicedAt: at.toISOString(),
+    colorBefore: current.color,
+    colorAfter: color,
+    ...(trimmed ? { note: trimmed } : {}),
+  }
+  const updated = color !== current.color ? { ...current, color } : null
+  state = {
+    ...state,
+    logs: [...state.logs, log],
+    items: updated ? upsert(state.items, updated) : state.items,
+  }
+  persist([...puts('logs', [log]), ...(updated ? puts('items', [updated]) : [])])
+  return log.id
 }
 
 /**
@@ -379,7 +414,7 @@ export function getTodayPracticedItemIds(activityId: string): Set<string> {
   const activityItemIds = new Set(getItems(activityId).map(i => i.id))
   const todayKey = localDateKey(new Date())
   return new Set(
-    state.logs
+    reps()
       .filter(l => activityItemIds.has(l.itemId) && localDateKey(l.practicedAt) === todayKey)
       .map(l => l.itemId)
   )
@@ -399,6 +434,9 @@ export function getColorDistributionByDay(
   if (logs.length === 0) return []
 
   const dates = [...new Set(logs.map(l => l.date))]
+  // Before an item's first log, it had that log's starting colour (not necessarily today's).
+  const firstColor = new Map<string, Color>()
+  for (const { log } of logs) if (!firstColor.has(log.itemId)) firstColor.set(log.itemId, log.colorBefore)
   const createdOn = new Map(items.map(i => [i.id, localDateKey(i.createdAt)]))
   const colorSoFar = new Map<string, Color>()
   let next = 0
@@ -412,7 +450,7 @@ export function getColorDistributionByDay(
     const counts = { red: 0, yellow: 0, green: 0 }
     for (const item of items) {
       if (createdOn.get(item.id)! > date) continue
-      counts[colorSoFar.get(item.id) ?? item.color]++
+      counts[colorSoFar.get(item.id) ?? firstColor.get(item.id) ?? item.color]++
     }
     return { date, ...counts }
   })
@@ -421,7 +459,7 @@ export function getColorDistributionByDay(
 export function getPracticeCountByItem(activityId: string): Record<string, number> {
   const itemIds = new Set(getItems(activityId).map(i => i.id))
   const counts: Record<string, number> = {}
-  for (const log of state.logs) {
+  for (const log of reps()) {
     if (itemIds.has(log.itemId)) {
       counts[log.itemId] = (counts[log.itemId] ?? 0) + 1
     }
@@ -432,7 +470,7 @@ export function getPracticeCountByItem(activityId: string): Record<string, numbe
 export function getLastPracticedByItem(activityId: string): Record<string, string> {
   const itemIds = new Set(getItems(activityId).map(i => i.id))
   const last: Record<string, string> = {}
-  for (const log of state.logs) {
+  for (const log of reps()) {
     if (itemIds.has(log.itemId)) {
       if (!last[log.itemId] || log.practicedAt > last[log.itemId]) {
         last[log.itemId] = log.practicedAt
@@ -443,7 +481,7 @@ export function getLastPracticedByItem(activityId: string): Record<string, strin
 }
 
 export function getNotesForItem(itemId: string): { practicedAt: string; note: string }[] {
-  return state.logs
+  return reps()
     .filter(l => l.itemId === itemId && !!l.note)
     .map(l => ({ practicedAt: l.practicedAt, note: l.note! }))
     .sort((a, b) => b.practicedAt.localeCompare(a.practicedAt))
@@ -454,7 +492,7 @@ export function getSessionHistory(activityId: string): SessionSummary[] {
   const itemMap = new Map(items.map(i => [i.id, i.name]))
   const itemIds = new Set(items.map(i => i.id))
 
-  const logs = state.logs.filter(l => itemIds.has(l.itemId))
+  const logs = reps().filter(l => itemIds.has(l.itemId))
 
   const byDate = new Map<string, PracticeLog[]>()
   for (const log of logs) {

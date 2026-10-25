@@ -29,6 +29,8 @@ export interface PracticeLog {
   colorBefore: Color
   colorAfter: Color
   note?: string
+  /** 'edit': the colour was changed by hand, not practised. Absent on practice reps. */
+  source?: 'edit'
 }
 
 export interface SavedFilter {
