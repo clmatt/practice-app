@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useActivity } from '../useActivity'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
-import { getActivities, getItems, getLastPracticedByItem, getPracticeCountByItem } from '../storage'
+import { getItems, getLastPracticedByItem, getPracticeCountByItem } from '../storage'
 import { filterAndSortItems, readListView, writeListView, ITEM_SORT_LABELS, type ItemListView, type ItemSort } from '../itemList'
 import { formatDateKey, localDateKey } from '../dates'
-import type { Activity, Item } from '../types'
+import type { Item } from '../types'
 import { sortTags } from '../sorting'
 import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
@@ -24,7 +25,7 @@ export default function ManageItemsScreen() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity] = useActivity()
   const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [lastPracticedAt] = useState(() => (activityId ? getLastPracticedByItem(activityId) : {}))
   const [practiceCounts] = useState(() => (activityId ? getPracticeCountByItem(activityId) : {}))
@@ -36,10 +37,6 @@ export default function ManageItemsScreen() {
   function update(changes: Partial<ItemListView>) {
     setSearchParams(writeListView({ ...view, ...changes }), { replace: true })
   }
-
-  useEffect(() => {
-    if (!activity) navigate('/')
-  }, [activity, navigate])
 
   if (!activity) return null
 

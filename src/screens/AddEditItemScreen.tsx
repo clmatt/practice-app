@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useActivity } from '../useActivity'
 import ColorPicker from '../components/ColorPicker'
 import TabBar from '../components/TabBar'
-import { getActivities, getItems, saveItem, deleteItemWithLogs } from '../storage'
+import { getItems, saveItem, deleteItemWithLogs } from '../storage'
 import { generateId } from '../utils'
-import type { Activity, Color, Item } from '../types'
+import type { Color, Item } from '../types'
 import { sortTags } from '../sorting'
 import ToggleChip from '../components/ToggleChip'
 
@@ -14,7 +15,7 @@ export default function AddEditItemScreen() {
   const location = useLocation()
   const isEditing = Boolean(itemId)
 
-  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity] = useActivity()
   const [existingItem] = useState<Item | null>(() =>
     itemId ? (getItems(activityId!).find(i => i.id === itemId) ?? null) : null)
   const [allActivityTags] = useState<string[]>(() =>
@@ -32,8 +33,7 @@ export default function AddEditItemScreen() {
   }, [tagInputKey])
 
   useEffect(() => {
-    if (!activity) navigate('/')
-    else if (itemId && !existingItem) navigate(`/activity/${activityId}/manage`)
+    if (activity && itemId && !existingItem) navigate(`/activity/${activityId}/manage`)
   }, [activity, existingItem, itemId, activityId, navigate])
 
   function handleSubmit(e: React.FormEvent) {

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
+import { useActivity } from '../useActivity'
+import { getItems, saveItem, appendLog, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
 import { generateId, toggled } from '../utils'
 import { RATING_ORDER } from '../palette'
-import type { Activity, Item, Color } from '../types'
+import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
@@ -186,7 +187,7 @@ export default function PracticeSessionScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
-  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity] = useActivity()
   const [items, setItems] = useState<Item[]>(() => (activity ? getItems(activity.id) : []))
   const allTags = useMemo(() => tagsOf(items), [items])
   const [phase, setPhase] = useState<Phase>('setup')
@@ -206,8 +207,7 @@ export default function PracticeSessionScreen() {
   const filter: PracticeFilter = { tags: activeTags, colors: activeColors, advanced: advancedFilter }
 
   useEffect(() => {
-    if (!activity) navigate('/')
-    else if (items.length === 0) navigate(`/activity/${activity.id}`)
+    if (activity && items.length === 0) navigate(`/activity/${activity.id}`)
   }, [activity, items.length, navigate])
 
   function drawNextItem(skipped: Set<string> = skippedItemIds) {

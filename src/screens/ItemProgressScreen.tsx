@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getActivities, getItems, getLogs, getNotesForItem } from '../storage'
+import { useActivity } from '../useActivity'
+import { getItems, getLogs, getNotesForItem } from '../storage'
 import { formatDateKey } from '../dates'
 import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
@@ -16,13 +17,12 @@ export default function ItemProgressScreen() {
   const { activityId, itemId } = useParams<{ activityId: string; itemId: string }>()
   const navigate = useNavigate()
 
-  const activity = getActivities().find(a => a.id === activityId)
+  const [activity] = useActivity()
   const item = activity ? getItems(activityId!).find(i => i.id === itemId) : undefined
 
   useEffect(() => {
-    // A deleted item sends you back to the list; an unknown activity to Home.
-    if (!activity) navigate('/')
-    else if (!item) navigate(`/activity/${activityId}/manage`, { replace: true })
+    // A deleted item sends you back to the list (useActivity handles an unknown activity).
+    if (activity && !item) navigate(`/activity/${activityId}/manage`, { replace: true })
   }, [activity, item, activityId, navigate])
 
   if (!activity || !item) return null

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { useActivity } from '../useActivity'
 import {
-  getActivities, getItems, getSessionHistory, getColorDistributionByDay, getPracticeCountByItem,
+  getItems, getSessionHistory, getColorDistributionByDay, getPracticeCountByItem,
 } from '../storage'
 import { formatDateKey } from '../dates'
 import ColorDot from '../components/ColorDot'
@@ -15,18 +16,13 @@ function formatDate(dateKey: string): string {
 
 export default function StatsScreen() {
   const { activityId = '' } = useParams<{ activityId: string }>()
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const tabParam = searchParams.get('tab')
   const tab = tabParam === 'sessions' ? 'sessions' : 'general'
 
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set())
-  const activity = useMemo(() => getActivities().find(a => a.id === activityId), [activityId])
-
-  useEffect(() => {
-    if (!activity) navigate('/')
-  }, [activity, navigate])
+  const [activity] = useActivity()
 
   // Stats never change while this screen is open, so compute once per activity.
   const data = useMemo(() => {

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useActivity } from '../useActivity'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getActivities, getItems, saveActivity, deleteActivity } from '../storage'
+import { getItems, saveActivity, deleteActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
@@ -10,7 +11,7 @@ import { pluralLabel, pluralize } from '../labels'
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
-  const [activity, setActivity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity, setActivity] = useActivity()
   const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [editingSettings, setEditingSettings] = useState(false)
   const [draftName, setDraftName] = useState(() => activity?.name ?? '')
@@ -23,10 +24,6 @@ export default function ActivityDashboardScreen() {
   }))
   const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? 0.9)
   const [draftChooseFilter, setDraftChooseFilter] = useState(() => activity?.chooseFilterEachItem ?? false)
-
-  useEffect(() => {
-    if (!activity) navigate('/')
-  }, [activity, navigate])
 
   function handleSaveSettings() {
     if (!activity) return

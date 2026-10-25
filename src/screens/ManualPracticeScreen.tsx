@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useActivity } from '../useActivity'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getActivities, getItems, saveItem, appendLog, undoPracticeLog, getNotesForItem } from '../storage'
+import { getItems, saveItem, appendLog, undoPracticeLog, getNotesForItem } from '../storage'
 import { generateId } from '../utils'
-import type { Activity, Item, Color } from '../types'
+import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import ColorPicker from '../components/ColorPicker'
 import UndoBar from '../components/UndoBar'
@@ -15,7 +16,7 @@ export default function ManualPracticeScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
-  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity] = useActivity()
   const [items, setItems] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
   const [searchQuery, setSearchQuery] = useState('')
   const [phase, setPhase] = useState<Phase>('list')
@@ -24,10 +25,6 @@ export default function ManualPracticeScreen() {
   const [noteText, setNoteText] = useState('')
   const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
   const clearLastSaved = useCallback(() => setLastSaved(null), [])
-
-  useEffect(() => {
-    if (!activity) navigate('/')
-  }, [activity, navigate])
 
   if (!activity) return null
 

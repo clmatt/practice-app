@@ -1,19 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useActivity } from '../useActivity'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getActivities, getItems } from '../storage'
-import type { Activity, Item } from '../types'
+import { getItems } from '../storage'
+import type { Item } from '../types'
 import TabBar from '../components/TabBar'
 import { pluralLabel } from '../labels'
 
 export default function PracticeChooserScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
-  const [activity] = useState<Activity | null>(() => getActivities().find(a => a.id === activityId) ?? null)
+  const [activity] = useActivity()
   const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
-
-  useEffect(() => {
-    if (!activity) navigate('/')
-  }, [activity, navigate])
 
   if (!activity) return null
 
