@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getActivities, getItems, getLogs, getPracticeCountByItem } from '../storage'
 import {
-  validateImportPayload, findActivityConflicts, findItemConflicts, executeImport,
-  type ImportPayload, type ActivityResolution, type ItemResolution, type ImportStats, type ItemConflict,
+  validateImportPayload, findActivityConflicts, findItemConflicts, planImport, applyImport, removalSummary,
+  type ImportPlan, type ImportPayload, type ActivityResolution, type ItemResolution, type ImportStats, type ItemConflict,
 } from '../backup'
 import { NewerSchemaError } from '../migrations'
 import type { Activity } from '../types'
 import { RATING_COLORS } from '../palette'
 import { isRep } from '../logs'
+import ConfirmDestructive from '../components/ConfirmDestructive'
 
-type WizardStep = 'select' | 'activity' | 'item' | 'summary'
+type WizardStep = 'select' | 'activity' | 'item' | 'confirm' | 'summary'
 
 export default function ImportScreen() {
   const navigate = useNavigate()
@@ -28,6 +29,18 @@ export default function ImportScreen() {
   const [selectedItemRes, setSelectedItemRes] = useState<ItemResolution>('keep-existing')
   const [applyItemAll, setApplyItemAll] = useState(false)
   const [stats, setStats] = useState<ImportStats | null>(null)
+  const [plan, setPlan] = useState<ImportPlan | null>(null)
+
+  /** Applies the import, first asking if it would remove anything already on this phone. */
+  function finish(next: ImportPlan) {
+    if (next.remove.activityIds.length > 0 || next.remove.itemIds.length > 0) {
+      setPlan(next)
+      setStep('confirm')
+    } else {
+      setStats(applyImport(next))
+      setStep('summary')
+    }
+  }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -44,8 +57,7 @@ export default function ImportScreen() {
         setError(null)
         const conflicts = findActivityConflicts(parsed.activities, getActivities())
         if (conflicts.length === 0) {
-          setStats(executeImport(parsed, new Map(), new Map()))
-          setStep('summary')
+          finish(planImport(parsed, new Map(), new Map()))
           return
         }
         setPayload(parsed)
@@ -73,8 +85,7 @@ export default function ImportScreen() {
       queue.push(...findItemConflicts(impAct, existAct, impItems, getItems(existAct.id)))
     }
     if (queue.length === 0) {
-      setStats(executeImport(payload!, resolutions, new Map()))
-      setStep('summary')
+      finish(planImport(payload!, resolutions, new Map()))
     } else {
       setItemConflicts(queue)
       setItemIdx(0)
@@ -109,8 +120,7 @@ export default function ImportScreen() {
     if (applyItemAll) {
       for (let i = itemIdx; i < itemConflicts.length; i++) next.set(itemConflicts[i].importedItem.id, selectedItemRes)
       setItemResolutions(next)
-      setStats(executeImport(payload!, actResolutions, next))
-      setStep('summary')
+      finish(planImport(payload!, actResolutions, next))
     } else {
       next.set(itemConflicts[itemIdx].importedItem.id, selectedItemRes)
       setItemResolutions(next)
@@ -119,8 +129,7 @@ export default function ImportScreen() {
         setSelectedItemRes('keep-existing')
         setApplyItemAll(false)
       } else {
-        setStats(executeImport(payload!, actResolutions, next))
-        setStep('summary')
+        finish(planImport(payload!, actResolutions, next))
       }
     }
   }
@@ -329,7 +338,24 @@ export default function ImportScreen() {
         </>
       )}
 
-      {/* ── Step 4: Summary ── */}
+      {/* ── Step 4: Confirm removals ── */}
+      {step === 'confirm' && plan && (() => {
+        const removal = removalSummary(plan)
+        const replaces = removal.activities.length > 0 ? `Replaces ${removal.activities.join(', ')}. ` : ''
+        return (
+          <>
+            <h1 className="text-xl font-bold mb-4">Before importing</h1>
+            <ConfirmDestructive
+              message={`${replaces}Permanently removes ${removal.items} ${removal.items === 1 ? 'item' : 'items'} and ${removal.reps} ${removal.reps === 1 ? 'rep' : 'reps'} now on this phone.`}
+              action="import"
+              onConfirm={() => { setStats(applyImport(plan)); setStep('summary') }}
+              onCancel={() => { setPlan(null); setPayload(null); setStep('select') }}
+            />
+          </>
+        )
+      })()}
+
+      {/* ── Step 5: Summary ── */}
       {step === 'summary' && stats && (
         <>
           <Link to="/" className="text-slate-400 text-sm mb-6 block">← Home</Link>

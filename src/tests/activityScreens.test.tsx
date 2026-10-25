@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+
+vi.mock('../backup', async importOriginal => {
+  const actual = await importOriginal<typeof import('../backup')>()
+  return { ...actual, exportData: vi.fn() }
+})
+
+import { exportData } from '../backup'
 import HomeScreen from '../screens/HomeScreen'
 import ActivityDashboardScreen from '../screens/ActivityDashboardScreen'
 import { saveActivity, saveItem, getActivities, getSnapshot } from '../storage'
@@ -31,25 +38,51 @@ describe('deleting an activity', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
 
-  it('lives in Activity Settings, asks first, and returns Home', () => {
+  function openDelete() {
     seed()
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderAt('/activity/act-1')
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     fireEvent.click(screen.getByRole('button', { name: 'Delete activity' }))
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Juggling'))
+  }
+
+  it('lives in Activity Settings, says what will be removed, and can delete without a backup', () => {
+    openDelete()
+    expect(screen.getByText(/Deletes "Juggling", its 1 trick and 0 reps\./)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete without backup' }))
     expect(getActivities()).toEqual([])
     expect(getSnapshot().items).toEqual([])
     expect(screen.getByText('No activities yet. Add one to get started.')).toBeInTheDocument()
   })
 
-  it('does nothing when the confirmation is cancelled', () => {
-    seed()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
-    renderAt('/activity/act-1')
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Delete activity' }))
+  it('exports first, then deletes', async () => {
+    vi.mocked(exportData).mockResolvedValue(true)
+    openDelete()
+    fireEvent.click(screen.getByRole('button', { name: 'Export backup, then delete' }))
+    expect(await screen.findByText('No activities yet. Add one to get started.')).toBeInTheDocument()
+    expect(exportData).toHaveBeenCalled()
+  })
+
+  it('does nothing when the export is cancelled', async () => {
+    vi.mocked(exportData).mockResolvedValue(false)
+    openDelete()
+    fireEvent.click(screen.getByRole('button', { name: 'Export backup, then delete' }))
+    await waitFor(() => expect(exportData).toHaveBeenCalled())
     expect(getActivities()).toHaveLength(1)
+  })
+
+  it('shows the error and keeps everything when the export fails', async () => {
+    vi.mocked(exportData).mockRejectedValue(new Error('disk full'))
+    openDelete()
+    fireEvent.click(screen.getByRole('button', { name: 'Export backup, then delete' }))
+    expect(await screen.findByText("Couldn't export: disk full")).toBeInTheDocument()
+    expect(getActivities()).toHaveLength(1)
+  })
+
+  it('Cancel keeps everything', () => {
+    openDelete()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(getActivities()).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Delete activity' })).toBeInTheDocument()
   })
 })
 

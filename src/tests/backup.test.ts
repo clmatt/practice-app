@@ -4,6 +4,9 @@ import {
   findActivityConflicts,
   findItemConflicts,
   executeImport,
+  planImport,
+  applyImport,
+  removalSummary,
   buildBackup,
   backupFileName,
   exportData,
@@ -474,5 +477,41 @@ describe('validateImportPayload: damaged records', () => {
   it('reports skipped damaged records in the import stats', () => {
     const p = validateImportPayload(file({ logs: [makeLog(), { id: 'l2' }] }))!
     expect(executeImport(p, new Map(), new Map()).invalid).toBe(1)
+  })
+})
+
+describe('planImport', () => {
+  it('works out the import without saving anything', () => {
+    saveActivity(makeActivity({ id: 'old', name: 'Juggling' }))
+    const payload = validateImportPayload({ activities: [makeActivity({ id: 'new', name: 'Juggling' })], items: [], logs: [] })!
+    const plan = planImport(payload, new Map([['new', 'replace']]), new Map())
+    expect(plan.remove.activityIds).toEqual(['old'])
+    expect(getActivities().map(a => a.id)).toEqual(['old'])
+    applyImport(plan)
+    expect(getActivities().map(a => a.name)).toEqual(['Juggling'])
+    expect(getActivities()[0].id).not.toBe('old')
+  })
+
+  it('summarises what would be removed, counting reps only', () => {
+    saveActivity(makeActivity({ id: 'old', name: 'Juggling' }))
+    saveItem(makeItem({ id: 'i1', activityId: 'old', color: 'red' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1' }))
+    saveItem(makeItem({ id: 'i1', activityId: 'old', color: 'green' })) // an edit, not a rep
+    const payload = validateImportPayload({ activities: [makeActivity({ id: 'new', name: 'Juggling' })], items: [], logs: [] })!
+    expect(removalSummary(planImport(payload, new Map([['new', 'replace']]), new Map())))
+      .toEqual({ activities: ['Juggling'], items: 1, reps: 1 })
+  })
+
+  it('counts items replaced by "keep imported" in a combine', () => {
+    saveActivity(makeActivity({ id: 'old', name: 'Juggling' }))
+    saveItem(makeItem({ id: 'i1', activityId: 'old', name: 'Box' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'i1' }))
+    const payload = validateImportPayload({
+      activities: [makeActivity({ id: 'new', name: 'Juggling' })],
+      items: [makeItem({ id: 'i9', activityId: 'new', name: 'Box' })],
+      logs: [],
+    })!
+    const plan = planImport(payload, new Map([['new', 'combine']]), new Map([['i9', 'keep-imported']]))
+    expect(removalSummary(plan)).toEqual({ activities: [], items: 1, reps: 1 })
   })
 })

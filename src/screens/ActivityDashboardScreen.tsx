@@ -1,12 +1,20 @@
 import { useState } from 'react'
 import { useActivity } from '../useActivity'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getActiveItems, saveActivity, deleteActivity } from '../storage'
+import { getActiveItems, getItems, getPracticeCountByItem, saveActivity, deleteActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
+import ConfirmDestructive from '../components/ConfirmDestructive'
 import { RATING_ORDER } from '../palette'
 import { pluralLabel, pluralize } from '../labels'
+
+/** "Deletes "Juggling", its 12 tricks and 340 reps." — archived items included. */
+function deleteMessage(activity: Activity): string {
+  const items = getItems(activity.id).length
+  const reps = Object.values(getPracticeCountByItem(activity.id)).reduce((a, b) => a + b, 0)
+  return `Deletes "${activity.name}", its ${items} ${items === 1 ? activity.itemLabel : pluralLabel(activity)} and ${reps} ${reps === 1 ? 'rep' : 'reps'}.`
+}
 
 export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -23,6 +31,7 @@ export default function ActivityDashboardScreen() {
     green: Math.round((activity?.weights.green ?? 0.1) * 100),
   }))
   const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? 0.9)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [draftChooseFilter, setDraftChooseFilter] = useState(() => activity?.chooseFilterEachItem ?? false)
 
   function handleSaveSettings() {
@@ -49,7 +58,6 @@ export default function ActivityDashboardScreen() {
 
   function handleDeleteActivity() {
     if (!activity) return
-    if (!window.confirm(`Delete "${activity.name}" and all its ${pluralLabel(activity)} and practice history? This cannot be undone.`)) return
     deleteActivity(activity.id)
     navigate('/', { replace: true })
   }
@@ -170,12 +178,23 @@ export default function ActivityDashboardScreen() {
           >
             Save Settings
           </button>
-          <button
-            onClick={handleDeleteActivity}
-            className="mt-6 mb-2 text-red-400 text-sm font-medium py-2 w-full text-center"
-          >
-            Delete activity
-          </button>
+          {confirmingDelete ? (
+            <div className="mt-6 mb-2">
+              <ConfirmDestructive
+                message={deleteMessage(activity)}
+                action="delete"
+                onConfirm={handleDeleteActivity}
+                onCancel={() => setConfirmingDelete(false)}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="mt-6 mb-2 text-red-400 text-sm font-medium py-2 w-full text-center"
+            >
+              Delete activity
+            </button>
+          )}
         </div>
       </div>
     )

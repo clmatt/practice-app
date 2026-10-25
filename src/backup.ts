@@ -1,7 +1,7 @@
 import {
   getSnapshot, importRecords, recordBackup, getActivities, getItems, getSavedFilters,
 } from './storage'
-import { CURRENT_SCHEMA_VERSION, migrateSnapshot } from './migrations'
+import { CURRENT_SCHEMA_VERSION, migrateSnapshot, type DataSnapshot } from './migrations'
 import { localDateKey, daysBetweenKeys } from './dates'
 import { generateId } from './utils'
 import { isRep } from './logs'
@@ -189,11 +189,19 @@ export function findItemConflicts(
     .map(i => ({ importedItem: i, existingItem: existingByName.get(i.name)! }))
 }
 
-export function executeImport(
+/** What an import will do: records to add, existing activities/items to remove, and the resulting stats. */
+export interface ImportPlan {
+  records: DataSnapshot
+  remove: { activityIds: string[]; itemIds: string[] }
+  stats: ImportStats
+}
+
+/** Works out an import without saving anything (so the user can be asked first if it removes data). */
+export function planImport(
   payload: ImportPayload,
   actResolutions: Map<string, ActivityResolution>,
   itemResolutions: Map<string, ItemResolution>,
-): ImportStats {
+): ImportPlan {
   const stats: ImportStats = { activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0, invalid: payload.invalidRecords ?? 0 }
   const existingActByName = new Map(getActivities().map(a => [a.name, a]))
   const newActivities: Activity[] = []
@@ -266,9 +274,36 @@ export function executeImport(
     addFilters(impAct.id, newActId, new Set())
   }
 
-  importRecords(
-    { activities: newActivities, items: newItems, logs: newLogs, savedFilters: newFilters },
-    { activityIds: removeActivityIds, itemIds: removeItemIds },
-  )
-  return stats
+  return {
+    records: { activities: newActivities, items: newItems, logs: newLogs, savedFilters: newFilters },
+    remove: { activityIds: removeActivityIds, itemIds: removeItemIds },
+    stats,
+  }
+}
+
+/** Saves a planned import (one atomic write). */
+export function applyImport(plan: ImportPlan): ImportStats {
+  importRecords(plan.records, plan.remove)
+  return plan.stats
+}
+
+export function executeImport(
+  payload: ImportPayload,
+  actResolutions: Map<string, ActivityResolution>,
+  itemResolutions: Map<string, ItemResolution>,
+): ImportStats {
+  return applyImport(planImport(payload, actResolutions, itemResolutions))
+}
+
+/** What a plan would permanently remove from this phone: activity names, and items and reps in total. */
+export function removalSummary(plan: ImportPlan): { activities: string[]; items: number; reps: number } {
+  const { activities, items, logs } = getSnapshot()
+  const actIds = new Set(plan.remove.activityIds)
+  const itemIds = new Set(plan.remove.itemIds)
+  for (const item of items) if (actIds.has(item.activityId)) itemIds.add(item.id)
+  return {
+    activities: activities.filter(a => actIds.has(a.id)).map(a => a.name),
+    items: itemIds.size,
+    reps: logs.filter(l => itemIds.has(l.itemId) && isRep(l)).length,
+  }
 }
