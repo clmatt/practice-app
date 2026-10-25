@@ -6,6 +6,7 @@ Personal PWA (React 19 + TypeScript + Vite + Tailwind 3) for tracking practice o
 - `npm test` (Vitest, jsdom, fake-indexeddb, timezone pinned to America/Los_Angeles)
 - `npm run lint` — must report 0 problems
 - `npm run build` — type-check (`tsc -b`) + production build
+- `npm run test:e2e` — Playwright in WebKit against the production build (run `npm run build` first)
 - `npm run dev` → http://localhost:5173/practice-app/
 - Node 24 (`.nvmrc`, `engines` in package.json)
 
@@ -19,12 +20,18 @@ Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflow
 - Never delete or write the legacy localStorage keys (`practice:activities`, `practice:items`, `practice:logs`, `practice:saved-filters`). They're a fallback copy of pre-IndexedDB data, read once on first start with an empty database.
 - Export files (`src/backup.ts`) must stay importable forever: keep accepting old files (no `schemaVersion` → version 1).
 - Group by day with `localDateKey()` from `src/dates.ts`, never `iso.slice(0, 10)` (that's the UTC date).
+- Save a practice rating with `recordPractice()` (log + new colour in one transaction), never `appendLog` + `saveItem`. `saveItem()` records a colour change as an edit log (`source: 'edit'`); anything that counts practice must skip those with `isRep()` from `src/logs.ts` (storage's own queries already do).
+- Items are archived (`archivedAt`), not deleted, from the UI. Practice, the dashboard and tag pickers use `getActiveItems()`; history and stats keep archived items (`getItems()`).
+- Auto Practice resume state lives in localStorage under `practice-app:auto-session:<activityId>` (`src/sessionResume.ts`). It's disposable screen state, not user data.
 
 ## Conventions
 - 2-space indent, no semicolons, single quotes; Tailwind utility classes; slate background, violet accents.
 - `tsconfig.app.json` has `erasableSyntaxOnly: true`: no enums, namespaces or constructor parameter properties.
 - Only components are exported from `.tsx` files (`react-refresh/only-export-components` lint rule); put helpers in `.ts` modules.
 - Screens read storage directly in `useState` initialisers; effects are only for redirects (`react-hooks/set-state-in-effect` is enforced).
-- Rating colors come from `RATING_COLORS` in `src/palette.ts` — never hard-code red/yellow/green hex values or Tailwind color classes for ratings. (Green is emerald on purpose: it was chosen with a colour-blindness validator.)
+- Rating colors come from `RATING_COLORS` in `src/palette.ts` — never hard-code red/yellow/green hex values or Tailwind color classes for ratings. (Green is emerald on purpose: it was chosen with a colour-blindness validator.) List or order the ratings with `RATINGS`/`RATING_ORDER`, never a hand-written `['red', 'yellow', 'green']`.
+- Plural item labels come from `pluralLabel(activity)` (`src/labels.ts`), never `${itemLabel}s`.
+- Activity screens get their activity (and the redirect when it's missing) from `useActivity()`.
+- Wording: a **rep** is one rating; a **session** is a practice day.
 - Show tags with `components/TagList` (labels) or `components/ToggleChip` (selectable); sort tags/names with `sortTags`/`compareNatural` from `src/sorting.ts`, never plain `.sort()`.
 - Design specs and plans live in `docs/superpowers/`.

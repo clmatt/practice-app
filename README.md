@@ -6,6 +6,8 @@ A personal practice tracker that runs as an app on your phone's home screen.
 
 You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice draws items weighted towards the ones you struggle with and the ones you haven't touched in a while. Tapped the wrong color? An *Undo* bar appears for a few seconds after each save. Stats show how your ratings shift over time.
 
+If the app is closed or reloaded in the middle of Auto Practice, reopening it the same day carries on where you were. Items you no longer practise can be archived (Edit → *Archive*): they leave practice and the lists but keep their history; find them under Items → Filter → *Archived*, where you can unarchive or permanently delete them. The version and build date are shown at the bottom of the Home screen.
+
 ## Using it
 
 **Install on iPhone:** open the live app in Safari → Share → *Add to Home Screen*. It works offline after the first load and updates itself when a new version is deployed (close and reopen it to pick up an update).
@@ -14,6 +16,7 @@ You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individ
 
 - **Back up regularly.** Home screen → *Export data*. On iPhone this opens the share sheet — choose *Save to Files* (iCloud Drive is a good spot). The Home screen shows when you last backed up and turns amber after 30 days.
 - **Restore / move to a new phone:** install the app, then Home → *Import data* and pick a backup file. If an activity already exists you'll be asked whether to keep existing, replace, keep both, or combine.
+- Deleting an activity, or an import that replaces data, first offers to export a backup.
 - The data is tied to the address `clmatt.github.io/practice-app`. Renaming the GitHub account or repository changes the address, and the app at the new address starts empty — export first, then import at the new address.
 - Clearing Safari's website data for the site deletes the data. The app asks the browser to keep its storage persistent, but a backup is the only real guarantee.
 
@@ -26,6 +29,7 @@ npm ci            # install exact dependency versions from package-lock.json
 npm run dev       # dev server → http://localhost:5173/practice-app/
 npm test          # run the test suite once (Vitest)
 npm run lint      # ESLint
+npm run test:e2e  # Playwright (WebKit, iPhone-sized) against the production build — run npm run build first
 npm run build     # type-check and production build into dist/
 npm run preview   # serve the production build locally
 npm run icons     # regenerate public/icon-*.png from scripts/generate-icons.mjs
@@ -37,7 +41,7 @@ The dev server uses a separate storage area from the live app (different address
 
 ### Deploying
 
-Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests and the build, and deploys to GitHub Pages only if all pass. Pushes to other branches run the same checks without deploying. Check progress at https://github.com/clmatt/practice-app/actions.
+Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests, the build and the WebKit end-to-end test, and deploys to GitHub Pages only if all pass. Pushes to other branches run the same checks without deploying. Check progress at https://github.com/clmatt/practice-app/actions.
 
 ### Coming back after a long break
 
@@ -63,6 +67,10 @@ src/
   dates.ts            local-calendar-date helpers
   autoPractice.ts     what Auto Practice draws next (filters, skips, done states)
   itemList.ts         search, sort and filters for the Items list (kept in the URL)
+  labels.ts           plurals of item labels (category → categories)
+  logs.ts             isRep(): practice reps vs. records of a colour edited by hand
+  sessionResume.ts    Auto Practice carries on after the app restarts (localStorage, same day only)
+  useActivity.ts      the route's activity, redirecting Home if it doesn't exist
   colorChart.ts       geometry for the Stats chart (drawn by components/ColorDistributionChart.tsx)
   palette.ts          the red/yellow/green rating colors, used everywhere
   sorting.ts          natural text order (V2 before V10) for tags and names
@@ -72,6 +80,7 @@ src/
   screens/            one component per route
   components/         shared UI
   tests/              Vitest tests
+e2e/                  Playwright test run in WebKit (Safari's engine) against the production build
 docs/superpowers/     design specs and implementation plans from past work
 ```
 
