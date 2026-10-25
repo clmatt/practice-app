@@ -142,6 +142,7 @@ export default function HomeScreen() {
         >
           Import data
         </button>
+        <p className="text-xs text-center text-slate-600 mt-6">Version {__APP_VERSION__}</p>
       </div>
     </div>
   )

@@ -100,3 +100,10 @@ describe('item label plural', () => {
     expect(screen.getByText('meals')).toBeInTheDocument()
   })
 })
+
+describe('Home', () => {
+  it('shows the app version', () => {
+    renderAt('/')
+    expect(screen.getByText(/^Version \S+ · \w{3} \d{1,2}, \d{4}$/)).toBeInTheDocument()
+  })
+})

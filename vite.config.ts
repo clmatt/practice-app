@@ -1,9 +1,25 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+
+/** "3c760fd · Oct 25, 2026": the commit and build date, shown on Home. */
+function appVersion(): string {
+  let sha = process.env.GITHUB_SHA?.slice(0, 7)
+  if (!sha) {
+    try {
+      sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    } catch {
+      sha = 'dev'
+    }
+  }
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return `${sha} · ${date}`
+}
 
 export default defineConfig({
   base: '/practice-app/',
+  define: { __APP_VERSION__: JSON.stringify(appVersion()) },
   build: {
     outDir: 'dist',
   },
