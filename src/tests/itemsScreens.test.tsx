@@ -171,3 +171,18 @@ describe('archiving', () => {
     expect(screen.getByText('An archived trick has that name — unarchive it instead.')).toBeInTheDocument()
   })
 })
+
+describe('reps to green', () => {
+  it('says how many reps an item took to first turn green', () => {
+    seed()
+    appendLog({ id: 'l3', itemId: 'a', practicedAt: '2026-09-22T18:00:00.000Z', colorBefore: 'red', colorAfter: 'green' })
+    renderAt('/activity/act-1/manage/a')
+    expect(screen.getByText('Turned green after 3 reps.')).toBeInTheDocument()
+  })
+
+  it('says nothing for an item that has not turned green', () => {
+    seed()
+    renderAt('/activity/act-1/manage/a')
+    expect(screen.queryByText(/Turned green/)).toBeNull()
+  })
+})

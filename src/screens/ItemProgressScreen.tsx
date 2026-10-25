@@ -4,7 +4,7 @@ import { useActivity } from '../useActivity'
 import { getItems, getLogs, getNotesForItem, saveItem, deleteItemWithLogs } from '../storage'
 import { formatDateKey, formatLongDate } from '../dates'
 import TabBar from '../components/TabBar'
-import { buildRuns } from '../itemRuns'
+import { buildRuns, repsToGreen } from '../itemRuns'
 import { isRep } from '../logs'
 import TagList from '../components/TagList'
 import NoteList from '../components/NoteList'
@@ -43,6 +43,7 @@ export default function ItemProgressScreen() {
 
   const logs = getLogs().filter(l => l.itemId === itemId)
   const runs = buildRuns(logs)
+  const toGreen = repsToGreen(logs)
   const totalReps = logs.filter(isRep).length
   const notes = getNotesForItem(itemId!)
 
@@ -63,6 +64,9 @@ export default function ItemProgressScreen() {
           Currently {item.color}
           {totalReps > 0 && ` · ${totalReps} rep${totalReps === 1 ? '' : 's'} total`}
         </p>
+        {toGreen !== null && (
+          <p className="text-slate-500 text-xs -mt-1 mb-2">Turned green after {toGreen} rep{toGreen === 1 ? '' : 's'}.</p>
+        )}
         <TagList tags={item.tags} className="mb-2" />
         {item.archivedAt && (
           <div className="bg-slate-800 rounded-xl px-4 py-3 mb-2 flex flex-col gap-2">

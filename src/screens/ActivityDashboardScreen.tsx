@@ -8,6 +8,7 @@ import TabBar from '../components/TabBar'
 import ConfirmDestructive from '../components/ConfirmDestructive'
 import { RATING_ORDER } from '../palette'
 import { pluralLabel, pluralize } from '../labels'
+import { describeRecencyBias } from '../recencyBias'
 
 /** "Deletes "Juggling", its 12 tricks and 340 reps." — archived items included. */
 function deleteMessage(activity: Activity): string {
@@ -112,7 +113,7 @@ export default function ActivityDashboardScreen() {
             <div className="flex flex-col gap-2">
               {RATING_ORDER.map(color => (
                 <div key={color} className="flex items-center gap-3">
-                  <ColorDot color={color} />
+                  <ColorDot color={color} decorative />
                   <span className="text-sm capitalize w-14">{color}</span>
                   <input
                     type="number"
@@ -152,7 +153,7 @@ export default function ActivityDashboardScreen() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              1 = uniform, lower = prefer items practiced longest ago
+              Lower values favor the items you practiced longest ago. {describeRecencyBias(draftRecencyBias)}
             </p>
           </div>
           <button
@@ -221,7 +222,7 @@ export default function ActivityDashboardScreen() {
               to={`/activity/${activityId}/manage?color=${color}`}
               className="flex-1 bg-slate-800 rounded-xl p-3 text-center"
             >
-              <ColorDot color={color} />
+              <ColorDot color={color} decorative />
               <div className="text-2xl font-bold mt-1">{counts[color]}</div>
               <div className="text-xs text-slate-400 capitalize mt-0.5">{color}</div>
             </Link>

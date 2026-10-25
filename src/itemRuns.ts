@@ -30,3 +30,14 @@ export function buildRuns(logs: PracticeLog[]): Run[] {
   }
   return runs
 }
+
+/**
+ * How many reps it took an item to first turn green, counting from its first
+ * rep. Null if it hasn't turned green yet, or was already green at its first rep.
+ */
+export function repsToGreen(logs: PracticeLog[]): number | null {
+  const reps = logs.filter(isRep).sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
+  if (reps.length === 0 || reps[0].colorBefore === 'green') return null
+  const index = reps.findIndex(l => l.colorAfter === 'green')
+  return index === -1 ? null : index + 1
+}

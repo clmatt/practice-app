@@ -79,7 +79,7 @@ export default function ManualPracticeScreen() {
         <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <p className="text-3xl font-bold text-center">{selectedItem.name}</p>
           <div className="flex items-center gap-2">
-            <ColorDot color={selectedItem.color} size="md" />
+            <ColorDot color={selectedItem.color} size="md" decorative />
             <span className="text-slate-400 text-sm capitalize">{selectedItem.color}</span>
           </div>
           <p className="text-slate-400 text-sm">How did it go?</p>

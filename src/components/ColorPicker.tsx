@@ -14,6 +14,7 @@ export default function ColorPicker({
         <button
           key={color}
           type="button"
+          aria-pressed={value === color}
           onClick={() => onChange(color)}
           style={{ backgroundColor: RATING_COLORS[color] }}
           className={`flex-1 py-4 rounded-xl font-semibold text-slate-950 text-sm transition-opacity hover:brightness-110 ${

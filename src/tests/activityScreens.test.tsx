@@ -107,3 +107,14 @@ describe('Home', () => {
     expect(screen.getByText(/^Version \S+ · \w{3} \d{1,2}, \d{4}$/)).toBeInTheDocument()
   })
 })
+
+describe('recency bias setting', () => {
+  it('explains the current value in plain words, live', () => {
+    seed()
+    renderAt('/activity/act-1')
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByText(/comes up about 2\.6× as often/)).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
+    expect(screen.getByText(/equally often/)).toBeInTheDocument()
+  })
+})

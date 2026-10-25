@@ -48,7 +48,7 @@ function SetupPhase({ allTags, filter, forNextItem, onToggleTag, onToggleColor, 
         <div className="flex flex-wrap gap-2">
           {RATING_ORDER.map(color => (
             <ToggleChip key={color} size="md" selected={colors.has(color)} onClick={() => onToggleColor(color)}>
-              <ColorDot color={color} size="sm" />
+              <ColorDot color={color} size="sm" decorative />
               <span className="capitalize">{color}</span>
             </ToggleChip>
           ))}
@@ -121,7 +121,7 @@ function FilterExhaustedDone({ filter, onChangeFilter, onEndSession }: FilterExh
           <div className="flex flex-wrap justify-center gap-3">
             {RATING_ORDER.filter(c => colors.has(c)).map(c => (
               <span key={c} className="flex items-center gap-1.5 text-xs text-slate-300 capitalize">
-                <ColorDot color={c} size="sm" />
+                <ColorDot color={c} size="sm" decorative />
                 {c}
               </span>
             ))}
@@ -390,7 +390,7 @@ export default function PracticeSessionScreen() {
 
             {revealed ? (
               <div className="flex items-center gap-2">
-                <ColorDot color={currentItem.color} size="md" />
+                <ColorDot color={currentItem.color} size="md" decorative />
                 <span className="text-slate-400 text-sm capitalize">{currentItem.color}</span>
               </div>
             ) : (

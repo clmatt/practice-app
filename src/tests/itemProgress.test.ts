@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildRuns } from '../itemRuns'
+import { buildRuns, repsToGreen } from '../itemRuns'
 import type { Color, PracticeLog } from '../types'
 
 const makeLog = (colorAfter: Color, practicedAt: string, colorBefore: Color = 'red'): PracticeLog => ({
@@ -88,5 +88,31 @@ describe('buildRuns', () => {
       makeLog('green', '2026-05-04T18:00:00.000Z', 'green'),
     ])
     expect(runs).toEqual([{ color: 'green', count: 1, startDate: '2026-05-03', endDate: '2026-05-04', edited: true }])
+  })
+})
+
+describe('repsToGreen', () => {
+  it('counts reps up to and including the first green rating', () => {
+    expect(repsToGreen([
+      makeLog('red', '2026-05-01T18:00:00.000Z'),
+      makeLog('yellow', '2026-05-02T18:00:00.000Z'),
+      makeLog('green', '2026-05-03T18:00:00.000Z', 'yellow'),
+      makeLog('red', '2026-05-04T18:00:00.000Z', 'green'),
+      makeLog('green', '2026-05-05T18:00:00.000Z'),
+    ])).toBe(3)
+  })
+
+  it('ignores colour edits and sorts by time', () => {
+    expect(repsToGreen([
+      makeLog('green', '2026-05-04T18:00:00.000Z', 'yellow'),
+      { ...makeLog('yellow', '2026-05-02T18:00:00.000Z'), source: 'edit' },
+      makeLog('red', '2026-05-01T18:00:00.000Z'),
+    ])).toBe(2)
+  })
+
+  it('is null when the item never turned green, or was already green at its first rep', () => {
+    expect(repsToGreen([makeLog('red', '2026-05-01T18:00:00.000Z')])).toBeNull()
+    expect(repsToGreen([makeLog('green', '2026-05-01T18:00:00.000Z', 'green')])).toBeNull()
+    expect(repsToGreen([])).toBeNull()
   })
 })

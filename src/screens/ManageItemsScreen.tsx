@@ -97,7 +97,7 @@ export default function ManageItemsScreen() {
             <div className="flex gap-2">
               {RATING_ORDER.map(color => (
                 <ToggleChip key={color} selected={colors.has(color)} onClick={() => update({ colors: toggled(colors, color) })}>
-                  <ColorDot color={color} size="sm" />
+                  <ColorDot color={color} size="sm" decorative />
                   <span className="capitalize">{color}</span>
                 </ToggleChip>
               ))}
