@@ -5,6 +5,7 @@ import { CURRENT_SCHEMA_VERSION, migrateSnapshot } from './migrations'
 import { localDateKey, daysBetweenKeys } from './dates'
 import { generateId } from './utils'
 import { isRep } from './logs'
+import { isColor } from './palette'
 import type { Activity, Item, PracticeLog, SavedFilter } from './types'
 
 /*
@@ -30,6 +31,8 @@ export interface ImportPayload {
   items: Item[]
   logs: PracticeLog[]
   savedFilters?: SavedFilter[]
+  /** Records in the file that were damaged and left out. */
+  invalidRecords?: number
 }
 
 export type ActivityResolution = 'keep-existing' | 'replace' | 'keep-both' | 'combine'
@@ -41,6 +44,8 @@ export interface ImportStats {
   /** Practice reps added (colour-edit records come along but aren't counted). */
   logsAdded: number
   skipped: number
+  /** Damaged records in the file that were left out. */
+  invalid: number
 }
 
 export interface ItemConflict {
@@ -111,6 +116,35 @@ export function describeLastBackup(lastBackupAt: string | null, now: Date = new 
 
 // --- Import ---
 
+const isStr = (v: unknown): v is string => typeof v === 'string'
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isWeight = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0
+const optional = (v: unknown, check: (v: unknown) => boolean) => v === undefined || check(v)
+
+function isValidActivity(v: unknown): v is Activity {
+  if (!isRecord(v) || !isRecord(v.weights)) return false
+  const w = v.weights
+  return isStr(v.id) && isStr(v.name) && isStr(v.itemLabel) && isStr(v.createdAt) &&
+    isWeight(w.red) && isWeight(w.yellow) && isWeight(w.green) &&
+    optional(v.recencyBias, b => typeof b === 'number' && b >= 0 && b <= 1) &&
+    optional(v.chooseFilterEachItem, b => typeof b === 'boolean') &&
+    optional(v.itemLabelPlural, isStr)
+}
+
+function isValidItem(v: unknown): v is Item {
+  return isRecord(v) && isStr(v.id) && isStr(v.activityId) && isStr(v.name) && isStr(v.createdAt) && isColor(v.color) &&
+    optional(v.tags, t => Array.isArray(t) && t.every(isStr)) && optional(v.archivedAt, isStr)
+}
+
+function isValidLog(v: unknown): v is PracticeLog {
+  return isRecord(v) && isStr(v.id) && isStr(v.itemId) && isStr(v.practicedAt) && !Number.isNaN(Date.parse(v.practicedAt)) &&
+    isColor(v.colorBefore) && isColor(v.colorAfter) && optional(v.note, isStr) && optional(v.source, s => s === 'edit')
+}
+
+function isValidFilter(v: unknown): v is SavedFilter {
+  return isRecord(v) && isStr(v.id) && isStr(v.activityId) && isStr(v.name) && isStr(v.expression)
+}
+
 /**
  * Returns the payload (migrated to the current schema) or null if it isn't a
  * backup file. Throws NewerSchemaError for backups from a newer app version.
@@ -127,7 +161,15 @@ export function validateImportPayload(raw: unknown): ImportPayload | null {
     logs: r.logs as PracticeLog[],
     savedFilters: (r.savedFilters ?? []) as SavedFilter[],
   }, fromVersion)
-  return { exportedAt: typeof r.exportedAt === 'string' ? r.exportedAt : '', ...migrated }
+  // Leave out damaged records rather than letting one break the app later.
+  const activities = migrated.activities.filter(isValidActivity)
+  if (migrated.activities.length > 0 && activities.length === 0) return null
+  const items = migrated.items.filter(isValidItem)
+  const logs = migrated.logs.filter(isValidLog)
+  const savedFilters = migrated.savedFilters.filter(isValidFilter)
+  const invalidRecords = migrated.activities.length - activities.length + migrated.items.length - items.length +
+    migrated.logs.length - logs.length + migrated.savedFilters.length - savedFilters.length
+  return { exportedAt: typeof r.exportedAt === 'string' ? r.exportedAt : '', activities, items, logs, savedFilters, invalidRecords }
 }
 
 export function findActivityConflicts(imported: Activity[], existing: Activity[]): Activity[] {
@@ -152,7 +194,7 @@ export function executeImport(
   actResolutions: Map<string, ActivityResolution>,
   itemResolutions: Map<string, ItemResolution>,
 ): ImportStats {
-  const stats: ImportStats = { activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0 }
+  const stats: ImportStats = { activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0, invalid: payload.invalidRecords ?? 0 }
   const existingActByName = new Map(getActivities().map(a => [a.name, a]))
   const newActivities: Activity[] = []
   const newItems: Item[] = []

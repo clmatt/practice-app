@@ -334,7 +334,7 @@ export default function ImportScreen() {
         <>
           <Link to="/" className="text-slate-400 text-sm mb-6 block">← Home</Link>
           <h1 className="text-xl font-bold mb-4">Import complete.</h1>
-          {stats.activitiesAdded === 0 && stats.itemsAdded === 0 && stats.logsAdded === 0 ? (
+          {stats.activitiesAdded === 0 && stats.itemsAdded === 0 && stats.logsAdded === 0 && stats.invalid === 0 ? (
             <p className="text-slate-400 text-sm">Nothing to import.</p>
           ) : (
             <div className="flex flex-col gap-1 text-sm text-slate-300">
@@ -349,6 +349,11 @@ export default function ImportScreen() {
               )}
               {stats.skipped > 0 && (
                 <p>{stats.skipped} skipped</p>
+              )}
+              {stats.invalid > 0 && (
+                <p className="text-amber-400">
+                  {stats.invalid} damaged {stats.invalid === 1 ? 'record was' : 'records were'} skipped.
+                </p>
               )}
             </div>
           )}

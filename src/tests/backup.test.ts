@@ -71,7 +71,7 @@ describe('validateImportPayload', () => {
 
   it('returns the payload when all arrays are present', () => {
     const payload = { exportedAt: '2026-01-01', activities: [], items: [], logs: [] }
-    expect(validateImportPayload(payload)).toEqual({ ...payload, savedFilters: [] })
+    expect(validateImportPayload(payload)).toEqual({ ...payload, savedFilters: [], invalidRecords: 0 })
   })
 })
 
@@ -270,7 +270,7 @@ describe('executeImport', () => {
 
   it('returns zero stats for an empty payload', () => {
     const stats = executeImport(makePayload(), new Map(), new Map())
-    expect(stats).toEqual({ activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0 })
+    expect(stats).toEqual({ activitiesAdded: 0, itemsAdded: 0, logsAdded: 0, skipped: 0, invalid: 0 })
   })
 })
 
@@ -385,7 +385,7 @@ describe('describeLastBackup', () => {
 describe('import: versions and saved filters', () => {
   it('accepts backups from before schemaVersion and savedFilters existed', () => {
     const old = { exportedAt: '2026-01-01T00:00:00.000Z', activities: [], items: [], logs: [] }
-    expect(validateImportPayload(old)).toEqual({ ...old, savedFilters: [] })
+    expect(validateImportPayload(old)).toEqual({ ...old, savedFilters: [], invalidRecords: 0 })
   })
 
   it('rejects backups from a newer app version', () => {
@@ -428,5 +428,51 @@ describe('import: colour-edit records', () => {
     }), new Map(), new Map())
     expect(stats.logsAdded).toBe(1)
     expect(getLogs()).toHaveLength(2)
+  })
+})
+
+describe('validateImportPayload: damaged records', () => {
+  const file = (o: Record<string, unknown> = {}) => ({
+    app: 'practice-app', schemaVersion: 1, exportedAt: '2026-10-01T00:00:00.000Z',
+    activities: [makeActivity()], items: [makeItem()], logs: [makeLog()], savedFilters: [], ...o,
+  })
+
+  it('keeps valid records from an old backup', () => {
+    const p = validateImportPayload({ activities: [makeActivity()], items: [makeItem()], logs: [makeLog()] })!
+    expect(p.items).toHaveLength(1)
+    expect(p.invalidRecords).toBe(0)
+  })
+
+  it('drops records with missing ids, unknown colours or bad dates, and counts them', () => {
+    const p = validateImportPayload(file({
+      items: [makeItem(), makeItem({ id: 'i2', color: 'blue' as never }), { name: 'no id' }],
+      logs: [makeLog(), makeLog({ id: 'l2', practicedAt: 'yesterday' }), makeLog({ id: 'l3', colorAfter: 'purple' as never })],
+      savedFilters: [{ id: 'f1', activityId: 'a', name: 'x' }],
+    }))!
+    expect(p.items).toHaveLength(1)
+    expect(p.logs).toHaveLength(1)
+    expect(p.savedFilters).toEqual([])
+    expect(p.invalidRecords).toBe(5)
+  })
+
+  it('drops activities with bad weights or optional fields of the wrong type', () => {
+    const p = validateImportPayload(file({
+      activities: [makeActivity(), makeActivity({ id: 'a2', weights: { red: -1, yellow: 0, green: 0 } }), makeActivity({ id: 'a3', recencyBias: 'high' as never })],
+    }))!
+    expect(p.activities).toHaveLength(1)
+    expect(p.invalidRecords).toBe(2)
+  })
+
+  it('rejects a file whose activities are all damaged', () => {
+    expect(validateImportPayload(file({ activities: [{ id: 1 }] }))).toBeNull()
+  })
+
+  it('accepts a backup of an empty app', () => {
+    expect(validateImportPayload(file({ activities: [], items: [], logs: [] }))).not.toBeNull()
+  })
+
+  it('reports skipped damaged records in the import stats', () => {
+    const p = validateImportPayload(file({ logs: [makeLog(), { id: 'l2' }] }))!
+    expect(executeImport(p, new Map(), new Map()).invalid).toBe(1)
   })
 })
