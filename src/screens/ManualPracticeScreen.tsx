@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useActivity } from '../useActivity'
+import { useTapGuard } from '../useTapGuard'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getActiveItems, recordPractice, undoPracticeLog, getNotesForItem } from '../storage'
 import type { Item, Color } from '../types'
@@ -21,7 +22,7 @@ export default function ManualPracticeScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const [phase, setPhase] = useState<Phase>('list')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
-  const [selectedColor, setSelectedColor] = useState<Color | null>(null)
+  const [tapsReady, rearmTaps] = useTapGuard()
   const [noteText, setNoteText] = useState('')
   const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
   const clearLastSaved = useCallback(() => setLastSaved(null), [])
@@ -35,21 +36,21 @@ export default function ManualPracticeScreen() {
 
   function handleSelectItem(item: Item) {
     setSelectedItem(item)
-    setSelectedColor(null)
     setNoteText('')
     setPhase('rate')
+    rearmTaps()
   }
 
-  function handleSave() {
-    if (!selectedItem || !selectedColor || !activityId) return
+  /** One tap on a color: save the rep (with any note) and go back to the list. */
+  function handleRate(color: Color) {
+    if (!selectedItem || !activityId) return
 
-    const logId = recordPractice({ item: selectedItem, color: selectedColor, note: noteText })
+    const logId = recordPractice({ item: selectedItem, color, note: noteText })
     setItems(getActiveItems(activityId))
     setLastSaved({ logId, name: selectedItem.name })
     setPhase('list')
     setSearchQuery('')
     setSelectedItem(null)
-    setSelectedColor(null)
     setNoteText('')
   }
 
@@ -63,7 +64,6 @@ export default function ManualPracticeScreen() {
   function handleBack() {
     setPhase('list')
     setSelectedItem(null)
-    setSelectedColor(null)
     setNoteText('')
   }
 
@@ -86,14 +86,7 @@ export default function ManualPracticeScreen() {
           <NoteList notes={selectedItemNotes} compact />
         </div>
 
-        <RatePanel
-          value={selectedColor}
-          onChange={setSelectedColor}
-          note={noteText}
-          onNoteChange={setNoteText}
-          onSave={handleSave}
-          onBack={handleBack}
-        />
+        <RatePanel note={noteText} onNoteChange={setNoteText} onRate={handleRate} ready={tapsReady} />
       </div>
     )
   }

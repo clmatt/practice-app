@@ -18,6 +18,7 @@ function renderAt(path: string) {
       <Routes>
         <Route path="/" element={<HomeScreen />} />
         <Route path="/activity/:activityId" element={<ActivityDashboardScreen />} />
+        <Route path="/activity/:activityId/practice-chooser" element={<p>practice chooser</p>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -116,5 +117,14 @@ describe('recency bias setting', () => {
     expect(screen.getByText(/comes up about 2\.6× as often/)).toBeInTheDocument()
     fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
     expect(screen.getByText(/equally often/)).toBeInTheDocument()
+  })
+})
+
+describe('dashboard', () => {
+  it('has a Practice button that opens the Auto/Manual choice', () => {
+    seed()
+    renderAt('/activity/act-1')
+    fireEvent.click(screen.getByRole('link', { name: 'Practice' }))
+    expect(screen.getByText('practice chooser')).toBeInTheDocument()
   })
 })

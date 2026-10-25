@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import PracticeSessionScreen from '../screens/PracticeSessionScreen'
-import { saveActivity, saveItem, recordPractice, getItems } from '../storage'
+import { saveActivity, saveItem, recordPractice, getItems, getLogs } from '../storage'
 import type { Activity, Item } from '../types'
 
 const activity = (o: Partial<Activity> = {}): Activity => ({
@@ -38,10 +38,14 @@ function startWith(tag: string) {
   click('Start with selected')
 }
 
+// The color buttons ignore taps for a moment after a new item appears (double-tap guard).
+beforeEach(() => { vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }) })
+afterEach(() => { vi.useRealTimers() })
+const settle = () => act(() => { vi.advanceTimersByTime(600) })
+
 function rateCurrent() {
-  click('I practiced it')
+  settle()
   click('Solid')
-  click('Save')
 }
 
 describe('item screen', () => {
@@ -210,5 +214,37 @@ describe('resuming a session', () => {
 
     renderSession()
     expect(screen.getByText('What are you focusing on?')).toBeInTheDocument()
+  })
+})
+
+describe('one-tap rating', () => {
+  it('tapping a color on the item screen saves the rep with the note and moves on', () => {
+    seed()
+    renderSession()
+    startWith('V3')
+    expect(screen.queryByRole('button', { name: 'I practiced it' })).toBeNull()
+    fireEvent.change(screen.getByPlaceholderText('Add a note (optional)'), { target: { value: 'clean' } })
+    settle()
+    click('Solid')
+    expect(getLogs()).toEqual([expect.objectContaining({ itemId: 'a', colorAfter: 'green', note: 'clean' })])
+    expect(screen.getByText('Saved "Slab problem"')).toBeInTheDocument()
+    expect(screen.getByText('All done with your current filter.')).toBeInTheDocument()
+  })
+
+  it('ignores a color tap right after a new item appears, so a double-tap cannot rate it unseen', () => {
+    seed()
+    renderSession()
+    click('Start — practice all')
+    const first = screen.queryByText('Slab problem') ? 'Slab problem' : 'Roof problem'
+    settle()
+    click('Solid')
+    expect(getLogs()).toHaveLength(1)
+    // The second tap of a double-tap lands on the next item: ignored.
+    click('Solid')
+    expect(getLogs()).toHaveLength(1)
+    expect(screen.getByText(first === 'Slab problem' ? 'Roof problem' : 'Slab problem')).toBeInTheDocument()
+    settle()
+    click('Solid')
+    expect(getLogs()).toHaveLength(2)
   })
 })

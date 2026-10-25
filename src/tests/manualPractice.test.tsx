@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import ManualPracticeScreen from '../screens/ManualPracticeScreen'
 import { saveActivity, saveItem, getLogs, getItems } from '../storage'
@@ -23,25 +23,31 @@ function renderScreen() {
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }))
 
+// The color buttons ignore taps for a moment after an item opens (double-tap guard).
+beforeEach(() => { vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }) })
+afterEach(() => { vi.useRealTimers() })
+const settle = () => act(() => { vi.advanceTimersByTime(600) })
+
 describe('Manual Practice', () => {
   it('rating an item saves one rep with the note and updates its colour', () => {
     seed()
     renderScreen()
     click(/Box/)
-    click('Solid')
     fireEvent.change(screen.getByPlaceholderText('Add a note (optional)'), { target: { value: 'clean' } })
-    click('Save')
+    settle()
+    click('Solid')
     expect(getLogs()).toEqual([expect.objectContaining({ itemId: 'a', colorBefore: 'red', colorAfter: 'green', note: 'clean' })])
     expect(getItems('act-1').find(i => i.id === 'a')!.color).toBe('green')
     expect(screen.getByText('Saved "Box"')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search tricks')).toBeInTheDocument()
   })
 
   it('Undo removes the rep and restores the colour', () => {
     seed()
     renderScreen()
     click(/Box/)
+    settle()
     click('Solid')
-    click('Save')
     click('Undo')
     expect(getLogs()).toEqual([])
     expect(getItems('act-1').find(i => i.id === 'a')!.color).toBe('red')
@@ -59,9 +65,9 @@ describe('Manual Practice', () => {
     seed()
     renderScreen()
     click(/Box/)
-    click('Okay')
     fireEvent.change(screen.getByPlaceholderText('Add a note (optional)'), { target: { value: 'drop on 3' } })
-    click('Save')
+    settle()
+    click('Okay')
     click(/Box/)
     expect(screen.getByText('drop on 3')).toBeInTheDocument()
   })

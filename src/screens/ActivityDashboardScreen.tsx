@@ -229,6 +229,13 @@ export default function ActivityDashboardScreen() {
           ))}
         </div>
 
+        <Link
+          to={`/activity/${activityId}/practice-chooser`}
+          className="shrink-0 block w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-4 text-center font-bold text-lg"
+        >
+          Practice
+        </Link>
+
         <div className="flex-1 min-h-0" />
       </div>
 

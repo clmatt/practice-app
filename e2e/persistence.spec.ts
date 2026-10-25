@@ -40,11 +40,12 @@ test('a rating is saved to the database and survives a reload', async ({ page })
   await page.getByRole('button', { name: 'Struggled' }).click()
   await page.getByRole('button', { name: 'Add trick' }).click()
 
-  await page.getByRole('button', { name: 'Practice' }).click()
+  await page.getByRole('button', { name: /Juggling/ }).click()
+  await page.getByRole('link', { name: 'Practice' }).click()
   await page.getByRole('button', { name: /Manual Practice/ }).click()
   await page.getByRole('button', { name: /Mills Mess/ }).click()
+  // One tap rates (Playwright waits out the brief double-tap guard).
   await page.getByRole('button', { name: 'Solid' }).click()
-  await page.getByRole('button', { name: 'Save' }).click()
   await expect(page.getByText('Saved "Mills Mess"')).toBeVisible()
 
   await expect.poll(() => savedLogCount(page)).toBe(1)

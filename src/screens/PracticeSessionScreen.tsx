@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useActivity } from '../useActivity'
+import { useTapGuard } from '../useTapGuard'
 import { getItems, getActiveItems, recordPractice, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
 import { toggled } from '../utils'
 import { localDateKey } from '../dates'
@@ -19,7 +20,7 @@ import ToggleChip from '../components/ToggleChip'
 import TagList from '../components/TagList'
 
 // 'next-filter' is the filter step between items: same screen as setup, for the next draw.
-type Phase = 'setup' | 'next-filter' | 'draw' | 'rate' | 'done'
+type Phase = 'setup' | 'next-filter' | 'draw' | 'done'
 
 interface SetupPhaseProps {
   allTags: string[]
@@ -218,7 +219,7 @@ export default function PracticeSessionScreen() {
   const [currentItem, setCurrentItem] = useState<Item | null>(start.item)
   const [filterExhausted, setFilterExhausted] = useState(start.exhausted)
   const [revealed, setRevealed] = useState(false)
-  const [selectedColor, setSelectedColor] = useState<Color | null>(null)
+  const [tapsReady, rearmTaps] = useTapGuard()
   const [noteText, setNoteText] = useState('')
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [lastSaved, setLastSaved] = useState<{ logId: string; name: string } | null>(null)
@@ -253,17 +254,12 @@ export default function PracticeSessionScreen() {
       setCurrentItem(result.item)
       setPhase('draw')
       setRevealed(false)
-      setSelectedColor(null)
+      rearmTaps()
     } else {
       setFilterExhausted(result.kind === 'filter-exhausted')
       setPhase('done')
       setCurrentItem(null)
     }
-  }
-
-  const handleIPracticed = () => {
-    setPhase('rate')
-    setSelectedColor(null)
   }
 
   const handleSkip = () => {
@@ -273,11 +269,11 @@ export default function PracticeSessionScreen() {
     drawNextItem({ skipped: updated })
   }
 
-  const handleSave = () => {
-    if (!currentItem || !selectedColor || !activityId) return
+  /** One tap on a color: save the rep (with any note) and move on. */
+  const handleRate = (colorAfter: Color) => {
+    if (!currentItem || !activityId) return
 
     const colorBefore = getItems(currentItem.activityId).find(i => i.id === currentItem.id)?.color ?? currentItem.color
-    const colorAfter = selectedColor
     const logId = recordPractice({ item: currentItem, color: colorAfter, note: noteText })
 
     const log = [...sessionLog, { name: currentItem.name, colorBefore, colorAfter }]
@@ -309,11 +305,6 @@ export default function PracticeSessionScreen() {
     }
   }
 
-  const handleBackToDraw = () => {
-    setPhase('draw')
-    setNoteText('')
-  }
-
   /** Leaving on purpose ends the session (a reload or the app closing doesn't). */
   const handleExit = () => {
     if (activity) clearSession(activity.id)
@@ -333,7 +324,7 @@ export default function PracticeSessionScreen() {
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
       <div className="flex justify-between items-center mb-6">
-        {(phase === 'draw' || phase === 'rate' || phase === 'next-filter') ? (
+        {(phase === 'draw' || phase === 'next-filter') ? (
           <div className="flex flex-col">
             <span className="text-slate-400 text-sm">{todayDoneCount} / {sessionTotal} done</span>
             {skippedItemIds.size > 0 && (
@@ -403,32 +394,11 @@ export default function PracticeSessionScreen() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <button onClick={handleIPracticed} className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full">
-              I practiced it
-            </button>
-            <button onClick={handleSkip} className="text-slate-400 text-sm text-center">
+            <RatePanel note={noteText} onNoteChange={setNoteText} onRate={handleRate} ready={tapsReady} />
+            <button onClick={handleSkip} className="text-slate-400 text-sm text-center py-1">
               Skip without rating
             </button>
           </div>
-        </div>
-      )}
-
-      {phase === 'rate' && currentItem && (
-        <div className="flex flex-col flex-1 gap-6">
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <p className="text-3xl font-bold text-center">{currentItem.name}</p>
-            <TagList tags={currentItem.tags} className="justify-center" />
-            <p className="text-slate-400 text-sm">How did it go?</p>
-          </div>
-
-          <RatePanel
-            value={selectedColor}
-            onChange={setSelectedColor}
-            note={noteText}
-            onNoteChange={setNoteText}
-            onSave={handleSave}
-            onBack={handleBackToDraw}
-          />
         </div>
       )}
 
