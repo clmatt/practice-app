@@ -43,6 +43,15 @@ The dev server uses a separate storage area from the live app (different address
 
 Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests, the build and the WebKit end-to-end test, and deploys to GitHub Pages only if all pass. Pushes to other branches run the same checks without deploying. Check progress at https://github.com/clmatt/practice-app/actions.
 
+### Dependency updates (Dependabot)
+
+Dependabot (`.github/dependabot.yml`) checks for updates weekly and opens pull requests; routine updates wait a week after release first. When every check passes on a Dependabot pull request, CI merges it and deploys by itself — no action needed — for:
+
+- the weekly npm *minor-and-patch* group, and single npm minor/patch updates (including security fixes);
+- updates to GitHub's own actions (`actions/*`).
+
+npm **major** updates (e.g. Tailwind 3 → 4) stay open as pull requests for you to handle. Anything that fails a check stays open and unmerged. The rules live in `scripts/dependabot-automerge-policy.ts`; the merges show up in the repo's closed pull requests. Optional: Settings → Code security → enable *Dependabot security updates* so security fixes arrive as soon as they're published rather than with the weekly run.
+
 ### Coming back after a long break
 
 1. `nvm use` (or install Node 24), then `npm ci`.
@@ -87,5 +96,7 @@ docs/superpowers/     design specs and implementation plans from past work
 **Storage:** on startup everything is loaded from IndexedDB into memory; reads are instant, and writes are saved in the background. If a save fails (e.g. the phone is out of space) a red banner offers an export. Versions before September 2026 kept data in `localStorage`; the first launch of a newer version copies it into IndexedDB automatically and leaves the old copy in place as a safety net.
 
 **Changing the data model:** if you change `types.ts` in a way that old saved data or old backup files wouldn't match, bump `CURRENT_SCHEMA_VERSION` in `src/migrations.ts` and add a migration step with a test. Adding a new *optional* field doesn't need a migration.
+
+**Security:** the app only loads its own files and never contacts another site, and the production build enforces that with a Content-Security-Policy (`vite.config.ts`). Adding anything from another site (a web font, analytics, a CDN script) means changing the policy; until then the end-to-end test fails, because it fails on any policy violation. All GitHub Pages sites under `clmatt.github.io` share one origin, so they could read this app's data — publish other sites elsewhere.
 
 **Dates:** timestamps are stored in UTC; anything grouped "by day" uses the phone's local date via `src/dates.ts`.

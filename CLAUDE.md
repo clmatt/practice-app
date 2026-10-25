@@ -11,7 +11,7 @@ Personal PWA (React 19 + TypeScript + Vite + Tailwind 3) for tracking practice o
 - Node 24 (`.nvmrc`, `engines` in package.json)
 
 ## Deploying
-Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflows/deploy.yml` runs lint + test + build on every push, deploys only from `main`). Do feature work on a branch; merge to `main` only when checks pass. The owner's standing preference: push after committing without asking. Never deploy or roll back to a version from before the IndexedDB move (September 2026) — export a backup first; an old version would show only the frozen pre-move localStorage copy, and anything saved during the rollback wouldn't carry forward.
+Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflows/deploy.yml` runs lint + test + build on every push, deploys only from `main`). Do feature work on a branch; merge to `main` only when checks pass. The owner's standing preference: push after committing without asking. Green Dependabot pull requests merge and deploy themselves (`automerge` job; rules in `scripts/dependabot-automerge-policy.ts`); npm majors are left for the owner — don't loosen that without asking. Never deploy or roll back to a version from before the IndexedDB move (September 2026) — export a backup first; an old version would show only the frozen pre-move localStorage copy, and anything saved during the rollback wouldn't carry forward.
 
 ## Rules that protect the user's data
 - All data access goes through `src/storage.ts`. Reads are synchronous from an in-memory cache; writes update memory and queue an IndexedDB save (`src/db.ts`). Never mutate `state` arrays in place; getters return copies.
@@ -25,6 +25,7 @@ Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflow
 - Auto Practice resume state lives in localStorage under `practice-app:auto-session:<activityId>` (`src/sessionResume.ts`). It's disposable screen state, not user data.
 
 ## Conventions
+- The production build has a strict Content-Security-Policy (`vite.config.ts`): no inline scripts or styles in HTML, nothing loaded from or sent to other origins. e2e fails on any violation; change the policy deliberately if a feature truly needs it.
 - 2-space indent, no semicolons, single quotes; Tailwind utility classes; slate background, violet accents.
 - `tsconfig.app.json` has `erasableSyntaxOnly: true`: no enums, namespaces or constructor parameter properties.
 - Only components are exported from `.tsx` files (`react-refresh/only-export-components` lint rule); put helpers in `.ts` modules.
