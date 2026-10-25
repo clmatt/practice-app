@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
@@ -43,6 +43,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
+    // e2e/ holds the Playwright tests (npm run test:e2e), not Vitest ones.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     globals: true,
     // Tests assume the user's timezone so local-date behaviour is exercised
     // (UTC-7/-8: evening practice is already "tomorrow" in UTC).
