@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import ManageItemsScreen from '../screens/ManageItemsScreen'
 import ItemProgressScreen from '../screens/ItemProgressScreen'
 import AddEditItemScreen from '../screens/AddEditItemScreen'
-import { saveActivity, saveItem, appendLog } from '../storage'
+import { saveActivity, saveItem, appendLog, getItems, getLogs } from '../storage'
 import type { Activity, Item } from '../types'
 
 const activity: Activity = {
@@ -123,5 +123,51 @@ describe('Item page', () => {
     renderAt('/activity/act-1/manage/a')
     expect(screen.getByText(/2 reps total/)).toBeInTheDocument()
     expect(screen.getByText(/Set manually/)).toBeInTheDocument()
+  })
+})
+
+describe('archiving', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('Archive on the edit screen hides the item from the list', () => {
+    seed()
+    renderAt('/activity/act-1/manage/a/edit')
+    fireEvent.click(screen.getByRole('button', { name: 'Archive trick' }))
+    expect(getItems('act-1').find(i => i.id === 'a')!.archivedAt).toBeDefined()
+    expect(screen.queryByText('Mills Mess')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Archived' }))
+    expect(screen.getByText('Mills Mess')).toBeInTheDocument()
+    expect(screen.queryByText('Box')).toBeNull()
+  })
+
+  it('an archived item can be unarchived from its page', () => {
+    seed()
+    saveItem(item('a', 'Mills Mess', { archivedAt: '2026-09-22T18:00:00.000Z', tags: ['3-ball', 'hard'] }))
+    renderAt('/activity/act-1/manage/a')
+    expect(screen.getByText('Archived on September 22, 2026')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Unarchive' }))
+    expect(getItems('act-1').find(i => i.id === 'a')!.archivedAt).toBeUndefined()
+    expect(screen.queryByText(/Archived on/)).toBeNull()
+  })
+
+  it('an archived item can be deleted permanently after confirming', () => {
+    seed()
+    saveItem(item('a', 'Mills Mess', { archivedAt: '2026-09-22T18:00:00.000Z', tags: ['3-ball', 'hard'] }))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderAt('/activity/act-1/manage/a')
+    fireEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    expect(getItems('act-1').map(i => i.id)).toEqual(['b'])
+    expect(getLogs()).toEqual([])
+  })
+
+  it('adding a name used by an archived item says to unarchive it', () => {
+    seed()
+    saveItem(item('a', 'Mills Mess', { archivedAt: '2026-09-22T18:00:00.000Z', tags: ['3-ball', 'hard'] }))
+    renderAt('/activity/act-1/manage/add')
+    fireEvent.change(screen.getByPlaceholderText('trick name'), { target: { value: 'mills mess' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Struggled' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add trick' }))
+    expect(screen.getByText('An archived trick has that name — unarchive it instead.')).toBeInTheDocument()
   })
 })

@@ -26,6 +26,8 @@ export interface ItemListFilter {
   colors: Set<Color>
   /** Keep items having any of these tags (all items when empty). */
   tags: Set<string>
+  /** Show only archived items (otherwise archived items are hidden). */
+  archived: boolean
 }
 
 /** Everything that shapes the list: kept in the URL so coming back to the list restores it. */
@@ -41,6 +43,7 @@ export function readListView(params: URLSearchParams): ItemListView {
     sort: sort && sort in ITEM_SORT_LABELS ? sort as ItemSort : 'name-asc',
     colors: new Set((params.get('color') ?? '').split(',').filter(isColor)),
     tags: new Set(params.getAll('tag')),
+    archived: params.get('archived') === '1',
   }
 }
 
@@ -50,6 +53,7 @@ export function writeListView(view: ItemListView): URLSearchParams {
   if (view.sort !== 'name-asc') params.set('sort', view.sort)
   if (view.colors.size > 0) params.set('color', RATING_ORDER.filter(c => view.colors.has(c)).join(','))
   for (const tag of sortTags(view.tags)) params.append('tag', tag)
+  if (view.archived) params.set('archived', '1')
   return params
 }
 
@@ -69,6 +73,7 @@ export function filterAndSortItems(
 ): Item[] {
   const query = filter.query.trim().toLowerCase()
   const kept = items.filter(item =>
+    Boolean(item.archivedAt) === filter.archived &&
     (query === '' || item.name.toLowerCase().includes(query)) &&
     (filter.colors.size === 0 || filter.colors.has(item.color)) &&
     (filter.tags.size === 0 || (item.tags ?? []).some(t => filter.tags.has(t))))

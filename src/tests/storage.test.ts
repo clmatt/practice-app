@@ -6,7 +6,7 @@ import {
   getSessionHistory, getColorDistributionByDay,
   getSavedFilters, upsertSavedFilter, deleteSavedFilter,
   importRecords, undoPracticeLog, reopenStorageForTests,
-  recordPractice, getPracticeCountByItem, getLastPracticedByItem,
+  recordPractice, getPracticeCountByItem, getLastPracticedByItem, getActiveItems,
 } from '../storage'
 import type { Activity, Item, PracticeLog, SavedFilter } from '../types'
 
@@ -496,5 +496,26 @@ describe('recordPractice', () => {
     saveItem(makeItem())
     recordPractice({ item: makeItem(), color: 'red', note: '   ' })
     expect(getLogs()[0]).not.toHaveProperty('note')
+  })
+})
+
+describe('archived items', () => {
+  it('getActiveItems leaves archived items out; getItems keeps them', () => {
+    saveItem(makeItem({ id: 'a' }))
+    saveItem(makeItem({ id: 'b', archivedAt: '2026-05-01T18:00:00.000Z' }))
+    expect(getActiveItems('act-1').map(i => i.id)).toEqual(['a'])
+    expect(getItems('act-1')).toHaveLength(2)
+  })
+
+  it('the chart stops counting an archived item after its archive day', () => {
+    saveActivity(makeActivity())
+    saveItem(makeItem({ id: 'a', color: 'red', createdAt: '2026-05-01T18:00:00.000Z', archivedAt: '2026-05-02T18:00:00.000Z' }))
+    saveItem(makeItem({ id: 'b', color: 'green', createdAt: '2026-05-01T18:00:00.000Z' }))
+    appendLog(makeLog({ id: 'l1', itemId: 'b', practicedAt: '2026-05-02T18:00:00.000Z', colorBefore: 'green', colorAfter: 'green' }))
+    appendLog(makeLog({ id: 'l2', itemId: 'b', practicedAt: '2026-05-03T18:00:00.000Z', colorBefore: 'green', colorAfter: 'green' }))
+    expect(getColorDistributionByDay('act-1')).toEqual([
+      { date: '2026-05-02', red: 1, yellow: 0, green: 1 },
+      { date: '2026-05-03', red: 0, yellow: 0, green: 1 },
+    ])
   })
 })

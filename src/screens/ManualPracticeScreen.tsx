@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useActivity } from '../useActivity'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getItems, recordPractice, undoPracticeLog, getNotesForItem } from '../storage'
+import { getActiveItems, recordPractice, undoPracticeLog, getNotesForItem } from '../storage'
 import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
 import RatePanel from '../components/RatePanel'
@@ -17,7 +17,7 @@ export default function ManualPracticeScreen() {
   const navigate = useNavigate()
 
   const [activity] = useActivity()
-  const [items, setItems] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
+  const [items, setItems] = useState<Item[]>(() => (activityId ? getActiveItems(activityId) : []))
   const [searchQuery, setSearchQuery] = useState('')
   const [phase, setPhase] = useState<Phase>('list')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
@@ -44,7 +44,7 @@ export default function ManualPracticeScreen() {
     if (!selectedItem || !selectedColor || !activityId) return
 
     const logId = recordPractice({ item: selectedItem, color: selectedColor, note: noteText })
-    setItems(getItems(activityId))
+    setItems(getActiveItems(activityId))
     setLastSaved({ logId, name: selectedItem.name })
     setPhase('list')
     setSearchQuery('')
@@ -57,7 +57,7 @@ export default function ManualPracticeScreen() {
     if (!lastSaved || !activityId) return
     undoPracticeLog(lastSaved.logId)
     setLastSaved(null)
-    setItems(getItems(activityId))
+    setItems(getActiveItems(activityId))
   }
 
   function handleBack() {

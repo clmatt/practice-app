@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useActivity } from '../useActivity'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getItems, saveActivity, deleteActivity } from '../storage'
+import { getActiveItems, saveActivity, deleteActivity } from '../storage'
 import type { Activity, Item } from '../types'
 import ColorDot from '../components/ColorDot'
 import TabBar from '../components/TabBar'
@@ -12,7 +12,7 @@ export default function ActivityDashboardScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
   const [activity, setActivity] = useActivity()
-  const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
+  const [items] = useState<Item[]>(() => (activityId ? getActiveItems(activityId) : []))
   const [editingSettings, setEditingSettings] = useState(false)
   const [draftName, setDraftName] = useState(() => activity?.name ?? '')
   const [draftLabel, setDraftLabel] = useState(() => activity?.itemLabel ?? '')

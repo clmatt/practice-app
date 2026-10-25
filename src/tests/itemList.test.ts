@@ -6,7 +6,7 @@ const item = (id: string, o: Partial<Item> = {}): Item => ({
   id, activityId: 'act-1', name: id, color: 'red', createdAt: '2026-01-01T00:00:00.000Z', ...o,
 })
 
-const noFilter: ItemListFilter = { query: '', colors: new Set(), tags: new Set() }
+const noFilter: ItemListFilter = { query: '', colors: new Set(), tags: new Set(), archived: false }
 
 const items = [
   item('Box', { color: 'green', tags: ['3-ball'], createdAt: '2026-03-01T00:00:00.000Z' }),
@@ -31,7 +31,7 @@ describe('filterAndSortItems', () => {
   })
 
   it('combines search, colors and tags', () => {
-    const filter = { query: 'o', colors: new Set(['green' as const]), tags: new Set(['3-ball']) }
+    const filter = { query: 'o', colors: new Set(['green' as const]), tags: new Set(['3-ball']), archived: false }
     expect(names(filterAndSortItems(items, filter, 'name-asc', lastPracticed))).toEqual(['Box'])
   })
 
@@ -60,7 +60,7 @@ describe('filterAndSortItems', () => {
 
 describe('list view in the URL', () => {
   it('round-trips search, sort, colors and tags', () => {
-    const view = { query: 'mills', sort: 'practiced-recent' as const, colors: new Set(['green', 'red'] as const), tags: new Set(['hard', '3-ball']) }
+    const view = { query: 'mills', sort: 'practiced-recent' as const, colors: new Set(['green', 'red'] as const), tags: new Set(['hard', '3-ball']), archived: false }
     const params = writeListView(view)
     expect(params.toString()).toBe('q=mills&sort=practiced-recent&color=red%2Cgreen&tag=3-ball&tag=hard')
     expect(readListView(params)).toEqual(view)
@@ -71,5 +71,20 @@ describe('list view in the URL', () => {
     const junk = readListView(new URLSearchParams('sort=bogus&color=purple,red'))
     expect(junk.sort).toBe('name-asc')
     expect([...junk.colors]).toEqual(['red'])
+  })
+})
+
+describe('archived items in the list', () => {
+  it('hides archived items unless showing archived, which shows only them', () => {
+    const list = [item('A'), item('B', { archivedAt: '2026-05-01T00:00:00.000Z' })]
+    expect(names(filterAndSortItems(list, noFilter, 'name-asc', {}))).toEqual(['A'])
+    expect(names(filterAndSortItems(list, { ...noFilter, archived: true }, 'name-asc', {}))).toEqual(['B'])
+  })
+
+  it('keeps the archived view in the URL', () => {
+    const view = readListView(new URLSearchParams('archived=1'))
+    expect(view.archived).toBe(true)
+    expect(writeListView(view).toString()).toBe('archived=1')
+    expect(readListView(new URLSearchParams('')).archived).toBe(false)
   })
 })

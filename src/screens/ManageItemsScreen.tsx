@@ -33,7 +33,7 @@ export default function ManageItemsScreen() {
   // Search, sort and filters live in the URL (the dashboard links here with ?color=red),
   // so coming back from an item restores the list exactly as it was.
   const view = readListView(searchParams)
-  const { query, sort, colors, tags } = view
+  const { query, sort, colors, tags, archived } = view
   function update(changes: Partial<ItemListView>) {
     setSearchParams(writeListView({ ...view, ...changes }), { replace: true })
   }
@@ -42,9 +42,11 @@ export default function ManageItemsScreen() {
 
   const label = activity.itemLabel
   const plural = pluralLabel(activity)
-  const allTags = sortTags(items.flatMap(i => i.tags ?? []))
-  const activeFilterCount = colors.size + tags.size
-  const shown = filterAndSortItems(items, { query, colors, tags }, sort, lastPracticedAt)
+  // The items this view draws from: archived ones only in the Archived view, otherwise the rest.
+  const pool = items.filter(i => Boolean(i.archivedAt) === archived)
+  const allTags = sortTags(pool.flatMap(i => i.tags ?? []))
+  const activeFilterCount = colors.size + tags.size + (archived ? 1 : 0)
+  const shown = filterAndSortItems(items, { query, colors, tags, archived }, sort, lastPracticedAt)
 
   return (
     <div className="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-100">
@@ -99,6 +101,9 @@ export default function ManageItemsScreen() {
                   <span className="capitalize">{color}</span>
                 </ToggleChip>
               ))}
+              <ToggleChip selected={archived} onClick={() => update({ archived: !archived })}>
+                Archived
+              </ToggleChip>
             </div>
             {allTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -111,7 +116,7 @@ export default function ManageItemsScreen() {
             )}
             {activeFilterCount > 0 && (
               <button
-                onClick={() => update({ colors: new Set(), tags: new Set() })}
+                onClick={() => update({ colors: new Set(), tags: new Set(), archived: false })}
                 className="self-start text-xs text-violet-400"
               >
                 Clear filters
@@ -121,7 +126,7 @@ export default function ManageItemsScreen() {
         )}
 
         {(activeFilterCount > 0 || query.trim() !== '') && items.length > 0 && (
-          <p className="text-slate-500 text-xs mb-3">Showing {shown.length} of {items.length} {plural}</p>
+          <p className="text-slate-500 text-xs mb-3">Showing {shown.length} of {pool.length} {archived ? `archived ${plural}` : plural}</p>
         )}
       </div>
 
@@ -136,12 +141,15 @@ export default function ManageItemsScreen() {
               <li key={item.id}>
                 <Link
                   to={`/activity/${activityId}/manage/${item.id}`}
-                  className="bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2"
+                  className={`bg-slate-800 rounded-xl px-4 py-3 flex flex-col gap-2 ${item.archivedAt ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <ColorDot color={item.color} size="md" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm">{item.name}</div>
+                      <div className="text-sm">
+                        {item.name}
+                        {item.archivedAt && <span className="text-xs text-slate-500 ml-2">Archived</span>}
+                      </div>
                       <div className="text-xs text-slate-500 mt-0.5">
                         {practiceSummary(lastPracticedAt[item.id], practiceCounts[item.id] ?? 0)}
                       </div>

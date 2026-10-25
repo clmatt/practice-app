@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useActivity } from '../useActivity'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getItems } from '../storage'
+import { getActiveItems } from '../storage'
 import type { Item } from '../types'
 import TabBar from '../components/TabBar'
 import { pluralLabel } from '../labels'
@@ -10,7 +10,7 @@ export default function PracticeChooserScreen() {
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
   const [activity] = useActivity()
-  const [items] = useState<Item[]>(() => (activityId ? getItems(activityId) : []))
+  const [items] = useState<Item[]>(() => (activityId ? getActiveItems(activityId) : []))
 
   if (!activity) return null
 

@@ -150,3 +150,15 @@ describe('color filter', () => {
     expect(screen.queryByRole('button', { name: /Advanced Filter/ })).toBeNull()
   })
 })
+
+describe('archived items', () => {
+  it('never draws archived items', () => {
+    saveActivity(activity())
+    saveItem({ ...item('a', 'Slab problem', []), archivedAt: '2026-02-01T00:00:00.000Z' })
+    saveItem({ ...item('b', 'Roof problem', []), color: 'green' })
+    renderSession()
+    click('Start — practice all')
+    expect(screen.getByText('Roof problem')).toBeInTheDocument()
+    expect(screen.getByText('0 / 1 done')).toBeInTheDocument()
+  })
+})

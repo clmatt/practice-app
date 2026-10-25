@@ -19,6 +19,8 @@ export interface Item {
   name: string
   color: Color
   tags?: string[]
+  /** Set when the item is archived: kept with its history, but out of practice and the lists. */
+  archivedAt?: string
   createdAt: string
 }
 

@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useActivity } from '../useActivity'
-import { getItems, getLogs, getNotesForItem } from '../storage'
-import { formatDateKey } from '../dates'
+import { getItems, getLogs, getNotesForItem, saveItem, deleteItemWithLogs } from '../storage'
+import { formatDateKey, formatLongDate } from '../dates'
 import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
 import { isRep } from '../logs'
@@ -20,7 +20,7 @@ export default function ItemProgressScreen() {
   const navigate = useNavigate()
 
   const [activity] = useActivity()
-  const item = activity ? getItems(activityId!).find(i => i.id === itemId) : undefined
+  const [item, setItem] = useState(() => (activity ? getItems(activity.id).find(i => i.id === itemId) ?? null : null))
 
   useEffect(() => {
     // A deleted item sends you back to the list (useActivity handles an unknown activity).
@@ -28,6 +28,18 @@ export default function ItemProgressScreen() {
   }, [activity, item, activityId, navigate])
 
   if (!activity || !item) return null
+
+  function handleUnarchive() {
+    const restored = { ...item!, archivedAt: undefined }
+    saveItem(restored)
+    setItem(restored)
+  }
+
+  function handleDelete() {
+    if (!window.confirm(`Delete "${item!.name}" and its practice history? This cannot be undone.`)) return
+    deleteItemWithLogs(item!.id)
+    navigate(`/activity/${activityId}/manage`, { replace: true })
+  }
 
   const logs = getLogs().filter(l => l.itemId === itemId)
   const runs = buildRuns(logs)
@@ -52,6 +64,19 @@ export default function ItemProgressScreen() {
           {totalReps > 0 && ` · ${totalReps} rep${totalReps === 1 ? '' : 's'} total`}
         </p>
         <TagList tags={item.tags} className="mb-2" />
+        {item.archivedAt && (
+          <div className="bg-slate-800 rounded-xl px-4 py-3 mb-2 flex flex-col gap-2">
+            <p className="text-sm text-slate-300">Archived on {formatLongDate(item.archivedAt)}</p>
+            <div className="flex gap-2">
+              <button onClick={handleUnarchive} className="flex-1 bg-violet-600 hover:bg-violet-500 rounded-lg py-2 text-sm font-semibold">
+                Unarchive
+              </button>
+              <button onClick={handleDelete} className="flex-1 bg-slate-700 hover:bg-slate-600 rounded-lg py-2 text-sm text-red-300">
+                Delete permanently
+              </button>
+            </div>
+          </div>
+        )}
         <div className="mb-2" />
       </div>
 

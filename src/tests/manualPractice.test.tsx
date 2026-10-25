@@ -66,3 +66,12 @@ describe('Manual Practice', () => {
     expect(screen.getByText('drop on 3')).toBeInTheDocument()
   })
 })
+
+describe('Manual Practice and archived items', () => {
+  it('leaves archived items out', () => {
+    seed()
+    saveItem({ id: 'c', activityId: 'act-1', name: 'Shower', color: 'red', createdAt: '2026-01-01T00:00:00.000Z', archivedAt: '2026-02-01T00:00:00.000Z' })
+    renderScreen()
+    expect(screen.queryByRole('button', { name: /Shower/ })).toBeNull()
+  })
+})

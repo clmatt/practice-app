@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useActivity } from '../useActivity'
-import { getItems, recordPractice, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
+import { getItems, getActiveItems, recordPractice, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
 import { toggled } from '../utils'
 import { RATING_ORDER } from '../palette'
 import type { Item, Color } from '../types'
@@ -189,7 +189,7 @@ export default function PracticeSessionScreen() {
   const navigate = useNavigate()
 
   const [activity] = useActivity()
-  const [items, setItems] = useState<Item[]>(() => (activity ? getItems(activity.id) : []))
+  const [items, setItems] = useState<Item[]>(() => (activity ? getActiveItems(activity.id) : []))
   const allTags = useMemo(() => tagsOf(items), [items])
   const [phase, setPhase] = useState<Phase>('setup')
   const [currentItem, setCurrentItem] = useState<Item | null>(null)
@@ -213,7 +213,7 @@ export default function PracticeSessionScreen() {
 
   function drawNextItem(skipped: Set<string> = skippedItemIds) {
     if (!activity) return
-    const freshItems = getItems(activity.id)
+    const freshItems = getActiveItems(activity.id)
     setItems(freshItems)
     const result = drawFrom(activity, freshItems, filter, skipped)
     if (result.kind === 'item') {
@@ -267,7 +267,7 @@ export default function PracticeSessionScreen() {
     setSessionLog(prev => prev.slice(0, -1))
     // The undone item can be drawn again; if the session had ended, bring it back.
     if (phase === 'done') drawNextItem()
-    else setItems(getItems(activity.id))
+    else setItems(getActiveItems(activity.id))
   }
 
   const handleBackToDraw = () => {

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useActivity } from '../useActivity'
 import {
-  getItems, getSessionHistory, getColorDistributionByDay, getPracticeCountByItem,
+  getActiveItems, getSessionHistory, getColorDistributionByDay, getPracticeCountByItem,
 } from '../storage'
 import { formatDateKey } from '../dates'
 import ColorDot from '../components/ColorDot'
@@ -26,7 +26,7 @@ export default function StatsScreen() {
 
   // Stats never change while this screen is open, so compute once per activity.
   const data = useMemo(() => {
-    const allItems = getItems(activityId)
+    const allItems = getActiveItems(activityId)
     const practiceCounts = getPracticeCountByItem(activityId)
     return {
       allItems,

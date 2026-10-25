@@ -336,6 +336,11 @@ export function getItems(activityId: string): Item[] {
 }
 
 /** Saves an item. Changing an existing item's colour also logs the edit, in the same save. */
+/** The activity's items that aren't archived — what practice and the dashboard use. */
+export function getActiveItems(activityId: string): Item[] {
+  return getItems(activityId).filter(i => !i.archivedAt)
+}
+
 export function saveItem(item: Item): void {
   const existing = state.items.find(i => i.id === item.id)
   const edit: PracticeLog | null = existing && existing.color !== item.color
@@ -438,6 +443,8 @@ export function getColorDistributionByDay(
   const firstColor = new Map<string, Color>()
   for (const { log } of logs) if (!firstColor.has(log.itemId)) firstColor.set(log.itemId, log.colorBefore)
   const createdOn = new Map(items.map(i => [i.id, localDateKey(i.createdAt)]))
+  // An archived item stops counting after the day it was archived.
+  const archivedOn = new Map(items.flatMap(i => (i.archivedAt ? [[i.id, localDateKey(i.archivedAt)] as const] : [])))
   const colorSoFar = new Map<string, Color>()
   let next = 0
 
@@ -450,6 +457,7 @@ export function getColorDistributionByDay(
     const counts = { red: 0, yellow: 0, green: 0 }
     for (const item of items) {
       if (createdOn.get(item.id)! > date) continue
+      if ((archivedOn.get(item.id) ?? '9999-12-31') < date) continue
       counts[colorSoFar.get(item.id) ?? firstColor.get(item.id) ?? item.color]++
     }
     return { date, ...counts }

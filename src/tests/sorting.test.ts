@@ -17,7 +17,7 @@ describe('natural sorting', () => {
     const item = (id: string, tags: string[]): Item => ({ id, activityId: 'a', name: id, color: 'red', tags, createdAt: '2026-01-01T00:00:00.000Z' })
     const items = [item('Problem 10', ['V10']), item('Problem 2', ['V2']), item('Problem 1', ['V1'])]
     expect(tagsOf(items)).toEqual(['V1', 'V2', 'V10'])
-    const sorted = filterAndSortItems(items, { query: '', colors: new Set(), tags: new Set() }, 'name-asc', {})
+    const sorted = filterAndSortItems(items, { query: '', colors: new Set(), tags: new Set(), archived: false }, 'name-asc', {})
     expect(sorted.map(i => i.name)).toEqual(['Problem 1', 'Problem 2', 'Problem 10'])
   })
 })

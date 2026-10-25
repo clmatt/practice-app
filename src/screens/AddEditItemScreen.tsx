@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useActivity } from '../useActivity'
 import ColorPicker from '../components/ColorPicker'
 import TabBar from '../components/TabBar'
-import { getItems, saveItem, deleteItemWithLogs } from '../storage'
+import { getItems, getActiveItems, saveItem } from '../storage'
 import { generateId } from '../utils'
 import type { Color, Item } from '../types'
 import { sortTags } from '../sorting'
@@ -19,7 +19,7 @@ export default function AddEditItemScreen() {
   const [existingItem] = useState<Item | null>(() =>
     itemId ? (getItems(activityId!).find(i => i.id === itemId) ?? null) : null)
   const [allActivityTags] = useState<string[]>(() =>
-    sortTags(getItems(activityId!).flatMap(i => i.tags ?? [])))
+    sortTags(getActiveItems(activityId!).flatMap(i => i.tags ?? [])))
   const [name, setName] = useState(() => existingItem?.name ?? '')
   const [color, setColor] = useState<Color | null>(() => existingItem?.color ?? null)
   const [tags, setTags] = useState<string[]>(() => sortTags(existingItem?.tags ?? []))
@@ -47,11 +47,13 @@ export default function AddEditItemScreen() {
       return
     }
 
-    const duplicate = getItems(activityId!).some(
+    const duplicate = getItems(activityId!).find(
       i => i.name.toLowerCase() === name.trim().toLowerCase() && i.id !== existingItem?.id
     )
     if (duplicate) {
-      setError(`A ${label} with that name already exists.`)
+      setError(duplicate.archivedAt
+        ? `An archived ${label} has that name — unarchive it instead.`
+        : `A ${label} with that name already exists.`)
       return
     }
 
@@ -92,11 +94,10 @@ export default function AddEditItemScreen() {
     setTags(tags.filter(t => t !== tag))
   }
 
-  function handleDelete() {
+  function handleArchive() {
     if (!existingItem) return
-    if (!window.confirm(`Delete "${existingItem.name}" and its practice history? This cannot be undone.`)) return
-    deleteItemWithLogs(existingItem.id)
-    navigate(`/activity/${activityId}/manage`)
+    saveItem({ ...existingItem, archivedAt: new Date().toISOString() })
+    navigate(`/activity/${activityId}/manage`, { replace: true })
   }
 
   if (!activity) return null
@@ -174,13 +175,13 @@ export default function AddEditItemScreen() {
             {isEditing ? 'Save changes' : `Add ${label}`}
           </button>
 
-          {isEditing && (
+          {isEditing && existingItem && !existingItem.archivedAt && (
             <button
               type="button"
-              onClick={handleDelete}
-              className="text-red-400 text-sm font-medium py-2 w-full text-center"
+              onClick={handleArchive}
+              className="text-slate-400 text-sm font-medium py-2 w-full text-center"
             >
-              Delete {label}
+              Archive {label}
             </button>
           )}
         </div>
