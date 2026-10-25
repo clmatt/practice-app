@@ -2,6 +2,13 @@
 
 Personal PWA (React 19 + TypeScript + Vite + Tailwind 3) for tracking practice of items rated red/yellow/green. Single user, iPhone home-screen app, no backend. See README.md for the product and layout.
 
+## Product philosophy (check every feature idea against this)
+The owner's words, condensed. Proposals that conflict with these are out, however standard they are elsewhere (Anki, Duolingo, habit apps).
+- **Never coerce practice.** Not practising — for a day or a month — is a legitimate choice, sometimes the right one. No streaks, due counts, overdue piles, reminders, "you haven't practised in N days" pressure, or anything that turns a break into a debt or a source of guilt.
+- **The model is the latest rating, not time.** An item's colour is how it went the last time you practised it. If a break makes you worse, that shows up in your next rating — that's the only consequence. Selection never depends on dates or elapsed time (recency bias uses the *order* items were practised in, not how long ago). No forgetting curves or spaced-repetition scheduling.
+- **You choose the session.** What to work on — colours, tags, filters, picking items by hand — is the user's call. The app suggests; it doesn't dictate what a session must contain.
+- **Built for the owner's physical-skill practice** (juggling, climbing), where "how did it go last time" is the right model. It may or may not suit things like vocabulary; that's fine. Design for these use cases rather than generalising at their expense.
+
 ## Commands
 - `npm test` (Vitest, jsdom, fake-indexeddb, timezone pinned to America/Los_Angeles)
 - `npm run lint` — must report 0 problems

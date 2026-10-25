@@ -6,6 +6,8 @@ A personal practice tracker that runs as an app on your phone's home screen.
 
 You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice draws items weighted towards the ones you struggle with and the ones you haven't touched in a while. Tapped the wrong color? An *Undo* bar appears for a few seconds after each save. Stats show how your ratings shift over time.
 
+**Philosophy.** The app never pushes you to practise: no streaks, no due counts, no pile of overdue items. Taking a day or a month off is fine — sometimes it's the right call — and the only consequence is that your next ratings may be lower. An item's color is simply how it went the last time you practised it; nothing is predicted from dates or time passing. You decide what each session is about (colors, tags, filters, or picking items yourself). It's built for physical skills like juggling and climbing, where "how did it go last time" is the right model.
+
 If the app is closed or reloaded in the middle of Auto Practice, reopening it the same day carries on where you were. Items you no longer practise can be archived (Edit → *Archive*): they leave practice and the lists but keep their history; find them under Items → Filter → *Archived*, where you can unarchive or permanently delete them. The version and build date are shown at the bottom of the Home screen.
 
 ## Using it
