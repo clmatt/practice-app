@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDateKey, daysBetweenKeys, formatDateKey, weekStartKey } from '../dates'
+import { localDateKey, daysBetweenKeys, formatDateKey, weekStartKey, formatLongDate } from '../dates'
 
 describe('test environment', () => {
   it('runs in America/Los_Angeles', () => {
@@ -51,5 +51,11 @@ describe('weekStartKey', () => {
 
   it('works across month and year boundaries', () => {
     expect(weekStartKey('2027-01-01')).toBe('2026-12-28')
+  })
+})
+
+describe('formatLongDate', () => {
+  it('shows the local calendar date', () => {
+    expect(formatLongDate('2026-05-02T03:00:00.000Z')).toBe('May 1, 2026')
   })
 })

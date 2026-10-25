@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
 import { useActivity } from '../useActivity'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getItems, saveItem, appendLog, undoPracticeLog, getNotesForItem } from '../storage'
-import { generateId } from '../utils'
+import { getItems, recordPractice, undoPracticeLog, getNotesForItem } from '../storage'
 import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
-import ColorPicker from '../components/ColorPicker'
+import RatePanel from '../components/RatePanel'
+import NoteList from '../components/NoteList'
 import UndoBar from '../components/UndoBar'
 import { compareNatural } from '../sorting'
 import { pluralLabel } from '../labels'
@@ -43,24 +43,7 @@ export default function ManualPracticeScreen() {
   function handleSave() {
     if (!selectedItem || !selectedColor || !activityId) return
 
-    const colorBefore = selectedItem.color
-    const colorAfter = selectedColor
-    const trimmedNote = noteText.trim()
-
-    const logId = generateId()
-    appendLog({
-      id: logId,
-      itemId: selectedItem.id,
-      practicedAt: new Date().toISOString(),
-      colorBefore,
-      colorAfter,
-      ...(trimmedNote ? { note: trimmedNote } : {}),
-    })
-
-    if (colorAfter !== colorBefore) {
-      saveItem({ ...selectedItem, color: colorAfter })
-    }
-
+    const logId = recordPractice({ item: selectedItem, color: selectedColor, note: noteText })
     setItems(getItems(activityId))
     setLastSaved({ logId, name: selectedItem.name })
     setPhase('list')
@@ -100,43 +83,17 @@ export default function ManualPracticeScreen() {
             <span className="text-slate-400 text-sm capitalize">{selectedItem.color}</span>
           </div>
           <p className="text-slate-400 text-sm">How did it go?</p>
-          {selectedItemNotes.length > 0 && (
-            <div className="w-full max-h-36 overflow-y-auto flex flex-col gap-1.5">
-              {selectedItemNotes.map(n => (
-                <div key={n.practicedAt} className="bg-slate-800 rounded-lg px-3 py-2">
-                  <p className="text-xs text-slate-500 mb-0.5">
-                    {new Date(n.practicedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                  <p className="text-sm text-slate-300">{n.note}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <NoteList notes={selectedItemNotes} compact />
         </div>
 
-        <div className="flex flex-col gap-4">
-          <ColorPicker value={selectedColor} onChange={setSelectedColor} />
-          <textarea
-            value={noteText}
-            onChange={e => setNoteText(e.target.value)}
-            placeholder="Add a note (optional)"
-            rows={2}
-            className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
-          />
-          <button
-            onClick={handleSave}
-            disabled={selectedColor === null}
-            className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Save
-          </button>
-          <button
-            onClick={handleBack}
-            className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full"
-          >
-            Back
-          </button>
-        </div>
+        <RatePanel
+          value={selectedColor}
+          onChange={setSelectedColor}
+          note={noteText}
+          onNoteChange={setNoteText}
+          onSave={handleSave}
+          onBack={handleBack}
+        />
       </div>
     )
   }

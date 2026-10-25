@@ -7,6 +7,7 @@ import TabBar from '../components/TabBar'
 import { buildRuns } from '../itemRuns'
 import { isRep } from '../logs'
 import TagList from '../components/TagList'
+import NoteList from '../components/NoteList'
 import { RATING_COLORS, ratingName } from '../palette'
 
 function formatDateRange(start: string, end: string): string {
@@ -102,16 +103,7 @@ export default function ItemProgressScreen() {
         {notes.length > 0 && (
           <div className="mt-8">
             <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Notes</h2>
-            <div className="flex flex-col gap-3">
-              {notes.map(n => (
-                <div key={n.practicedAt} className="bg-slate-800 rounded-xl px-4 py-3">
-                  <p className="text-xs text-slate-500 mb-1">
-                    {new Date(n.practicedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                  <p className="text-sm text-slate-200">{n.note}</p>
-                </div>
-              ))}
-            </div>
+            <NoteList notes={notes} />
           </div>
         )}
       </div>

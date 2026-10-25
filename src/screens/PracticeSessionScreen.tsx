@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useActivity } from '../useActivity'
-import { getItems, saveItem, appendLog, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
-import { generateId, toggled } from '../utils'
+import { getItems, recordPractice, undoPracticeLog, getTodayPracticedItemIds, getNotesForItem } from '../storage'
+import { toggled } from '../utils'
 import { RATING_ORDER } from '../palette'
 import type { Item, Color } from '../types'
 import ColorDot from '../components/ColorDot'
-import ColorPicker from '../components/ColorPicker'
+import RatePanel from '../components/RatePanel'
+import NoteList from '../components/NoteList'
 import AdvancedFilterModal from '../components/AdvancedFilterModal'
 import UndoBar from '../components/UndoBar'
 import {
@@ -227,10 +228,6 @@ export default function PracticeSessionScreen() {
     }
   }
 
-  function formatNoteDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  }
-
   const handleIPracticed = () => {
     setPhase('rate')
     setSelectedColor(null)
@@ -246,23 +243,9 @@ export default function PracticeSessionScreen() {
   const handleSave = () => {
     if (!currentItem || !selectedColor || !activityId) return
 
-    const colorBefore = currentItem.color
+    const colorBefore = getItems(currentItem.activityId).find(i => i.id === currentItem.id)?.color ?? currentItem.color
     const colorAfter = selectedColor
-    const trimmedNote = noteText.trim()
-
-    const logId = generateId()
-    appendLog({
-      id: logId,
-      itemId: currentItem.id,
-      practicedAt: new Date().toISOString(),
-      colorBefore,
-      colorAfter,
-      ...(trimmedNote ? { note: trimmedNote } : {}),
-    })
-
-    if (colorAfter !== colorBefore) {
-      saveItem({ ...currentItem, color: colorAfter })
-    }
+    const logId = recordPractice({ item: currentItem, color: colorAfter, note: noteText })
 
     setSessionLog(prev => [...prev, { name: currentItem.name, colorBefore, colorAfter }])
     setLastSaved({ logId, name: currentItem.name })
@@ -376,16 +359,7 @@ export default function PracticeSessionScreen() {
               </button>
             )}
 
-            {pastNotes.length > 0 && (
-              <div className="w-full max-h-36 overflow-y-auto flex flex-col gap-1.5">
-                {pastNotes.map(n => (
-                  <div key={n.practicedAt} className="bg-slate-800 rounded-lg px-3 py-2">
-                    <p className="text-xs text-slate-500 mb-0.5">{formatNoteDate(n.practicedAt)}</p>
-                    <p className="text-sm text-slate-300">{n.note}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+            <NoteList notes={pastNotes} compact />
           </div>
 
           <div className="flex flex-col gap-3">
@@ -407,26 +381,14 @@ export default function PracticeSessionScreen() {
             <p className="text-slate-400 text-sm">How did it go?</p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <ColorPicker value={selectedColor} onChange={setSelectedColor} />
-            <textarea
-              value={noteText}
-              onChange={e => setNoteText(e.target.value)}
-              placeholder="Add a note (optional)"
-              rows={2}
-              className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
-            />
-            <button
-              onClick={handleSave}
-              disabled={selectedColor === null}
-              className="bg-violet-600 hover:bg-violet-500 rounded-xl py-4 font-bold text-lg w-full disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Save
-            </button>
-            <button onClick={handleBackToDraw} className="bg-slate-800 hover:bg-slate-700 rounded-xl py-3 font-semibold w-full">
-              Back
-            </button>
-          </div>
+          <RatePanel
+            value={selectedColor}
+            onChange={setSelectedColor}
+            note={noteText}
+            onNoteChange={setNoteText}
+            onSave={handleSave}
+            onBack={handleBackToDraw}
+          />
         </div>
       )}
 

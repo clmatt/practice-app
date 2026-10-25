@@ -32,3 +32,8 @@ export function weekStartKey(key: string): string {
 export function formatDateKey(key: string, options: Intl.DateTimeFormatOptions): string {
   return new Date(key + 'T00:00:00').toLocaleDateString('en-US', options)
 }
+
+/** A timestamp's local date in words, e.g. "May 1, 2026". */
+export function formatLongDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
