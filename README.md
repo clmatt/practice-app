@@ -50,7 +50,7 @@ Dependabot (`.github/dependabot.yml`) checks for updates weekly and opens pull r
 - the weekly npm *minor-and-patch* group, and single npm minor/patch updates (including security fixes);
 - updates to GitHub's own actions (`actions/*`).
 
-npm **major** updates (e.g. Tailwind 3 → 4) stay open as pull requests for you to handle. Anything that fails a check stays open and unmerged. The rules live in `scripts/dependabot-automerge-policy.ts`; the merges show up in the repo's closed pull requests. Optional: Settings → Code security → enable *Dependabot security updates* so security fixes arrive as soon as they're published rather than with the weekly run.
+npm **major** updates (e.g. Tailwind 3 → 4) stay open as pull requests for you to handle. Anything that fails a check stays open and unmerged. The rules live in `scripts/dependabot-automerge-policy.ts`; the merges show up in the repo's closed pull requests. A daily safety net (`.github/workflows/dependabot-sweep.yml`, also run after each push to `main`) merges any qualifying pull request whose checks passed but that wasn't merged at the time. Optional: Settings → Code security → enable *Dependabot security updates* so security fixes arrive as soon as they're published rather than with the weekly run.
 
 ### Coming back after a long break
 

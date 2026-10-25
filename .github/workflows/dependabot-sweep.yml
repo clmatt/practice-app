@@ -1,0 +1,61 @@
+name: Merge waiting Dependabot updates
+
+# Safety net for the automerge job in deploy.yml: merges Dependabot pull
+# requests whose checks already passed but that weren't merged when they ran
+# (a runner hiccup, or the rules were fixed since). Same rules, read from main:
+# scripts/dependabot-automerge-policy.ts. Runs daily and after each push to main.
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: dependabot-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Merge the pull requests that qualify, then deploy
+        # Outside the checkout, so gh only touches remote branches.
+        working-directory: ${{ runner.temp }}
+        run: |
+          merged=0
+          for number in $(gh pr list --app dependabot --state open --json number --jq '.[].number'); do
+            gh pr view "$number" --json number,title,author,headRefOid,headRefName > pr.json
+            branch=$(jq -r .headRefName pr.json)
+            sha=$(jq -r .headRefOid pr.json)
+            # Only the exact commit whose full CI run (the build job) passed.
+            passed=$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=build" --jq '[.check_runs[] | select(.conclusion == "success")] | length')
+            if [ "$passed" = "0" ]; then
+              echo "#$number: no passing build for $sha yet"
+              continue
+            fi
+            if node "$GITHUB_WORKSPACE/scripts/dependabot-automerge.ts" pr.json "$branch" "$sha" | grep -q '^merge=true$'; then
+              if gh pr merge "$number" --squash --delete-branch --match-head-commit "$sha"; then
+                merged=1
+              else
+                echo "#$number: merge refused (probably conflicts; Dependabot will rebase it)"
+              fi
+            fi
+          done
+          if [ "$merged" = 1 ]; then gh workflow run deploy.yml --ref main; fi

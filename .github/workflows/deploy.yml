@@ -13,6 +13,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Normally ~4 minutes; a stalled step fails fast instead of holding up deploys for hours.
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -25,8 +27,17 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps webkit
+      - name: Install WebKit for the end-to-end test
+        timeout-minutes: 15
+        run: |
+          # The system-package download occasionally stalls; give each try 4 minutes.
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps webkit && exit 0
+            echo "Install attempt $attempt failed or stalled; retrying"
+          done
+          exit 1
       - run: npm run test:e2e
+        timeout-minutes: 10
       - if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5
         with:
@@ -36,6 +47,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
@@ -55,6 +67,7 @@ jobs:
     if: github.actor == 'dependabot[bot]' && startsWith(github.ref_name, 'dependabot/')
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
