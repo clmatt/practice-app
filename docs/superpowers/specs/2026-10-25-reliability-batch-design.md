@@ -80,7 +80,8 @@ Changes: item page "12 reps total" (was "sessions"); run labels "3 reps · May 1
   - log: `id`, `itemId` strings; `practicedAt` a string that parses as a date; `colorBefore`/`colorAfter` ratings; `note` absent or a string.
   - saved filter: `id`, `activityId`, `name`, `expression` strings.
 - Invalid records are dropped and counted in `ImportPayload.invalidRecords`, carried to `ImportStats.invalid`; the summary shows "N damaged records were skipped." when > 0.
-- A file with no valid activity is rejected as not a backup.
+- Optional fields are checked when present: activity `recencyBias` a number in [0, 1], `chooseFilterEachItem` a boolean, `itemLabelPlural` a string; item `archivedAt` a string; log `source` equal to `'edit'`.
+- A file that has activities but none of them valid is rejected as not a backup. (A backup of an empty app has no activities and stays valid.)
 
 ### B5. Version on Home
 
