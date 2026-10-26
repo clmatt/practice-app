@@ -1,6 +1,6 @@
 # Practice App — notes for Claude
 
-Personal PWA (React 19 + TypeScript + Vite + Tailwind 3) for tracking practice of items rated red/yellow/green. Single user, iPhone home-screen app, no backend. See README.md for the product and layout.
+Personal PWA (React 19 + TypeScript + Vite + Tailwind 4) for tracking practice of items rated red/yellow/green. Single user, iPhone home-screen app, no backend. See README.md for the product and layout.
 
 ## Product philosophy (check every feature idea against this)
 The owner's words, condensed. Proposals that conflict with these are out, however standard they are elsewhere (Anki, Duolingo, habit apps).
@@ -37,6 +37,7 @@ Pushing `main` deploys to the user's phone via GitHub Actions (`.github/workflow
 - `tsconfig.app.json` has `erasableSyntaxOnly: true`: no enums, namespaces or constructor parameter properties.
 - Only components are exported from `.tsx` files (`react-refresh/only-export-components` lint rule); put helpers in `.ts` modules.
 - Screens read storage directly in `useState` initialisers; effects are only for redirects (`react-hooks/set-state-in-effect` is enforced).
+- Tailwind 4 is configured in `src/index.css` (no tailwind.config.js). Its `@theme` pins the v3 line heights, font stack and sRGB colors the app was designed with — add a shade there (v3 hex) before using a new one, or it renders in v4's more saturated OKLCH.
 - Rating colors come from `RATING_COLORS` in `src/palette.ts` — never hard-code red/yellow/green hex values or Tailwind color classes for ratings. (Green is emerald on purpose: it was chosen with a colour-blindness validator.) List or order the ratings with `RATINGS`/`RATING_ORDER`, never a hand-written `['red', 'yellow', 'green']`.
 - Plural item labels come from `pluralLabel(activity)` (`src/labels.ts`), never `${itemLabel}s`.
 - Activity screens get their activity (and the redirect when it's missing) from `useActivity()`.
