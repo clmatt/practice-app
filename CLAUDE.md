@@ -13,6 +13,7 @@ The owner's words, condensed. Proposals that conflict with these are out, howeve
 - `npm test` (Vitest, jsdom, fake-indexeddb, timezone pinned to America/Los_Angeles)
 - `npm run lint` — must report 0 problems
 - `npm run build` — type-check (`tsc -b`) + production build
+- TypeScript runs side by side (Microsoft's official setup): `tsc` is TypeScript 7 (`@typescript/native` → `typescript@7`), while the `typescript` package is the TS 6 API (`@typescript/typescript6`) because typescript-eslint doesn't support TS 7 yet. Once it does, `typescript` can point at 7 and `@typescript/native` can go.
 - `npm run test:e2e` — Playwright in WebKit against the production build (run `npm run build` first)
 - `npm run test:visual` — every screen of `./base` (a git worktree of the "before" commit, built) vs `.` must be pixel-identical; CI runs it on Dependabot branches only, so intentional UI changes never need reference images. The fixture data is made up — never put real practice data in the repo.
 - `npm run dev` → http://localhost:5173/practice-app/
