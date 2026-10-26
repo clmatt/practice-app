@@ -12,7 +12,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned: a version Playwright supports for WebKit's system packages
+    # (ubuntu-latest started moving to Ubuntu 26 in October 2026).
+    runs-on: ubuntu-24.04
     # Normally ~4 minutes; a stalled step fails fast instead of holding up deploys for hours.
     timeout-minutes: 30
     permissions:
@@ -27,15 +29,29 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - name: Install WebKit for the end-to-end test
+      - name: Install WebKit's system packages
         timeout-minutes: 15
         run: |
-          # The system-package download occasionally stalls; give each try 4 minutes.
+          # Let apt handle stalls itself: time out and retry slow downloads, and wait
+          # for a busy package lock. Never kill apt mid-install (that breaks dpkg).
+          conf=/etc/apt/apt.conf.d/99ci-resilience
+          echo 'Acquire::Retries "5";' | sudo tee "$conf" > /dev/null
+          echo 'Acquire::http::Timeout "30";' | sudo tee -a "$conf" > /dev/null
+          echo 'Acquire::https::Timeout "30";' | sudo tee -a "$conf" > /dev/null
+          echo 'DPkg::Lock::Timeout "300";' | sudo tee -a "$conf" > /dev/null
+          npx playwright install-deps webkit
+      - name: Download WebKit
+        timeout-minutes: 10
+        run: |
+          # Just a download: safe to time out and try again.
           for attempt in 1 2 3; do
-            timeout 240 npx playwright install --with-deps webkit && exit 0
-            echo "Install attempt $attempt failed or stalled; retrying"
+            timeout 180 npx playwright install webkit && exit 0
+            echo "Download attempt $attempt failed or stalled; retrying"
           done
           exit 1
+      - name: Note the runner OS (on failure)
+        if: failure()
+        run: echo "::warning title=Runner::$(lsb_release -ds 2>/dev/null || uname -a)"
       - run: npm run test:e2e
         timeout-minutes: 10
       - if: github.ref == 'refs/heads/main'
