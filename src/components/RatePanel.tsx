@@ -19,7 +19,7 @@ export default function RatePanel({ note, onNoteChange, onRate, ready }: Props) 
         onChange={e => onNoteChange(e.target.value)}
         placeholder="Add a note (optional)"
         rows={2}
-        className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-none resize-none text-slate-100 placeholder:text-slate-500"
+        className="bg-slate-800 rounded-xl px-4 py-3 text-sm w-full outline-hidden resize-none text-slate-100 placeholder:text-slate-500"
       />
       <ColorPicker onChange={onRate} disabled={!ready} />
     </div>

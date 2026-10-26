@@ -10,7 +10,7 @@ export default function ColorDot({ color, size = 'md', decorative = false }: { c
   return (
     <span
       {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': ratingName(color) })}
-      className={`inline-block rounded-full flex-shrink-0 ${sizeClass}`}
+      className={`inline-block rounded-full shrink-0 ${sizeClass}`}
       style={{ backgroundColor: RATING_COLORS[color] }}
     />
   )

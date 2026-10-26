@@ -136,7 +136,7 @@ export default function AdvancedFilterModal({ activityId, allTags, items, initia
             onChange={e => setExpression(e.target.value)}
             rows={3}
             placeholder={'"tag1" && ("tag2" || "tag3")'}
-            className="bg-slate-800 rounded-xl px-4 py-3 text-sm font-mono w-full outline-none resize-none text-slate-100 placeholder:text-slate-600 border border-transparent focus:border-violet-600"
+            className="bg-slate-800 rounded-xl px-4 py-3 text-sm font-mono w-full outline-hidden resize-none text-slate-100 placeholder:text-slate-600 border border-transparent focus:border-violet-600"
           />
           {trimmed && (
             isValid

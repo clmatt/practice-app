@@ -89,7 +89,7 @@ export default function ActivityDashboardScreen() {
           <div>
             <label className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Name</label>
             <input
-              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
+              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm"
               value={draftName}
               onChange={e => setDraftName(e.target.value)}
             />
@@ -97,7 +97,7 @@ export default function ActivityDashboardScreen() {
           <div>
             <label className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Item label</label>
             <input
-              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
+              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm"
               placeholder="e.g. trick, route, exercise"
               value={draftLabel}
               onChange={e => setDraftLabel(e.target.value)}
@@ -116,7 +116,7 @@ export default function ActivityDashboardScreen() {
                     type="number"
                     min={0}
                     max={100}
-                    className="bg-slate-800 rounded-lg px-3 py-2 text-sm w-20 outline-none"
+                    className="bg-slate-800 rounded-lg px-3 py-2 text-sm w-20 outline-hidden"
                     value={draftWeights[color]}
                     onChange={e => setDraftWeights(w => ({ ...w, [color]: Math.min(100, Math.max(0, Math.round(Number(e.target.value) || 0))) }))}
                   />
@@ -176,7 +176,7 @@ export default function ActivityDashboardScreen() {
                 <label htmlFor="item-label-plural" className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Plural (optional)</label>
                 <input
                   id="item-label-plural"
-                  className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
+                  className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm"
                   placeholder={pluralize(draftLabel.trim() || activity.itemLabel)}
                   value={draftPlural}
                   onChange={e => setDraftPlural(e.target.value)}

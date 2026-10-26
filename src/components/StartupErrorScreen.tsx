@@ -16,7 +16,7 @@ export default function StartupErrorScreen({ error }: { error: unknown }) {
           : 'The app could not open its storage. Nothing has been deleted. Try reloading; if this keeps happening, check that the browser is not in private mode and has free space.'}
       </p>
       {!isNewer && error instanceof Error && (
-        <p className="text-xs text-slate-500 font-mono break-words">{error.message}</p>
+        <p className="text-xs text-slate-500 font-mono wrap-break-word">{error.message}</p>
       )}
       <button
         onClick={() => window.location.reload()}

@@ -111,7 +111,7 @@ export default function ManualPracticeScreen() {
         placeholder={`Search ${pluralLabel(activity)}`}
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
-        className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-4 shrink-0"
+        className="bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm w-full mb-4 shrink-0"
       />
 
       <div className="flex-1 overflow-y-auto">

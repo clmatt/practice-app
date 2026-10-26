@@ -31,7 +31,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <p className="text-slate-400 text-sm">
           Your data is still saved on this device. Export a backup to be safe, then reload.
         </p>
-        <p className="text-xs text-slate-500 font-mono break-words">{error.message}</p>
+        <p className="text-xs text-slate-500 font-mono wrap-break-word">{error.message}</p>
         <button
           onClick={() => void exportData()}
           className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold"

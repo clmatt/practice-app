@@ -88,14 +88,14 @@ export default function HomeScreen() {
           <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-3">
             <input
               autoFocus
-              className="bg-slate-700 rounded-lg px-3 py-2 text-sm w-full outline-none"
+              className="bg-slate-700 rounded-lg px-3 py-2 text-sm w-full outline-hidden"
               placeholder="Activity name (e.g. Juggling)"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAdd()}
             />
             <input
-              className="bg-slate-700 rounded-lg px-3 py-2 text-sm w-full outline-none"
+              className="bg-slate-700 rounded-lg px-3 py-2 text-sm w-full outline-hidden"
               placeholder="Item label, singular (e.g. trick, route)"
               value={itemLabel}
               onChange={e => setItemLabel(e.target.value)}

@@ -44,7 +44,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
       <ul aria-label="Legend" className={`flex gap-4 text-xs text-slate-300 ${chart.smoothed ? 'mb-1' : 'mb-2'}`}>
         {RATING_ORDER.map(color => (
           <li key={color} className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLORS[color] }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: RATING_COLORS[color] }} />
             {ratingName(color)}
           </li>
         ))}
@@ -112,7 +112,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
             <div className="text-slate-400 mb-1">Session {active.session} · {shortDate(active.date)}</div>
             {TOOLTIP_ORDER.map(color => (
               <div key={color} className="flex items-center gap-2">
-                <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: RATING_COLORS[color] }} />
+                <span className="inline-block w-3 h-0.5 rounded-sm" style={{ backgroundColor: RATING_COLORS[color] }} />
                 <span className="font-semibold text-slate-100 tabular-nums w-5 text-right">{active[color]}</span>
                 <span className="text-slate-400">{ratingName(color)}</span>
               </div>

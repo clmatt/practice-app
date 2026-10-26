@@ -1,10 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Prevent iOS auto-zoom — outside @layer so it overrides Tailwind utility font sizes */
+/* Prevent iOS auto-zoom — outside any layer so it overrides Tailwind utility font sizes */
 input, textarea, select {
   font-size: 16px !important;
+}
+
+/*
+  Keep the Tailwind v3 defaults this app was designed with (v4 changed them):
+  borders default to gray-200 rather than the text color, placeholders are
+  gray-400, and buttons show a pointer cursor. Utilities still override these.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer base {

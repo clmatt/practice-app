@@ -120,7 +120,7 @@ export default function AddEditItemScreen() {
             placeholder={`${label} name`}
             value={name}
             onChange={e => { setName(e.target.value); setError('') }}
-            className="rounded-xl px-4 py-3 outline-none text-sm w-full bg-slate-800"
+            className="rounded-xl px-4 py-3 outline-hidden text-sm w-full bg-slate-800"
           />
 
           <ColorPicker value={color} onChange={c => { setColor(c); setError('') }} />
@@ -140,7 +140,7 @@ export default function AddEditItemScreen() {
                   addTag()
                 }
               }}
-              className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full"
+              className="bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm w-full"
             />
             {allActivityTags.length > 0 && (
               <div className="flex flex-wrap gap-2">

@@ -66,7 +66,7 @@ export default function ManageItemsScreen() {
           placeholder={`Search ${plural}`}
           value={query}
           onChange={e => update({ query: e.target.value })}
-          className="bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm w-full mb-3"
+          className="bg-slate-800 rounded-xl px-4 py-3 outline-hidden text-sm w-full mb-3"
         />
 
         <div className="flex items-center gap-2 mb-3">
@@ -75,7 +75,7 @@ export default function ManageItemsScreen() {
             id="item-sort"
             value={sort}
             onChange={e => update({ sort: e.target.value as ItemSort })}
-            className="flex-1 min-w-0 bg-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 outline-none"
+            className="flex-1 min-w-0 bg-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 outline-hidden"
           >
             {(Object.keys(ITEM_SORT_LABELS) as ItemSort[]).map(key => (
               <option key={key} value={key}>{ITEM_SORT_LABELS[key]}</option>

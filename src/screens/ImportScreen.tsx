@@ -167,9 +167,9 @@ export default function ImportScreen() {
             <span className="text-xs text-slate-500">
               Activity conflict {actIdx + 1} of {actConflicts.length}
             </span>
-            <div className="flex-1 h-0.5 bg-slate-800 rounded">
+            <div className="flex-1 h-0.5 bg-slate-800 rounded-sm">
               <div
-                className="h-full bg-violet-500 rounded transition-all"
+                className="h-full bg-violet-500 rounded-sm transition-all"
                 style={{ width: `${((actIdx + 1) / actConflicts.length) * 100}%` }}
               />
             </div>
@@ -230,7 +230,7 @@ export default function ImportScreen() {
             onClick={() => setApplyActAll(v => !v)}
             className="flex items-center gap-3 w-full bg-slate-800 rounded-xl px-4 py-3 mb-4"
           >
-            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 ${
+            <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border-2 ${
               applyActAll ? 'bg-violet-600 border-violet-600' : 'border-slate-500'
             }`}>
               {applyActAll && <span className="text-white text-xs leading-none">✓</span>}
@@ -259,9 +259,9 @@ export default function ImportScreen() {
             <span className="text-xs text-slate-500">
               Item conflict {itemIdx + 1} of {itemConflicts.length}
             </span>
-            <div className="flex-1 h-0.5 bg-slate-800 rounded">
+            <div className="flex-1 h-0.5 bg-slate-800 rounded-sm">
               <div
-                className="h-full bg-violet-500 rounded transition-all"
+                className="h-full bg-violet-500 rounded-sm transition-all"
                 style={{ width: `${((itemIdx + 1) / itemConflicts.length) * 100}%` }}
               />
             </div>
@@ -321,7 +321,7 @@ export default function ImportScreen() {
             onClick={() => setApplyItemAll(v => !v)}
             className="flex items-center gap-3 w-full bg-slate-800 rounded-xl px-4 py-3 mb-4"
           >
-            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 ${
+            <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border-2 ${
               applyItemAll ? 'bg-violet-600 border-violet-600' : 'border-slate-500'
             }`}>
               {applyItemAll && <span className="text-white text-xs leading-none">✓</span>}

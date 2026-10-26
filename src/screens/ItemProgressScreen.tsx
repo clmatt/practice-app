@@ -90,7 +90,7 @@ export default function ItemProgressScreen() {
         ) : (
           <div className="flex gap-4">
             {/* Vertical color bar */}
-            <div className="flex flex-col w-3 rounded-full overflow-hidden flex-shrink-0">
+            <div className="flex flex-col w-3 rounded-full overflow-hidden shrink-0">
               {runs.map((run, i) => (
                 <div
                   key={i}

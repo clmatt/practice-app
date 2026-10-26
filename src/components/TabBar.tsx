@@ -91,7 +91,7 @@ export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
           className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'dashboard' ? activeClass : inactive}`}
         >
           <HomeIcon />
-          <span className="text-[10px] font-medium max-w-[4.5rem] truncate">{activityName || 'Home'}</span>
+          <span className="text-[10px] font-medium max-w-18 truncate">{activityName || 'Home'}</span>
         </button>
 
         <button
@@ -109,7 +109,7 @@ export default function TabBar({ activityId, activityName = '' }: TabBarProps) {
           className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 ${active === 'items' ? activeClass : inactive}`}
         >
           <ListIcon />
-          <span className="text-[10px] font-medium max-w-[4.5rem] truncate">{itemsTabLabel(activityId)}</span>
+          <span className="text-[10px] font-medium max-w-18 truncate">{itemsTabLabel(activityId)}</span>
         </button>
 
         <button

@@ -1,6 +1,7 @@
 import { configDefaults, defineConfig } from 'vitest/config'
 import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
 
@@ -56,6 +57,7 @@ export default defineConfig({
     outDir: 'dist',
   },
   plugins: [
+    tailwindcss(),
     react(),
     contentSecurityPolicy(),
     VitePWA({
@@ -77,7 +79,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
     // e2e/ holds the Playwright tests (npm run test:e2e), not Vitest ones.
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', '.superpowers/**'],
     globals: true,
     // Tests assume the user's timezone so local-date behaviour is exercised
     // (UTC-7/-8: evening practice is already "tomorrow" in UTC).
