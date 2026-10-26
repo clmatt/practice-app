@@ -79,7 +79,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
     // e2e/ holds the Playwright tests (npm run test:e2e), not Vitest ones.
-    exclude: [...configDefaults.exclude, 'e2e/**', '.superpowers/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', '.superpowers/**', 'base/**'],
     globals: true,
     // Tests assume the user's timezone so local-date behaviour is exercised
     // (UTC-7/-8: evening practice is already "tomorrow" in UTC).

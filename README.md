@@ -32,6 +32,7 @@ npm run dev       # dev server → http://localhost:5173/practice-app/
 npm test          # run the test suite once (Vitest)
 npm run lint      # ESLint
 npm run test:e2e  # Playwright (WebKit, iPhone-sized) against the production build — run npm run build first
+npm run test:visual  # screenshots of every screen, before vs after (see e2e/visual/; CI runs it on Dependabot updates)
 npm run build     # type-check and production build into dist/
 npm run preview   # serve the production build locally
 npm run icons     # regenerate public/icon-*.png from scripts/generate-icons.mjs
@@ -47,7 +48,7 @@ Push to `main`. GitHub Actions (`.github/workflows/deploy.yml`) runs lint, tests
 
 ### Dependency updates (Dependabot)
 
-Dependabot (`.github/dependabot.yml`) checks for updates weekly and opens pull requests; routine updates wait a week after release first. When every check passes on a Dependabot pull request (lint, unit tests, build and the WebKit end-to-end test), CI merges it and deploys by itself — no action needed — for:
+Dependabot (`.github/dependabot.yml`) checks for updates weekly and opens pull requests; routine updates wait a week after release first. When every check passes on a Dependabot pull request — lint, unit tests, build, the WebKit end-to-end tests (including working offline), and a visual check that every screen looks pixel-identical before and after the update (made-up data from `e2e/visual/fixture.json`) — CI merges it and deploys by itself — no action needed — for:
 
 - any npm update: minor, patch or major, one package or several (including security fixes);
 - updates to GitHub's own actions (`actions/*`). Third-party actions would run with write access to the repo, so those stay open for you.

@@ -44,10 +44,11 @@ jobs:
             gh pr view "$number" --json number,title,author,headRefOid,headRefName > pr.json
             branch=$(jq -r .headRefName pr.json)
             sha=$(jq -r .headRefOid pr.json)
-            # Only the exact commit whose full CI run (the build job) passed.
-            passed=$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=build" --jq '[.check_runs[] | select(.conclusion == "success")] | length')
-            if [ "$passed" = "0" ]; then
-              echo "#$number: no passing build for $sha yet"
+            # Only the exact commit whose full CI run passed: the build job and the visual check.
+            build=$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=build" --jq '[.check_runs[] | select(.conclusion == "success")] | length')
+            visual=$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=visual" --jq '[.check_runs[] | select(.conclusion == "success")] | length')
+            if [ "$build" = "0" ] || [ "$visual" = "0" ]; then
+              echo "#$number: no passing build and visual check for $sha yet"
               continue
             fi
             if node "$GITHUB_WORKSPACE/scripts/dependabot-automerge.ts" pr.json "$branch" "$sha" | grep -q '^merge=true$'; then

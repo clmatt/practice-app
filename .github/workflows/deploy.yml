@@ -74,14 +74,65 @@ jobs:
       - uses: actions/deploy-pages@v5
         id: deployment
 
-  # Dependabot updates that passed every check above merge themselves, then
+  # Dependabot updates that passed every check above (build and visual) merge themselves, then
   # deploy. Which updates qualify: scripts/dependabot-automerge-policy.ts
   # (any npm update; GitHub's own actions). A merge made with GITHUB_TOKEN doesn't
   # start a workflow run by itself, so this starts the deploy, which re-runs
   # every check on main before publishing anything.
+  # A dependency update must not change how the app looks: build the app as it was
+  # before the update (the commit this branch started from) and after it, screenshot
+  # every screen with the same made-up data, and require them to be identical.
+  visual:
+    if: github.actor == 'dependabot[bot]' && startsWith(github.ref_name, 'dependabot/')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check out the app as it was before the update
+        run: git worktree add base "$(git merge-base HEAD origin/main)"
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Build after the update
+        run: npm ci && npm run build
+      - name: Build before the update
+        working-directory: base
+        run: npm ci && npm run build
+      - name: Install WebKit's system packages
+        timeout-minutes: 15
+        run: |
+          conf=/etc/apt/apt.conf.d/99ci-resilience
+          echo 'Acquire::Retries "5";' | sudo tee "$conf" > /dev/null
+          echo 'Acquire::http::Timeout "30";' | sudo tee -a "$conf" > /dev/null
+          echo 'Acquire::https::Timeout "30";' | sudo tee -a "$conf" > /dev/null
+          echo 'DPkg::Lock::Timeout "300";' | sudo tee -a "$conf" > /dev/null
+          npx playwright install-deps webkit
+      - name: Download WebKit
+        timeout-minutes: 10
+        run: |
+          for attempt in 1 2 3; do
+            timeout 180 npx playwright install webkit && exit 0
+            echo "Download attempt $attempt failed or stalled; retrying"
+          done
+          exit 1
+      - run: npm run test:visual
+        timeout-minutes: 10
+      - name: Keep the before/after/diff screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-differences
+          path: test-results/visual/
+          if-no-files-found: ignore
+
   automerge:
     if: github.actor == 'dependabot[bot]' && startsWith(github.ref_name, 'dependabot/')
-    needs: build
+    needs: [build, visual]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

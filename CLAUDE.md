@@ -14,6 +14,7 @@ The owner's words, condensed. Proposals that conflict with these are out, howeve
 - `npm run lint` — must report 0 problems
 - `npm run build` — type-check (`tsc -b`) + production build
 - `npm run test:e2e` — Playwright in WebKit against the production build (run `npm run build` first)
+- `npm run test:visual` — every screen of `./base` (a git worktree of the "before" commit, built) vs `.` must be pixel-identical; CI runs it on Dependabot branches only, so intentional UI changes never need reference images. The fixture data is made up — never put real practice data in the repo.
 - `npm run dev` → http://localhost:5173/practice-app/
 - Node 24 (`.nvmrc`, `engines` in package.json)
 

@@ -1,0 +1,1127 @@
+{
+  "app": "practice-app",
+  "schemaVersion": 1,
+  "exportedAt": "2026-09-30T12:00:00.000Z",
+  "activities": [
+    {
+      "id": "act-juggling",
+      "name": "Juggling",
+      "itemLabel": "trick",
+      "weights": {
+        "red": 0.6,
+        "yellow": 0.3,
+        "green": 0.1
+      },
+      "recencyBias": 0.9,
+      "createdAt": "2026-09-01T01:00:00.000Z"
+    },
+    {
+      "id": "act-climbing",
+      "name": "Climbing",
+      "itemLabel": "route",
+      "weights": {
+        "red": 0.5,
+        "yellow": 0.3,
+        "green": 0.2
+      },
+      "createdAt": "2026-09-01T02:00:00.000Z"
+    }
+  ],
+  "items": [
+    {
+      "id": "act-juggling-0",
+      "activityId": "act-juggling",
+      "name": "Cascade",
+      "color": "yellow",
+      "tags": [
+        "5 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-1",
+      "activityId": "act-juggling",
+      "name": "Reverse cascade",
+      "color": "green",
+      "tags": [
+        "3 balls",
+        "LH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-2",
+      "activityId": "act-juggling",
+      "name": "Shower",
+      "color": "green",
+      "tags": [
+        "3 balls",
+        "RH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-3",
+      "activityId": "act-juggling",
+      "name": "Half shower",
+      "color": "red",
+      "tags": [
+        "4 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-4",
+      "activityId": "act-juggling",
+      "name": "Mills Mess",
+      "color": "yellow",
+      "tags": [
+        "3 balls",
+        "RH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-5",
+      "activityId": "act-juggling",
+      "name": "Box",
+      "color": "red",
+      "tags": [
+        "4 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-6",
+      "activityId": "act-juggling",
+      "name": "Columns",
+      "color": "red",
+      "tags": [
+        "3 balls",
+        "LH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-7",
+      "activityId": "act-juggling",
+      "name": "Tennis",
+      "color": "green",
+      "tags": [
+        "4 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-8",
+      "activityId": "act-juggling",
+      "name": "Burke's Barrage",
+      "color": "green",
+      "tags": [
+        "3 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-9",
+      "activityId": "act-juggling",
+      "name": "Rubenstein's Revenge",
+      "color": "yellow",
+      "tags": [
+        "3 balls",
+        "RH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-10",
+      "activityId": "act-juggling",
+      "name": "423",
+      "color": "yellow",
+      "tags": [
+        "5 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-11",
+      "activityId": "act-juggling",
+      "name": "441",
+      "color": "green",
+      "tags": [
+        "3 balls",
+        "RH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-12",
+      "activityId": "act-juggling",
+      "name": "531",
+      "color": "red",
+      "tags": [
+        "4 balls"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-juggling-13",
+      "activityId": "act-juggling",
+      "name": "Four ball fountain",
+      "color": "yellow",
+      "tags": [
+        "3 balls",
+        "RH"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z",
+      "archivedAt": "2026-09-20T05:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-0",
+      "activityId": "act-climbing",
+      "name": "Blue slab",
+      "color": "red",
+      "tags": [
+        "V5"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-1",
+      "activityId": "act-climbing",
+      "name": "Corner crack",
+      "color": "yellow",
+      "tags": [
+        "V3"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-2",
+      "activityId": "act-climbing",
+      "name": "Roof traverse",
+      "color": "green",
+      "tags": [
+        "V3"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-3",
+      "activityId": "act-climbing",
+      "name": "Pinch problem",
+      "color": "yellow",
+      "tags": [
+        "V3"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-4",
+      "activityId": "act-climbing",
+      "name": "Warm-up #3",
+      "color": "yellow",
+      "tags": [
+        "V3"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    },
+    {
+      "id": "act-climbing-5",
+      "activityId": "act-climbing",
+      "name": "Project V5",
+      "color": "green",
+      "tags": [
+        "V4",
+        "overhang"
+      ],
+      "createdAt": "2026-09-01T03:00:00.000Z"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-0",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-02T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-1",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-02T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-2",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-02T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-3",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-02T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-4",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-02T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-5",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-04T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-6",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-04T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-7",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-04T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-8",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-04T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-9",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-04T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red",
+      "note": "Tired, rushed it"
+    },
+    {
+      "id": "log-10",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-06T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-11",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-06T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Tired, rushed it"
+    },
+    {
+      "id": "log-12",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-06T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-13",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-06T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-14",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-06T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-15",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-06T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-16",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-06T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-17",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-06T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-18",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-08T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-19",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-08T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-20",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-08T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-21",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-08T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-22",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-08T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-23",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-08T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-24",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-08T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-25",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-10T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-26",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-10T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-27",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-10T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-28",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-10T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-29",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-10T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-30",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-10T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-31",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-10T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-32",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-10T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-33",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-10T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-34",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-10T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-35",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-12T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-36",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-12T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-37",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-12T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-38",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-12T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-39",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-12T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-40",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-12T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow",
+      "note": "Better rhythm today"
+    },
+    {
+      "id": "log-41",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-12T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-42",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-12T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red",
+      "note": "Better rhythm today"
+    },
+    {
+      "id": "log-43",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-12T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-44",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-14T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-45",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-14T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-46",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-14T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-47",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-14T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-48",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-16T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-49",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-16T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-50",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-16T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-51",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-16T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-52",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-16T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-53",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-16T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-54",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-18T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-55",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-18T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-56",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-18T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-57",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-18T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-58",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-18T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-59",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-18T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-60",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-18T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-61",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-18T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-62",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-18T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-63",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-20T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-64",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-20T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-65",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-20T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-66",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-20T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-67",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-20T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-68",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-20T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-69",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-20T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-70",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-20T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-71",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-20T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-72",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-20T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-73",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-22T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-74",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-22T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-75",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-22T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-76",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-22T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-77",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-22T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-78",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-22T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Drop on the third throw"
+    },
+    {
+      "id": "log-79",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-22T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-80",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-22T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-81",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-22T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-82",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-24T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-83",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-24T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-84",
+      "itemId": "act-juggling-5",
+      "practicedAt": "2026-09-24T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-85",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-24T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-86",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-24T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Tired, rushed it"
+    },
+    {
+      "id": "log-87",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-24T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-88",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-24T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-89",
+      "itemId": "act-juggling-0",
+      "practicedAt": "2026-09-26T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-90",
+      "itemId": "act-juggling-1",
+      "practicedAt": "2026-09-26T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Drop on the third throw"
+    },
+    {
+      "id": "log-91",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-26T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-92",
+      "itemId": "act-juggling-4",
+      "practicedAt": "2026-09-26T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-93",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-26T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-94",
+      "itemId": "act-juggling-7",
+      "practicedAt": "2026-09-26T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-95",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-26T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Better rhythm today"
+    },
+    {
+      "id": "log-96",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-26T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-97",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-26T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow",
+      "note": "Drop on the third throw"
+    },
+    {
+      "id": "log-98",
+      "itemId": "act-juggling-2",
+      "practicedAt": "2026-09-28T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Drop on the third throw"
+    },
+    {
+      "id": "log-99",
+      "itemId": "act-juggling-3",
+      "practicedAt": "2026-09-28T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red",
+      "note": "Better rhythm today"
+    },
+    {
+      "id": "log-100",
+      "itemId": "act-juggling-6",
+      "practicedAt": "2026-09-28T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red",
+      "note": "Tired, rushed it"
+    },
+    {
+      "id": "log-101",
+      "itemId": "act-juggling-8",
+      "practicedAt": "2026-09-28T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green",
+      "note": "Drop on the third throw"
+    },
+    {
+      "id": "log-102",
+      "itemId": "act-juggling-9",
+      "practicedAt": "2026-09-28T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-103",
+      "itemId": "act-juggling-10",
+      "practicedAt": "2026-09-28T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-104",
+      "itemId": "act-juggling-11",
+      "practicedAt": "2026-09-28T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-105",
+      "itemId": "act-juggling-12",
+      "practicedAt": "2026-09-28T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-106",
+      "itemId": "act-climbing-0",
+      "practicedAt": "2026-09-02T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-107",
+      "itemId": "act-climbing-1",
+      "practicedAt": "2026-09-02T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-108",
+      "itemId": "act-climbing-2",
+      "practicedAt": "2026-09-02T18:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-109",
+      "itemId": "act-climbing-4",
+      "practicedAt": "2026-09-02T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-110",
+      "itemId": "act-climbing-5",
+      "practicedAt": "2026-09-02T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-111",
+      "itemId": "act-climbing-0",
+      "practicedAt": "2026-09-04T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red",
+      "note": "Clean run of 20"
+    },
+    {
+      "id": "log-112",
+      "itemId": "act-climbing-3",
+      "practicedAt": "2026-09-04T19:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-113",
+      "itemId": "act-climbing-4",
+      "practicedAt": "2026-09-04T17:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    },
+    {
+      "id": "log-114",
+      "itemId": "act-climbing-0",
+      "practicedAt": "2026-09-06T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-115",
+      "itemId": "act-climbing-1",
+      "practicedAt": "2026-09-06T19:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-116",
+      "itemId": "act-climbing-3",
+      "practicedAt": "2026-09-06T17:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-117",
+      "itemId": "act-climbing-4",
+      "practicedAt": "2026-09-06T18:00:00.000Z",
+      "colorBefore": "red",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-118",
+      "itemId": "act-climbing-5",
+      "practicedAt": "2026-09-06T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-119",
+      "itemId": "act-climbing-0",
+      "practicedAt": "2026-09-08T17:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "green"
+    },
+    {
+      "id": "log-120",
+      "itemId": "act-climbing-1",
+      "practicedAt": "2026-09-08T18:00:00.000Z",
+      "colorBefore": "yellow",
+      "colorAfter": "yellow"
+    },
+    {
+      "id": "log-121",
+      "itemId": "act-climbing-0",
+      "practicedAt": "2026-09-10T19:00:00.000Z",
+      "colorBefore": "green",
+      "colorAfter": "red"
+    }
+  ],
+  "savedFilters": [
+    {
+      "id": "f-1",
+      "activityId": "act-juggling",
+      "name": "Three ball, not left",
+      "expression": "\"3 balls\" && !\"LH\"",
+      "createdAt": "2026-09-03T01:00:00.000Z"
+    }
+  ]
+}
