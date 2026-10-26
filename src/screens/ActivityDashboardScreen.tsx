@@ -8,7 +8,7 @@ import TabBar from '../components/TabBar'
 import ConfirmDestructive from '../components/ConfirmDestructive'
 import { RATING_ORDER } from '../palette'
 import { pluralLabel, pluralize } from '../labels'
-import { describeRecencyBias } from '../recencyBias'
+import { describeRecencyBias } from '../drawSettings'
 
 /** "Deletes "Juggling", its 12 tricks and 340 reps." — archived items included. */
 function deleteMessage(activity: Activity): string {

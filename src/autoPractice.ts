@@ -1,8 +1,10 @@
-import { getTodayPracticedItemIds, getLastPracticedByItem } from './storage'
+import { getTodayPracticedItemIds, getLastPracticedByItem, getLogs } from './storage'
 import { selectItem } from './selection'
 import { parseFilter, evaluateFilter } from './filterParser'
 import type { Activity, Color, Item } from './types'
 import { sortTags } from './sorting'
+import { workScoresByItem } from './workScore'
+import { DEFAULT_RATING_MEMORY, DEFAULT_RECENCY_BIAS, DEFAULT_WORK_BIAS } from './drawSettings'
 import { RATING_ORDER, ratingName } from './palette'
 
 /** Decision logic for Auto Practice: which items are in play and what to draw next. */
@@ -72,10 +74,15 @@ export function drawFrom(
 ): DrawResult {
   const excluded = new Set([...getTodayPracticedItemIds(activity.id), ...skipped])
   const lastPracticedAt = getLastPracticedByItem(activity.id)
-  const recencyBias = activity.recencyBias ?? 0.9
+  const recencyBias = activity.recencyBias ?? DEFAULT_RECENCY_BIAS
+  const workBias = activity.workBias ?? DEFAULT_WORK_BIAS
+  const work = {
+    workBias,
+    workScores: workBias > 0 ? workScoresByItem(items, getLogs(), activity.ratingMemory ?? DEFAULT_RATING_MEMORY) : {},
+  }
   const pool = buildFilteredPool(items, filter)
   const weights = practiceWeights(activity.weights, filter.colors)
-  const next = selectItem(pool, excluded, weights, recencyBias, lastPracticedAt)
+  const next = selectItem(pool, excluded, weights, recencyBias, lastPracticedAt, work)
   if (next) return { kind: 'item', item: next }
   if (isFiltering(filter) && selectItem(items, excluded, activity.weights, recencyBias, lastPracticedAt)) {
     return { kind: 'filter-exhausted' }

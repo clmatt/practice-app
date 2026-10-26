@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { selectItem, computeRecencyWeights } from '../selection'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { selectItem, computeRecencyWeights, computeDrawWeights } from '../selection'
 import type { Item } from '../types'
 
 const makeItem = (id: string, color: Item['color']): Item => ({
@@ -207,5 +207,49 @@ describe('computeRecencyWeights', () => {
     const w2 = computeRecencyWeights([b, a], 0.5, lastPracticedAt)
     expect(w1[0]).toBeCloseTo(w2[1])
     expect(w1[1]).toBeCloseTo(w2[0])
+  })
+})
+
+describe('computeDrawWeights (recency × work boost, within one color)', () => {
+  const pool = [makeItem('settled', 'green'), makeItem('fresh', 'green')]
+
+  it('is just the recency weights without a work bias', () => {
+    const last = { settled: '2026-01-01T00:00:00.000Z', fresh: '2026-01-02T00:00:00.000Z' }
+    expect(computeDrawWeights(pool, 0.9, last, { fresh: 0.8 }, 0)).toEqual(computeRecencyWeights(pool, 0.9, last))
+  })
+
+  it('multiplies each item by 1 + workBias × its work score, then normalises', () => {
+    const w = computeDrawWeights(pool, 1, {}, { settled: 0, fresh: 0.75 }, 4)
+    expect(w[1] / w[0]).toBeCloseTo(4)
+    expect(w[0] + w[1]).toBeCloseTo(1)
+  })
+
+  it('combines with recency', () => {
+    const last = { settled: '2026-01-01T00:00:00.000Z', fresh: '2026-01-02T00:00:00.000Z' } // settled is older: rank 0
+    const w = computeDrawWeights(pool, 0.5, last, { settled: 0, fresh: 1 }, 4)
+    expect(w[1] / w[0]).toBeCloseTo(0.5 * 5)
+  })
+})
+
+describe('selectItem with a work bias', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+  const items = [makeItem('r', 'red'), makeItem('settled', 'green'), makeItem('fresh', 'green')]
+  const scores = { r: 1, settled: 0, fresh: 0.9 }
+
+  it('never changes which color is drawn', () => {
+    for (const roll of [0.1, 0.5, 0.8, 0.9, 0.99]) {
+      vi.spyOn(Math, 'random').mockReturnValue(roll)
+      const plain = selectItem(items, new Set(), weights, 1, {})!.color
+      const biased = selectItem(items, new Set(), weights, 1, {}, { workScores: scores, workBias: 10 })!.color
+      expect(biased).toBe(plain)
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('within a color, favours the item that needs more work', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0.4) // green, then 40% into the green pool
+    expect(selectItem(items, new Set(), weights, 1, {})!.id).toBe('settled')
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0.4)
+    expect(selectItem(items, new Set(), weights, 1, {}, { workScores: scores, workBias: 10 })!.id).toBe('fresh')
   })
 })

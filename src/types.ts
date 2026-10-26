@@ -8,6 +8,10 @@ export interface Activity {
   itemLabelPlural?: string
   weights: { red: number; yellow: number; green: number }
   recencyBias?: number
+  /** Within a color, favor items whose recent ratings were worse: 0 (off) to 10; default DEFAULT_WORK_BIAS. */
+  workBias?: number
+  /** Half-life of a rating in reps, for the work score; default DEFAULT_RATING_MEMORY. */
+  ratingMemory?: number
   /** Auto Practice: after each rating, show the filter step before drawing the next item. */
   chooseFilterEachItem?: boolean
   createdAt: string

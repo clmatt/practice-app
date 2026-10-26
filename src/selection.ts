@@ -29,12 +29,31 @@ export function computeRecencyWeights(
   return raw.map(w => w / sum)
 }
 
+/**
+ * Chance of each item in one color's pool: its recency weight × (1 + workBias ×
+ * its work score), normalised. workBias 0 gives the recency weights unchanged.
+ */
+export function computeDrawWeights(
+  pool: Item[],
+  recencyBias: number,
+  lastPracticedAt: Record<string, string>,
+  workScores: Record<string, number>,
+  workBias: number,
+): number[] {
+  const recency = computeRecencyWeights(pool, recencyBias, lastPracticedAt)
+  if (workBias === 0) return recency
+  const raw = pool.map((item, i) => recency[i] * (1 + workBias * (workScores[item.id] ?? 0)))
+  const sum = raw.reduce((a, b) => a + b, 0)
+  return raw.map(w => w / sum)
+}
+
 export function selectItem(
   items: Item[],
   excluded: Set<string>,
   weights: Activity['weights'],
   recencyBias: number = 1,
   lastPracticedAt: Record<string, string> = {},
+  work: { workScores?: Record<string, number>; workBias?: number } = {},
 ): Item | null {
   const available = items.filter(i => !excluded.has(i.id))
   if (available.length === 0) return null
@@ -63,12 +82,13 @@ export function selectItem(
     }
   }
 
+  // The color was chosen above from the latest ratings alone; history only orders items within it.
   const pool = byColor[chosenColor]
-  const recencyWeights = computeRecencyWeights(pool, recencyBias, lastPracticedAt)
+  const itemWeights = computeDrawWeights(pool, recencyBias, lastPracticedAt, work.workScores ?? {}, work.workBias ?? 0)
   const r2 = Math.random()
   let cum = 0
   for (let i = 0; i < pool.length; i++) {
-    cum += recencyWeights[i]
+    cum += itemWeights[i]
     if (r2 < cum) return pool[i]
   }
   return pool[pool.length - 1]

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { buildFilteredPool, describeFilter, drawFrom, practiceWeights, tagsOf, type PracticeFilter } from '../autoPractice'
 import { saveItem, appendLog } from '../storage'
 import type { Activity, Color, Item } from '../types'
@@ -149,5 +149,47 @@ describe('describeFilter', () => {
     expect(describeFilter(filter({ colors: ['green', 'red'] }))).toBe('Red, Green')
     expect(describeFilter(filter({ colors: ['green'], tags: ['V4', 'V3'] }))).toBe('Green · V3, V4')
     expect(describeFilter(filter({ tags: ['V3'], advanced: '"slab"' }))).toBe('⚡ "slab"')
+  })
+})
+
+describe('drawFrom favours items that need more work', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  // Two green items last practiced at the same moment: "settled" was always green,
+  // "fresh" only just turned green after being red.
+  function seedGreens() {
+    saveItem({ ...makeItem('settled'), color: 'green' })
+    saveItem({ ...makeItem('fresh'), color: 'green' })
+    appendLog({ id: 's1', itemId: 'settled', practicedAt: '2026-01-02T18:00:00.000Z', colorBefore: 'green', colorAfter: 'green' })
+    appendLog({ id: 'f1', itemId: 'fresh', practicedAt: '2026-01-01T18:00:00.000Z', colorBefore: 'red', colorAfter: 'red' })
+    appendLog({ id: 'f2', itemId: 'fresh', practicedAt: '2026-01-02T18:00:00.000Z', colorBefore: 'red', colorAfter: 'green' })
+  }
+  const items = () => [{ ...makeItem('settled'), color: 'green' as const }, { ...makeItem('fresh'), color: 'green' as const }]
+  const draw = (a: Activity) => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.4)
+    const result = drawFrom(a, items(), filter(), new Set())
+    return result.kind === 'item' ? result.item.id : result.kind
+  }
+
+  it('does by default', () => {
+    seedGreens()
+    expect(draw(activity)).toBe('fresh')
+  })
+
+  it('does not when the work bias is off', () => {
+    seedGreens()
+    expect(draw({ ...activity, workBias: 0 })).toBe('settled')
+  })
+
+  it('uses the rating memory: a long memory still remembers the red', () => {
+    seedGreens()
+    // Strength 0.5: a 1-rep memory halves the red (1.25 vs 1), a 10-rep memory barely fades it (≈1.47 vs 1).
+    vi.spyOn(Math, 'random').mockReturnValue(0.42)
+    const short = drawFrom({ ...activity, workBias: 0.5, ratingMemory: 1 }, items(), filter(), new Set())
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.42)
+    const long = drawFrom({ ...activity, workBias: 0.5, ratingMemory: 10 }, items(), filter(), new Set())
+    expect(short.kind === 'item' && short.item.id).toBe('settled')
+    expect(long.kind === 'item' && long.item.id).toBe('fresh')
   })
 })
