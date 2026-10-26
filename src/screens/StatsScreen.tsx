@@ -89,7 +89,7 @@ export default function StatsScreen() {
 
             <div>
               <h2 className="text-base font-semibold mb-1">Ratings over time</h2>
-              <p className="text-xs text-slate-500 mb-3">How many {pluralLabel(activity)} were each color at the end of each practice day.</p>
+              <p className="text-xs text-slate-500 mb-3">How many {pluralLabel(activity)} were each color after each practice session.</p>
               {chartData.length === 0 ? (
                 <p className="text-slate-400 text-sm">No practice data yet.</p>
               ) : (

@@ -1,8 +1,11 @@
-import { daysBetweenKeys, formatDateKey, weekStartKey } from './dates'
 import type { Color } from './types'
 import { RATING_ORDER } from './palette'
 
-/** Geometry for the Stats colour-distribution chart (a stacked area over time). */
+/**
+ * Geometry for the Stats colour-distribution chart: a stacked area over
+ * practice sessions (session 1, 2, 3, …), not calendar time — a break doesn't
+ * stretch the chart. Each session keeps its date for the tooltip.
+ */
 
 export interface ColorCounts {
   date: string // 'YYYY-MM-DD'
@@ -22,16 +25,18 @@ export interface ChartBox {
 }
 
 export interface ChartPoint extends ColorCounts {
+  /** 1 for the first practice session, 2 for the next, … */
+  session: number
   x: number
 }
 
 export interface ColorChart {
-  /** One per practice day: what the pointer snaps to and the tooltip reports. */
+  /** One per practice session: what the pointer snaps to and the tooltip reports. */
   points: ChartPoint[]
-  /** The points the bands are drawn through (a weekly subset of `points` for long histories). */
+  /** The points the bands are drawn through (every Nth session for long histories). */
   drawn: ChartPoint[]
-  /** True when the bands are drawn week by week. */
-  weekly: boolean
+  /** True when the bands are drawn through every Nth session rather than all of them. */
+  smoothed: boolean
   /** Bottom to top: red, yellow, green. */
   bands: { color: Color; path: string }[]
   yMax: number
@@ -44,9 +49,8 @@ export interface ColorChart {
 }
 
 const STACK: Color[] = RATING_ORDER
-const LONG_RANGE_DAYS = 300
-/** Beyond this many practice days, day-to-day changes are too dense to draw: draw one point per week. */
-const DAILY_LIMIT = 30
+/** Beyond this many sessions, session-to-session changes are too dense to draw: draw about this many points. */
+const DRAWN_LIMIT = 30
 
 export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart | null {
   if (rows.length === 0) return null
@@ -56,20 +60,17 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
   const plotTop = box.top
   const plotBottom = box.height - box.bottom
 
-  const span = daysBetweenKeys(rows[0].date, rows[rows.length - 1].date)
-  // Every practice day gets the same width. Spacing by calendar time squeezed
-  // bursts of daily practice into narrow spikes next to long empty gaps.
+  // Every session gets the same width, however far apart the dates are.
   const points: ChartPoint[] = rows.length === 1
-    // A single day: show it as a flat band across the whole width.
-    ? [{ ...rows[0], x: plotLeft }, { ...rows[0], x: plotRight }]
-    : rows.map((r, i) => ({ ...r, x: plotLeft + (i / (rows.length - 1)) * (plotRight - plotLeft) }))
+    // A single session: show it as a flat band across the whole width.
+    ? [{ ...rows[0], session: 1, x: plotLeft }, { ...rows[0], session: 1, x: plotRight }]
+    : rows.map((r, i) => ({ ...r, session: i + 1, x: plotLeft + (i / (rows.length - 1)) * (plotRight - plotLeft) }))
 
-  // For long histories draw a smooth trend through the first day and the last practice
-  // day of each week; every day keeps its position, so tapping still finds exact days.
-  const weekly = rows.length > DAILY_LIMIT
-  const drawn = weekly
-    ? points.filter((p, i) => i === 0 || i === points.length - 1 || weekStartKey(points[i + 1].date) !== weekStartKey(p.date))
-    : points
+  // For long histories draw a smooth trend through every Nth session (and the last);
+  // every session keeps its position, so tapping still finds exact sessions.
+  const smoothed = rows.length > DRAWN_LIMIT
+  const step = Math.ceil(rows.length / DRAWN_LIMIT)
+  const drawn = smoothed ? points.filter((_, i) => i % step === 0 || i === points.length - 1) : points
 
   const yMax = Math.max(1, ...rows.map(r => r.red + r.yellow + r.green))
   const y = (value: number) => plotBottom - (value / yMax) * (plotBottom - plotTop)
@@ -84,19 +85,17 @@ export function buildColorChart(rows: ColorCounts[], box: ChartBox): ColorChart 
     return { color, path: `M${xy(top[0])}${forward}L${xy(bottom[bottom.length - 1])}${backward}Z` }
   })
 
-  const longRange = span > LONG_RANGE_DAYS
-  const label = (date: string) => formatDateKey(date, longRange ? { month: 'short', year: 'numeric' } : { month: 'short', day: 'numeric' })
-  const tickCount = span === 0 ? 1 : 3
+  const tickCount = rows.length === 1 ? 1 : 3
   const xTicks = Array.from({ length: tickCount }, (_, i) => {
     const target = tickCount === 1 ? 0 : (i / (tickCount - 1)) * (plotRight - plotLeft)
     const p = nearestPoint(points, plotLeft + target)
-    return { x: p.x, label: label(p.date) }
+    return { x: p.x, label: `Session ${p.session}` }
   }).filter((t, i, all) => all.findIndex(o => o.label === t.label) === i)
 
   const yTickValues = yMax >= 2 ? [0, Math.round(yMax / 2), yMax] : [0, yMax]
   const yTicks = [...new Set(yTickValues)].map(v => ({ y: y(v), label: String(v) }))
 
-  return { points, drawn, weekly, bands, yMax, y, xTicks, yTicks, nearest: x => nearestPoint(points, x) }
+  return { points, drawn, smoothed, bands, yMax, y, xTicks, yTicks, nearest: x => nearestPoint(points, x) }
 }
 
 type Pt = [number, number]

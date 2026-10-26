@@ -14,17 +14,17 @@ describe('ColorDistributionChart', () => {
     render(<ColorDistributionChart rows={rows} />)
     const legend = screen.getByRole('list', { name: 'Legend' })
     expect(within(legend).getAllByRole('listitem').map(li => li.textContent)).toEqual(['Red', 'Yellow', 'Green'])
-    expect(screen.getByRole('img')).toHaveAccessibleName('Ratings over time. Latest, Sep 11: 1 red, 4 yellow, 5 green.')
+    expect(screen.getByRole('img')).toHaveAccessibleName('Ratings over time. Latest, session 2 (Sep 11): 1 red, 4 yellow, 5 green.')
   })
 
-  it('shows a tooltip with every rating for the day nearest the pointer', () => {
+  it('shows a tooltip with the session, its date, and every rating', () => {
     render(<ColorDistributionChart rows={rows} />)
     const svg = screen.getByRole('img')
     // jsdom has no layout: pretend the chart is drawn 1:1 at the page's left edge.
     vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 340, height: 220, right: 340, bottom: 220, x: 0, y: 0, toJSON: () => ({}) })
     fireEvent.pointerMove(svg, { clientX: 330, clientY: 100, pointerType: 'mouse' })
     const tooltip = screen.getByRole('status')
-    expect(tooltip).toHaveTextContent('Sep 11')
+    expect(tooltip).toHaveTextContent('Session 2 · Sep 11')
     expect(tooltip).toHaveTextContent('1Red')
     expect(tooltip).toHaveTextContent('4Yellow')
     expect(tooltip).toHaveTextContent('5Green')
@@ -41,18 +41,19 @@ describe('ColorDistributionChart', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Sep 11')
 
     fireEvent.pointerDown(svg, { clientX: 10, clientY: 100, pointerType: 'touch' })
-    expect(screen.getByRole('status')).toHaveTextContent('Sep 1')
+    expect(screen.getByRole('status')).toHaveTextContent('Session 1 · Sep 1')
 
     fireEvent.pointerDown(screen.getByText('elsewhere'), { pointerType: 'touch' })
     expect(screen.queryByRole('status')).toBeNull()
   })
 
-  it('offers the numbers as a table', () => {
+  it('offers the numbers as a table, by session with its date', () => {
     render(<ColorDistributionChart rows={rows} />)
     fireEvent.click(screen.getByText('Show as table'))
     const table = screen.getByRole('table')
+    expect(within(table).getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Session', 'Date', 'Red', 'Yellow', 'Green'])
     expect(within(table).getAllByRole('row')).toHaveLength(3)
-    expect(within(table).getByText('Sep 1')).toBeInTheDocument()
+    expect(within(table).getAllByRole('row')[2]).toHaveTextContent(/^1Sep 1532$/)
   })
 })
 
@@ -66,9 +67,9 @@ describe('ColorDistributionChart with a long history', () => {
     return { date, red: i % 2 === 0 ? 0 : 5, yellow: 2, green: 10 }
   })
 
-  it('says it is drawn week by week', () => {
+  it('says it is smoothed', () => {
     render(<ColorDistributionChart rows={longRows} />)
-    expect(screen.getByText("Drawn week by week. Tap for any day's exact counts.")).toBeInTheDocument()
+    expect(screen.getByText("Smoothed for long histories. Tap for any session's exact counts.")).toBeInTheDocument()
   })
 
   it("still shows a single day's exact counts on tap", () => {
@@ -79,14 +80,14 @@ describe('ColorDistributionChart with a long history', () => {
     const x = 28 + (13 / 34) * (340 - 28 - 8)
     fireEvent.pointerDown(svg, { clientX: x, clientY: 100, pointerType: 'touch' })
     const tooltip = screen.getByRole('status')
-    expect(tooltip).toHaveTextContent('Aug 16')
+    expect(tooltip).toHaveTextContent('Session 14 · Aug 16')
     expect(tooltip).toHaveTextContent('5Red')
     expect(tooltip).toHaveTextContent('2Yellow')
     expect(tooltip).toHaveTextContent('10Green')
   })
 
-  it('short histories have no weekly note', () => {
+  it('short histories have no smoothing note', () => {
     render(<ColorDistributionChart rows={longRows.slice(0, 20)} />)
-    expect(screen.queryByText(/Drawn week by week/)).toBeNull()
+    expect(screen.queryByText(/Smoothed/)).toBeNull()
   })
 })

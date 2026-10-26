@@ -46,13 +46,18 @@ describe('buildColorChart', () => {
     expect(chart.points.map(p => p.date)).toEqual(['2026-09-01', '2026-09-01'])
   })
 
-  it('labels the x axis with short dates, including the year when the range is long', () => {
-    const short = buildColorChart([row('2026-08-20', 1, 0, 0), row('2026-09-28', 1, 0, 0)], box)!
-    expect(short.xTicks[0].label).toBe('Aug 20')
-    expect(short.xTicks.at(-1)!.label).toBe('Sep 28')
-    const long = buildColorChart([row('2025-01-10', 1, 0, 0), row('2026-09-28', 1, 0, 0)], box)!
-    expect(long.xTicks[0].label).toBe('Jan 2025')
-    expect(long.xTicks.at(-1)!.label).toBe('Sep 2026')
+  it('numbers each practice session, in order', () => {
+    const chart = buildColorChart([row('2025-01-10', 1, 0, 0), row('2026-09-28', 1, 0, 0)], box)!
+    expect(chart.points.map(p => [p.session, p.date])).toEqual([[1, '2025-01-10'], [2, '2026-09-28']])
+  })
+
+  it('labels the x axis with session numbers, not dates', () => {
+    const two = buildColorChart([row('2025-01-10', 1, 0, 0), row('2026-09-28', 1, 0, 0)], box)!
+    expect(two.xTicks.map(t => t.label)).toEqual(['Session 1', 'Session 2'])
+    const nine = buildColorChart(Array.from({ length: 9 }, (_, i) => row(`2026-09-0${i + 1}`, 1, 0, 0)), box)!
+    expect(nine.xTicks.map(t => t.label)).toEqual(['Session 1', 'Session 5', 'Session 9'])
+    const one = buildColorChart([row('2026-09-01', 1, 0, 0)], box)!
+    expect(one.xTicks.map(t => t.label)).toEqual(['Session 1'])
   })
 
   it('finds the nearest day to a horizontal position', () => {
@@ -93,7 +98,7 @@ describe('monotoneSegments (smooth curves)', () => {
   })
 })
 
-describe('weekly drawing for long histories', () => {
+describe('smoothing for long histories', () => {
   // 40 practice days: every weekday from Mon 2026-08-03 to Fri 2026-09-25.
   const days: string[] = []
   for (let d = new Date(2026, 7, 3); days.length < 40; d.setDate(d.getDate() + 1)) {
@@ -101,20 +106,21 @@ describe('weekly drawing for long histories', () => {
   }
   const rows = days.map((date, i) => row(date, i % 3, 1, i))
 
-  it('draws every day while there are 30 or fewer', () => {
+  it('draws every session while there are 30 or fewer', () => {
     const chart = buildColorChart(rows.slice(0, 30), box)!
     expect(chart.drawn).toHaveLength(30)
-    expect(chart.weekly).toBe(false)
+    expect(chart.smoothed).toBe(false)
   })
 
-  it('beyond 30 days, draws the first day and the last practice day of each week', () => {
+  it('beyond 30 sessions, draws every Nth session (and the last), with no calendar grouping', () => {
     const chart = buildColorChart(rows, box)!
-    expect(chart.weekly).toBe(true)
-    expect(chart.drawn.map(p => p.date)).toEqual([
-      '2026-08-03', '2026-08-07', '2026-08-14', '2026-08-21', '2026-08-28', '2026-09-04', '2026-09-11', '2026-09-18', '2026-09-25',
-    ])
-    // Drawn points sit exactly where those days sit, so the curve and the day positions line up.
-    for (const p of chart.drawn) expect(p.x).toBe(chart.points.find(q => q.date === p.date)!.x)
+    expect(chart.smoothed).toBe(true)
+    // 40 sessions → every 2nd: 1, 3, …, 39, then the last.
+    expect(chart.drawn.map(p => p.session)).toEqual([...Array.from({ length: 20 }, (_, i) => 2 * i + 1), 40])
+    // Drawn points sit exactly where those sessions sit, so the curve and the positions line up.
+    for (const p of chart.drawn) expect(p.x).toBe(chart.points.find(q => q.session === p.session)!.x)
+    const big = buildColorChart(Array.from({ length: 95 }, (_, i) => row(rows[i % 40].date, 1, 1, i)), box)!
+    expect(big.drawn.length).toBeLessThanOrEqual(31)
   })
 
   it('still finds the exact day under the pointer, with that day\'s own counts', () => {

@@ -10,7 +10,7 @@ const MIN_LABEL_BAND = 14 // SVG units: only write a count inside a band this ta
 
 const shortDate = (date: string) => formatDateKey(date, { month: 'short', day: 'numeric' })
 
-/** How many items were red / yellow / green at the end of each practice day, as a stacked area. */
+/** How many items were red / yellow / green after each practice session, as a stacked area. */
 export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }) {
   const chart = useMemo(() => buildColorChart(rows, BOX), [rows])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -30,7 +30,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
   if (!chart) return null
 
   const latest = rows[rows.length - 1]
-  const description = `Ratings over time. Latest, ${shortDate(latest.date)}: ${latest.red} red, ${latest.yellow} yellow, ${latest.green} green.`
+  const description = `Ratings over time. Latest, session ${rows.length} (${shortDate(latest.date)}): ${latest.red} red, ${latest.yellow} yellow, ${latest.green} green.`
   const last = chart.points[chart.points.length - 1]
 
   function track(e: PointerEvent<SVGSVGElement>) {
@@ -41,7 +41,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
 
   return (
     <div>
-      <ul aria-label="Legend" className={`flex gap-4 text-xs text-slate-300 ${chart.weekly ? 'mb-1' : 'mb-2'}`}>
+      <ul aria-label="Legend" className={`flex gap-4 text-xs text-slate-300 ${chart.smoothed ? 'mb-1' : 'mb-2'}`}>
         {RATING_ORDER.map(color => (
           <li key={color} className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLORS[color] }} />
@@ -49,8 +49,8 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
           </li>
         ))}
       </ul>
-      {chart.weekly && (
-        <p className="text-xs text-slate-500 mb-2">Drawn week by week. Tap for any day's exact counts.</p>
+      {chart.smoothed && (
+        <p className="text-xs text-slate-500 mb-2">Smoothed for long histories. Tap for any session's exact counts.</p>
       )}
 
       <div ref={plotRef} className="relative">
@@ -109,7 +109,7 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
               ? { left: `calc(${(active.x / BOX.width) * 100}% + 8px)` }
               : { right: `calc(${((BOX.width - active.x) / BOX.width) * 100}% + 8px)` }}
           >
-            <div className="text-slate-400 mb-1">{shortDate(active.date)}</div>
+            <div className="text-slate-400 mb-1">Session {active.session} · {shortDate(active.date)}</div>
             {TOOLTIP_ORDER.map(color => (
               <div key={color} className="flex items-center gap-2">
                 <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: RATING_COLORS[color] }} />
@@ -126,13 +126,15 @@ export default function ColorDistributionChart({ rows }: { rows: ColorCounts[] }
         <table className="w-full mt-2 text-xs text-slate-300">
           <thead>
             <tr className="text-slate-500">
-              <th className="text-left font-normal py-1">Day</th>
+              <th className="text-left font-normal py-1">Session</th>
+              <th className="text-left font-normal py-1">Date</th>
               {RATING_ORDER.map(c => <th key={c} className="text-right font-normal py-1">{ratingName(c)}</th>)}
             </tr>
           </thead>
           <tbody>
-            {[...rows].reverse().map(r => (
+            {rows.map((r, i) => ({ ...r, session: i + 1 })).reverse().map(r => (
               <tr key={r.date} className="border-t border-slate-800">
+                <td className="py-1 tabular-nums">{r.session}</td>
                 <td className="py-1">{shortDate(r.date)}</td>
                 {RATING_ORDER.map(c => <td key={c} className="text-right tabular-nums py-1">{r[c]}</td>)}
               </tr>
