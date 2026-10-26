@@ -26,15 +26,15 @@ describe('Dependabot auto-merge decision', () => {
     expect(decide(pr('Bump postcss from 8.5.31 to 8.5.32 in /'), npm).merge).toBe(true)
   })
 
-  it('leaves npm major updates for you, including 0.x minors', () => {
-    expect(decide(pr('Bump vite from 8.3.5 to 9.0.0'), npm)).toEqual({ merge: false, reason: expect.stringMatching(/major/) })
-    expect(decide(pr('Bump sharp from 0.34.5 to 0.35.5'), npm).merge).toBe(false)
+  it('merges npm major updates too: passing every check is the bar', () => {
+    expect(decide(pr('Bump vite from 8.3.5 to 9.0.0'), npm).merge).toBe(true)
+    expect(decide(pr('Bump sharp from 0.34.5 to 0.35.5'), npm).merge).toBe(true)
   })
 
-  it("leaves updates it can't read", () => {
-    expect(decide(pr('Bump react and @types/react'), npm).merge).toBe(false)
-    expect(decide(pr('Bump vite from 8.x to 9.x'), npm).merge).toBe(false)
-    expect(decide(pr('Bump the everything group with 3 updates'), npm).merge).toBe(false)
+  it('merges any npm update, including several packages at once', () => {
+    expect(decide(pr('Bump react and @types/react'), npm).merge).toBe(true)
+    expect(decide(pr('Bump vite from 8.x to 9.x'), npm).merge).toBe(true)
+    expect(decide(pr('Bump the everything group with 3 updates'), npm).merge).toBe(true)
   })
 
   it("merges updates to GitHub's own actions, majors included", () => {
@@ -73,10 +73,19 @@ describe('real Dependabot titles (prefixed in the repo commit style, lower-case 
     expect(decide(pr('deps: bump vite from 8.0.13 to 8.3.5'), npm).merge).toBe(true)
   })
 
-  it('still leaves prefixed majors and multi-package updates', () => {
-    expect(decide(pr('build(deps-dev): bump jsdom from 29.1.1 to 30.1.3'), npm).merge).toBe(false)
-    expect(decide(pr('build(deps-dev): bump sharp from 0.34.5 to 0.35.5'), npm).merge).toBe(false)
-    expect(decide(pr('build(deps): bump postcss-selector-parser and tailwindcss'), npm).merge).toBe(false)
+  it('merges prefixed majors and multi-package updates', () => {
+    expect(decide(pr('build(deps-dev): bump jsdom from 29.1.1 to 30.1.3'), npm).merge).toBe(true)
+    expect(decide(pr('chore(deps): bump @vitest/mocker and vitest'), npm).merge).toBe(true)
+  })
+
+  it('still leaves third-party actions and unknown action groups (they run with write access)', () => {
+    expect(decide(pr('ci(deps): bump peaceiris/actions-gh-pages from 3 to 4'), actions).merge).toBe(false)
+    expect(decide(pr('Bump the everything group with 2 updates'), { branch: 'dependabot/github_actions/everything-1', sha: SHA }).merge).toBe(false)
+    expect(decide(pr('Bump actions/checkout and peaceiris/actions-gh-pages'), actions).merge).toBe(false)
+  })
+
+  it('leaves other ecosystems alone', () => {
+    expect(decide(pr('Bump requests from 2.0 to 2.1'), { branch: 'dependabot/pip/requests-2.1', sha: SHA }).merge).toBe(false)
   })
 
   it('merges prefixed updates to GitHub actions', () => {

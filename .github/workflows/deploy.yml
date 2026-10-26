@@ -76,7 +76,7 @@ jobs:
 
   # Dependabot updates that passed every check above merge themselves, then
   # deploy. Which updates qualify: scripts/dependabot-automerge-policy.ts
-  # (npm majors stay open for you). A merge made with GITHUB_TOKEN doesn't
+  # (any npm update; GitHub's own actions). A merge made with GITHUB_TOKEN doesn't
   # start a workflow run by itself, so this starts the deploy, which re-runs
   # every check on main before publishing anything.
   automerge:

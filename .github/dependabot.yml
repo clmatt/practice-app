@@ -1,6 +1,6 @@
-# Weekly dependency updates. CI merges the safe ones by itself once every
-# check passes (see the automerge job in workflows/deploy.yml and
-# scripts/dependabot-automerge-policy.ts); npm major updates wait for you.
+# Weekly dependency updates. CI merges them by itself once every check passes,
+# majors included (see the automerge job in workflows/deploy.yml and
+# scripts/dependabot-automerge-policy.ts). Updates that fail a check stay open.
 version: 2
 updates:
   - package-ecosystem: npm

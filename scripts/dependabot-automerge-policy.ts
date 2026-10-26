@@ -1,9 +1,12 @@
 /*
  * Decides whether CI may merge a Dependabot pull request on its own.
- * Used by scripts/dependabot-automerge.ts (run in CI). Merges:
- * the weekly npm minor-and-patch group, single npm minor/patch updates
- * (security fixes included), and updates to GitHub's own actions/*. npm
- * major updates stay open for the owner. Anything it can't read stays open.
+ * Used by scripts/dependabot-automerge.ts, which only runs once every check
+ * (lint, unit tests, build, WebKit e2e) has passed on the exact commit.
+ *
+ * - npm: any update merges, majors and multi-package updates included —
+ *   passing every check is the bar (the owner's choice).
+ * - GitHub Actions: only GitHub's own actions/*. Workflow steps run with write
+ *   access to the repo, so third-party actions stay open for a person to check.
  */
 export interface PullRequest {
   number: number
@@ -20,21 +23,8 @@ export type Decision =
 // gh reports the bot as app/dependabot; the REST API as dependabot[bot].
 const DEPENDABOT_LOGINS = ['app/dependabot', 'dependabot[bot]', 'dependabot']
 
-/** Groups from .github/dependabot.yml whose updates are safe by construction, per ecosystem. */
-const SAFE_GROUPS: Record<string, string> = {
-  npm_and_yarn: 'minor-and-patch',
-  github_actions: 'github-actions',
-}
-
-/** Whether going from one version to another is a breaking (major) change; unreadable versions count as major. */
-function isMajor(from: string, to: string): boolean {
-  const parse = (v: string) => /^v?(\d+)\.(\d+)/.exec(v)
-  const a = parse(from)
-  const b = parse(to)
-  if (!a || !b) return true
-  // Below 1.0, a minor bump is a breaking change (0.34 → 0.35).
-  return a[1] !== b[1] || (a[1] === '0' && a[2] !== b[2])
-}
+/** The Actions group from .github/dependabot.yml (it only contains actions/*). */
+const ACTIONS_GROUP = 'github-actions'
 
 export function decide(pr: PullRequest | null, run: { branch: string; sha: string }): Decision {
   const no = (reason: string): Decision => ({ merge: false, reason })
@@ -46,21 +36,14 @@ export function decide(pr: PullRequest | null, run: { branch: string; sha: strin
   const ecosystem = run.branch.split('/')[1]
   const yes = (reason: string): Decision => ({ merge: true, number: pr.number, reason })
 
+  if (ecosystem === 'npm_and_yarn') return yes(`npm update "${pr.title}" passed every check`)
+  if (ecosystem !== 'github_actions') return no(`unknown ecosystem ${ecosystem}`)
+
   // Dependabot follows the repo's commit style: "build(deps): bump …", "deps: bump …" or "Bump …".
   const title = pr.title.replace(/^[\w-]+(\([\w-]+\))?!?: /, '')
   const group = /^bump the (\S+) group\b/i.exec(title)
-  if (group) {
-    return SAFE_GROUPS[ecosystem] === group[1] ? yes(`${group[1]} group`) : no(`unknown group ${group[1]}`)
-  }
-
-  const single = /^bump (\S+) from (\S+) to (\S+)(?: in \S+)?$/i.exec(title)
-  if (!single) return no(`can't tell what "${pr.title}" updates`)
-  const [, name, from, to] = single
-  if (ecosystem === 'github_actions') {
-    return name.startsWith('actions/') ? yes(`GitHub's own ${name}`) : no(`third-party action ${name}`)
-  }
-  if (ecosystem === 'npm_and_yarn') {
-    return isMajor(from, to) ? no(`${name} ${from} → ${to} is a major update: left for you`) : yes(`${name} ${from} → ${to}`)
-  }
-  return no(`unknown ecosystem ${ecosystem}`)
+  if (group) return group[1] === ACTIONS_GROUP ? yes(`${group[1]} group`) : no(`unknown group ${group[1]}`)
+  const single = /^bump (\S+) from \S+ to \S+(?: in \S+)?$/i.exec(title)
+  if (!single) return no(`can't tell which actions "${pr.title}" updates`)
+  return single[1].startsWith('actions/') ? yes(`GitHub's own ${single[1]}`) : no(`third-party action ${single[1]}`)
 }
