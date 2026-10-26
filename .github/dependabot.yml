@@ -11,6 +11,11 @@ updates:
     # usually pulled within days. Security updates don't wait.
     cooldown:
       default-days: 7
+    ignore:
+      # Node's type definitions must match the Node the project runs (.nvmrc: 24).
+      # Move both together by hand when upgrading Node.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       # One pull request a week for all minor and patch updates.
       minor-and-patch:
