@@ -4,7 +4,7 @@ A personal practice tracker that runs as an app on your phone's home screen.
 
 **Live app:** https://clmatt.github.io/practice-app/
 
-You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice draws items weighted towards the ones you struggle with and the ones you haven't touched in a while. Tapped the wrong color? An *Undo* bar appears for a few seconds after each save. Stats show how your ratings shift over time.
+You create **activities** (e.g. "Juggling"), add **items** to each (e.g. individual tricks), and after practising an item you rate it red, yellow or green. Auto Practice first picks a color by your weights (most often red), then, within that color, favors the items you practiced longest ago and the ones whose recent ratings were worse — e.g. a trick that only just turned green after a long red stretch comes up more than one that's been green for ages. Activity Settings explain each setting in plain words. Tapped the wrong color? An *Undo* bar appears for a few seconds after each save. Stats show how your ratings shift over time.
 
 **Philosophy.** The app never pushes you to practise: no streaks, no due counts, no pile of overdue items. Taking a day or a month off is fine — sometimes it's the right call — and the only consequence is that your next ratings may be lower. An item's color is simply how it went the last time you practised it; nothing is predicted from dates or time passing. You decide what each session is about (colors, tags, filters, or picking items yourself). It's built for physical skills like juggling and climbing, where "how did it go last time" is the right model.
 

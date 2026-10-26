@@ -6,6 +6,7 @@ import { localDateKey, daysBetweenKeys } from './dates'
 import { generateId } from './utils'
 import { isRep } from './logs'
 import { isColor } from './palette'
+import { RATING_MEMORY_MAX, WORK_BIAS_MAX } from './drawSettings'
 import type { Activity, Item, PracticeLog, SavedFilter } from './types'
 
 /*
@@ -128,7 +129,9 @@ function isValidActivity(v: unknown): v is Activity {
     isWeight(w.red) && isWeight(w.yellow) && isWeight(w.green) &&
     optional(v.recencyBias, b => typeof b === 'number' && b >= 0 && b <= 1) &&
     optional(v.chooseFilterEachItem, b => typeof b === 'boolean') &&
-    optional(v.itemLabelPlural, isStr)
+    optional(v.itemLabelPlural, isStr) &&
+    optional(v.workBias, b => typeof b === 'number' && b >= 0 && b <= WORK_BIAS_MAX) &&
+    optional(v.ratingMemory, m => typeof m === 'number' && m >= 1 && m <= RATING_MEMORY_MAX)
 }
 
 function isValidItem(v: unknown): v is Item {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 vi.mock('../backup', async importOriginal => {
@@ -109,14 +109,45 @@ describe('Home', () => {
   })
 })
 
-describe('recency bias setting', () => {
-  it('explains the current value in plain words, live', () => {
+describe('draw settings', () => {
+  function openSettings() {
     seed()
     renderAt('/activity/act-1')
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
-    expect(screen.getByText(/comes up about 2\.6× as often/)).toBeInTheDocument()
-    fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
-    expect(screen.getByText(/equally often/)).toBeInTheDocument()
+  }
+
+  it('offers "needs the most work" in the main settings, on at 4 by default, explained live, and saves it', () => {
+    openSettings()
+    const work = screen.getByLabelText('Favor items that need the most work')
+    expect(work).toHaveValue('4')
+    expect(screen.getByText(/up to 5× as likely to be picked/)).toBeInTheDocument()
+    fireEvent.change(work, { target: { value: '0' } })
+    expect(screen.getByText(/Off: within a color/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
+    expect(getActivities()[0].workBias).toBe(0)
+  })
+
+  it('keeps recency bias, rating memory and the plural under a collapsed Advanced section', () => {
+    openSettings()
+    const advanced = screen.getByText('Advanced').closest('details')!
+    expect(advanced).not.toHaveAttribute('open')
+    expect(within(advanced).getByLabelText('Recency bias')).toBeInTheDocument()
+    expect(within(advanced).getByLabelText('Rating memory')).toBeInTheDocument()
+    expect(within(advanced).getByLabelText('Plural (optional)')).toBeInTheDocument()
+  })
+
+  it('explains recency bias and rating memory live, and saves them', () => {
+    openSettings()
+    expect(screen.getByText(/about 2\.6× as likely to be picked/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Recency bias'), { target: { value: '1' } })
+    expect(screen.getByText(/equally likely to be picked/)).toBeInTheDocument()
+    const memory = screen.getByLabelText('Rating memory')
+    expect(memory).toHaveValue('3')
+    expect(screen.getByText(/from 3 reps ago counts half/)).toBeInTheDocument()
+    fireEvent.change(memory, { target: { value: '5' } })
+    expect(screen.getByText(/from 5 reps ago counts half/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
+    expect(getActivities()[0]).toMatchObject({ recencyBias: 1, ratingMemory: 5 })
   })
 })
 

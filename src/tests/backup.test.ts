@@ -515,3 +515,19 @@ describe('planImport', () => {
     expect(removalSummary(plan)).toEqual({ activities: [], items: 1, reps: 1 })
   })
 })
+
+describe('validateImportPayload: draw settings', () => {
+  it('keeps activities with valid work bias and rating memory, drops ones with nonsense values', () => {
+    const p = validateImportPayload({
+      activities: [
+        makeActivity({ id: 'a1', workBias: 4, ratingMemory: 3 }),
+        makeActivity({ id: 'a2', workBias: -1 }),
+        makeActivity({ id: 'a3', ratingMemory: 0 }),
+        makeActivity({ id: 'a4', workBias: 'lots' as never }),
+      ],
+      items: [], logs: [],
+    })!
+    expect(p.activities.map(a => a.id)).toEqual(['a1'])
+    expect(p.invalidRecords).toBe(3)
+  })
+})

@@ -8,7 +8,10 @@ import TabBar from '../components/TabBar'
 import ConfirmDestructive from '../components/ConfirmDestructive'
 import { RATING_ORDER } from '../palette'
 import { pluralLabel, pluralize } from '../labels'
-import { describeRecencyBias } from '../drawSettings'
+import {
+  DEFAULT_RATING_MEMORY, DEFAULT_RECENCY_BIAS, DEFAULT_WORK_BIAS, RATING_MEMORY_MAX, WORK_BIAS_MAX,
+  describeRatingMemory, describeRecencyBias, describeWorkBias,
+} from '../drawSettings'
 
 /** "Deletes "Juggling", its 12 tricks and 340 reps." — archived items included. */
 function deleteMessage(activity: Activity): string {
@@ -31,7 +34,9 @@ export default function ActivityDashboardScreen() {
     yellow: Math.round((activity?.weights.yellow ?? 0.3) * 100),
     green: Math.round((activity?.weights.green ?? 0.1) * 100),
   }))
-  const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? 0.9)
+  const [draftRecencyBias, setDraftRecencyBias] = useState(() => activity?.recencyBias ?? DEFAULT_RECENCY_BIAS)
+  const [draftWorkBias, setDraftWorkBias] = useState(() => activity?.workBias ?? DEFAULT_WORK_BIAS)
+  const [draftRatingMemory, setDraftRatingMemory] = useState(() => activity?.ratingMemory ?? DEFAULT_RATING_MEMORY)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [draftChooseFilter, setDraftChooseFilter] = useState(() => activity?.chooseFilterEachItem ?? false)
 
@@ -50,6 +55,8 @@ export default function ActivityDashboardScreen() {
         green: draftWeights.green / total,
       },
       recencyBias: draftRecencyBias,
+      workBias: draftWorkBias,
+      ratingMemory: draftRatingMemory,
       chooseFilterEachItem: draftChooseFilter,
     }
     saveActivity(updated)
@@ -97,16 +104,6 @@ export default function ActivityDashboardScreen() {
             />
           </div>
           <div>
-            <label htmlFor="item-label-plural" className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Plural (optional)</label>
-            <input
-              id="item-label-plural"
-              className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
-              placeholder={pluralize(draftLabel.trim() || activity.itemLabel)}
-              value={draftPlural}
-              onChange={e => setDraftPlural(e.target.value)}
-            />
-          </div>
-          <div>
             <label className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
               Selection weights (must add to 100)
             </label>
@@ -135,25 +132,24 @@ export default function ActivityDashboardScreen() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
-              Recency bias
+            <label htmlFor="work-bias" className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
+              Favor items that need the most work
             </label>
             <div className="flex items-center gap-3">
               <input
+                id="work-bias"
                 type="range"
                 min={0}
-                max={1}
-                step={0.01}
-                value={draftRecencyBias}
-                onChange={e => setDraftRecencyBias(Number(e.target.value))}
-                className="flex-1"
+                max={WORK_BIAS_MAX}
+                step={1}
+                value={draftWorkBias}
+                onChange={e => setDraftWorkBias(Number(e.target.value))}
+                className="flex-1 accent-violet-500"
               />
-              <span className="text-sm text-slate-300 w-12 text-right">
-                {draftRecencyBias.toFixed(2)}
-              </span>
+              <span className="text-sm text-slate-300 w-12 text-right">{draftWorkBias === 0 ? 'Off' : draftWorkBias}</span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Lower values favor the items you practiced longest ago. {describeRecencyBias(draftRecencyBias)}
+              Uses each item's recent ratings, not just its current color. {describeWorkBias(draftWorkBias)}
             </p>
           </div>
           <button
@@ -173,6 +169,65 @@ export default function ActivityDashboardScreen() {
               <span className={`block w-5 h-5 rounded-full bg-white transition-transform ${draftChooseFilter ? 'translate-x-4' : ''}`} />
             </span>
           </button>
+          <details className="bg-slate-900 rounded-xl px-4 py-3">
+            <summary className="text-sm text-slate-300 cursor-pointer">Advanced</summary>
+            <div className="flex flex-col gap-4 mt-4">
+              <div>
+                <label htmlFor="item-label-plural" className="text-xs text-slate-400 uppercase tracking-wide mb-1 block">Plural (optional)</label>
+                <input
+                  id="item-label-plural"
+                  className="w-full bg-slate-800 rounded-xl px-4 py-3 outline-none text-sm"
+                  placeholder={pluralize(draftLabel.trim() || activity.itemLabel)}
+                  value={draftPlural}
+                  onChange={e => setDraftPlural(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recency-bias" className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
+                  Recency bias
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="recency-bias"
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={draftRecencyBias}
+                    onChange={e => setDraftRecencyBias(Number(e.target.value))}
+                    className="flex-1 accent-violet-500"
+                  />
+                  <span className="text-sm text-slate-300 w-12 text-right">
+                    {draftRecencyBias.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Lower values favor the items you practiced longest ago. {describeRecencyBias(draftRecencyBias)}
+                </p>
+              </div>
+              <div>
+                <label htmlFor="rating-memory" className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">
+                  Rating memory
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="rating-memory"
+                    type="range"
+                    min={1}
+                    max={RATING_MEMORY_MAX}
+                    step={1}
+                    value={draftRatingMemory}
+                    onChange={e => setDraftRatingMemory(Number(e.target.value))}
+                    className="flex-1 accent-violet-500"
+                  />
+                  <span className="text-sm text-slate-300 w-12 text-right">{draftRatingMemory} reps</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  How long past ratings count toward &ldquo;needs the most work&rdquo;. {describeRatingMemory(draftRatingMemory)}
+                </p>
+              </div>
+            </div>
+          </details>
           <button
             onClick={handleSaveSettings}
             className="w-full bg-violet-600 hover:bg-violet-500 rounded-xl py-3 font-semibold"
